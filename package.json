@@ -1,0 +1,13 @@
+{
+  "name": "fbt-outlet",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FBT Outlet — static storefront with a Vercel-hosted admin panel backed by Vercel Postgres.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0"
+  }
+}

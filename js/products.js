@@ -1,8 +1,11 @@
 /* ============================================
    FBT OUTLET — Product catalog + card renderer
+   Products load from /api/products (Vercel Postgres).
+   If the API is unavailable (e.g. opened as a static
+   file), the embedded FALLBACK_PRODUCTS are used.
    ============================================ */
 
-const PRODUCTS = [
+const FALLBACK_PRODUCTS = [
   { id: 'p01', name: 'Velocity Pro Tee',   cat: 'Koszulki',  brand: 'Nike',       condition: 'Nowy',    price: 89,  old: 149, tag: '-40%',   tagType: 'sale', stars: 5, sizes: ['S','M','L','XL'], colors: ['Czarny','Czerwony'], gradient: 'linear-gradient(135deg,#2a0409,#1c1c22)' },
   { id: 'p02', name: 'Apex Track Jacket',  cat: 'Bluzy',     brand: 'Adidas',     condition: 'Nowy',    price: 259, old: 399, tag: 'HIT',    tagType: 'hit',  stars: 5, sizes: ['M','L','XL','XXL'], colors: ['Czarny','Szary'], gradient: 'linear-gradient(135deg,#1c1c22,#320810)' },
   { id: 'p03', name: 'Redline Joggers',    cat: 'Spodnie',   brand: 'Puma',       condition: 'Używany', price: 179, old: 249, tag: '-28%',   tagType: 'sale', stars: 4, sizes: ['S','M','L'], colors: ['Szary','Czarny'], gradient: 'linear-gradient(135deg,#151519,#2a0409)' },
@@ -17,15 +20,30 @@ const PRODUCTS = [
   { id: 'p12', name: 'Phantom Trail Shoe', cat: 'Obuwie',    brand: 'New Balance',condition: 'Używany', price: 379, old: 529, tag: 'NOWOŚĆ', tagType: 'new',  stars: 5, sizes: ['M','L','XL'], colors: ['Czarny','Biały'], gradient: 'linear-gradient(135deg,#1c1c22,#2a0409)' },
 ];
 
+// Live catalog — replaced by API data once loaded.
+let PRODUCTS = FALLBACK_PRODUCTS;
+
+async function loadProducts() {
+  try {
+    const res = await fetch('/api/products', { headers: { Accept: 'application/json' } });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length) return data;
+    }
+  } catch { /* offline / static preview — fall back below */ }
+  return FALLBACK_PRODUCTS;
+}
+
 function starStr(n) { return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
 
 function productCard(p) {
   const condClass = p.condition === 'Nowy' ? 'cond-new' : 'cond-used';
+  const oldPrice = p.old ? ` <span class="old">${p.old} zł</span>` : '';
   return `
   <article class="product-card reveal" data-product="${p.id}" data-name="${p.name}" data-price="${p.price}">
     <div class="product-media" style="background:${p.gradient}">
       <div class="product-badges">
-        <span class="tag ${p.tagType === 'sale' ? '' : 'grey'}">${p.tag}</span>
+        ${p.tag ? `<span class="tag ${p.tagType === 'sale' ? '' : 'grey'}">${p.tag}</span>` : ''}
         <span class="tag ${condClass}">${p.condition}</span>
       </div>
       <a href="produkt-${p.id}.html" class="product-quick">Zobacz produkt</a>
@@ -34,7 +52,7 @@ function productCard(p) {
       <div class="product-cat">${p.brand} · ${p.cat}</div>
       <h3 class="product-name"><a href="produkt-${p.id}.html">${p.name}</a></h3>
       <div class="product-foot">
-        <div class="product-price">${p.price} zł <span class="old">${p.old} zł</span></div>
+        <div class="product-price">${p.price} zł${oldPrice}</div>
       </div>
     </div>
   </article>`;
@@ -51,23 +69,26 @@ function renderProducts(selector, list) {
   el.querySelectorAll('.reveal').forEach((c, i) => { c.style.transitionDelay = `${(i % 4) * 70}ms`; if (typeof io !== 'undefined') io.observe(c); });
 }
 
-// Homepage featured (first 8)
-renderProducts('#featured-products', PRODUCTS.slice(0, 8));
+/* ---------- Page renderers ---------- */
 
-// Product page: related products by data-related ids
-(function () {
+function renderFeatured() {
+  renderProducts('#featured-products', PRODUCTS.slice(0, 8));
+}
+
+function renderRelated() {
   const rel = document.querySelector('#related-products');
   if (!rel) return;
   const ids = (rel.dataset.related || '').split(',').map(s => s.trim()).filter(Boolean);
   const list = ids.map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
   renderProducts('#related-products', list.length ? list : PRODUCTS.slice(0, 4));
-})();
+}
 
 /* ============================================
    SHOP PAGE — full filtering + sorting engine
    ============================================ */
-const shopGrid = '#shop-products';
-if (document.querySelector(shopGrid)) {
+function initShop() {
+  const shopGrid = '#shop-products';
+  if (!document.querySelector(shopGrid)) return;
 
   const state = {
     cat: 'Wszystkie',
@@ -223,3 +244,11 @@ if (document.querySelector(shopGrid)) {
 
   draw();
 }
+
+/* ---------- Bootstrap ---------- */
+(async function boot() {
+  PRODUCTS = await loadProducts();
+  renderFeatured();
+  renderRelated();
+  initShop();
+})();
