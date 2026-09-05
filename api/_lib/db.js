@@ -1,5 +1,70 @@
-import { sql } from '@vercel/postgres';
+import pg from 'pg';
 import { SEED_PRODUCTS } from './seed-data.js';
+
+const { Pool } = pg;
+
+// Accept whatever connection string the platform provides. Different Vercel /
+// Neon integrations name it differently, so we probe the common variants.
+// The plain `pg` driver accepts pooled OR direct URLs, unlike @vercel/postgres.
+const CONN_VARS = [
+  'POSTGRES_URL',
+  'DATABASE_URL',
+  'POSTGRES_PRISMA_URL',
+  'POSTGRES_URL_NON_POOLING',
+  'DATABASE_URL_UNPOOLED',
+  'POSTGRES_URL_NO_SSL',
+  'PGURL',
+];
+
+export function connectionString() {
+  for (const name of CONN_VARS) {
+    const v = process.env[name];
+    if (v && v.trim()) return v.trim();
+  }
+  return '';
+}
+
+// Names (never values) of DB-related env vars that are present. Safe to surface
+// for diagnostics — helps spot a misnamed or missing connection variable.
+export function detectedDbVars() {
+  return Object.keys(process.env)
+    .filter((k) => /^(POSTGRES|DATABASE|NEON|PG)[A-Z_]*$/i.test(k))
+    .sort();
+}
+
+let pool;
+function getPool() {
+  if (pool) return pool;
+  const cs = connectionString();
+  if (!cs) {
+    const err = new Error('missing_connection_string');
+    err.code = 'NO_DB_CONNECTION';
+    throw err;
+  }
+  const isLocal = /@(localhost|127\.0\.0\.1)[:/]/.test(cs);
+  pool = new Pool({
+    connectionString: cs,
+    max: 3,
+    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 10_000,
+    // Hosted Postgres (Neon/Vercel/Supabase) requires TLS. rejectUnauthorized
+    // is relaxed because serverless runtimes don't ship the provider CA chain.
+    ssl: isLocal ? false : { rejectUnauthorized: false },
+  });
+  pool.on('error', (e) => console.error('[pg pool]', e));
+  return pool;
+}
+
+// Tagged-template runner: `` sql`SELECT ... ${v}` `` -> parameterized query.
+// Literal text between interpolations (e.g. `::jsonb`) is preserved verbatim.
+async function sql(strings, ...values) {
+  let text = '';
+  strings.forEach((s, i) => {
+    text += s;
+    if (i < values.length) text += '$' + (i + 1);
+  });
+  return getPool().query(text, values);
+}
 
 let schemaReady = false;
 
@@ -37,6 +102,12 @@ export async function seedIfEmpty() {
   for (const p of SEED_PRODUCTS) {
     await insertProduct({ ...p }, order++);
   }
+}
+
+// Lightweight connectivity check for the /api/health endpoint.
+export async function ping() {
+  const { rows } = await sql`SELECT 1 AS ping`;
+  return rows?.[0]?.ping === 1;
 }
 
 // Maps a DB row to the shape the storefront + admin UI consume.
@@ -106,11 +177,15 @@ async function nextSortOrder() {
   return rows[0].n;
 }
 
-// Turns raw driver errors into an actionable message when the DB is missing.
+// Turns raw driver errors into an actionable message.
 export function dbErrorMessage(err) {
   const msg = String(err?.message || err || '');
-  if (/missing_connection_string|POSTGRES_URL|connect/i.test(msg)) {
-    return 'Baza danych nie jest skonfigurowana. Podłącz Vercel Postgres do projektu (Storage → Postgres).';
+  if (err?.code === 'NO_DB_CONNECTION' || /missing_connection_string/i.test(msg)) {
+    const found = detectedDbVars();
+    const hint = found.length
+      ? `Wykryto zmienne: ${found.join(', ')}, ale żadna nie zawiera prawidłowego connection stringa. Jeśli właśnie podłączono bazę — wykonaj Redeploy.`
+      : 'Nie wykryto żadnej zmiennej połączenia. Podłącz bazę (Storage → Postgres) i wykonaj Redeploy projektu.';
+    return `Baza danych nie jest skonfigurowana. ${hint}`;
   }
-  return 'Błąd serwera bazy danych.';
+  return `Błąd bazy danych: ${msg || 'nieznany'}`;
 }
