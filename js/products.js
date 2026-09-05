@@ -84,6 +84,22 @@ function renderFeatured() {
   renderProducts('#featured-products', PRODUCTS.slice(0, 8));
 }
 
+// Polish plural for "produkt": 1 produkt, 2–4 produkty, else produktów.
+function plProdukty(n) {
+  if (n === 1) return 'produkt';
+  const d = n % 10, h = n % 100;
+  return (d >= 2 && d <= 4 && !(h >= 12 && h <= 14)) ? 'produkty' : 'produktów';
+}
+
+// Fills the homepage category tiles with the real number of products in
+// each category (no more fake counts).
+function fillCategoryCounts() {
+  document.querySelectorAll('.cat-count[data-cat]').forEach((el) => {
+    const n = PRODUCTS.filter((p) => p.cat === el.dataset.cat).length;
+    el.textContent = `${n} ${plProdukty(n)}`;
+  });
+}
+
 function renderRelated() {
   const rel = document.querySelector('#related-products');
   if (!rel) return;
@@ -109,6 +125,16 @@ function initShop() {
     priceMax: 2000,
     sort: 'default',
   };
+
+  // Preselect a category when arriving from a homepage tile (sklep.html?cat=…).
+  const wantedCat = new URLSearchParams(location.search).get('cat');
+  if (wantedCat && document.querySelector(`.chip[data-cat="${wantedCat}"]`)) {
+    state.cat = wantedCat;
+    document.querySelectorAll('.chip[data-cat]').forEach(c =>
+      c.classList.toggle('active', c.dataset.cat === wantedCat));
+    const radio = document.querySelector(`input[name="cat"][value="${wantedCat}"]`);
+    if (radio) radio.checked = true;
+  }
 
   function currentList() {
     let list = PRODUCTS.filter(p =>
@@ -258,5 +284,6 @@ function initShop() {
   PRODUCTS = await loadProducts();
   renderFeatured();
   renderRelated();
+  fillCategoryCounts();
   initShop();
 })();
