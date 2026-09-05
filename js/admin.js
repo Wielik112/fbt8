@@ -22,7 +22,7 @@ let galleryImages = [];   // data URLs of extra gallery photos
 
 // Reads an image file, downscales it and returns a compact JPEG data URL.
 // Downscaling keeps request payloads well under the serverless body limit.
-function fileToScaledDataURL(file, maxDim = 1400, quality = 0.82) {
+function fileToScaledDataURL(file, maxDim = 1600, quality = 0.85) {
   return new Promise((resolve, reject) => {
     if (!file || !file.type?.startsWith('image/')) { reject(new Error('Wybierz plik graficzny.')); return; }
     const reader = new FileReader();

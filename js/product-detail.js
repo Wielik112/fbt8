@@ -64,12 +64,12 @@
     const mainLogo = $('#pd-main-logo');
     mainLogo.alt = p.name;
     if (gallery.length) {
-      mainEl.style.background = '#0f0f12';
+      mainEl.classList.add('has-photo');
       mainLogo.src = gallery[0];
       mainLogo.style.width = '100%';
       mainLogo.style.height = '100%';
       mainLogo.style.objectFit = 'contain';
-      mainLogo.style.padding = '24px';
+      mainLogo.style.padding = '30px';
       mainLogo.style.opacity = '1';
     } else {
       mainEl.style.background = p.gradient || DEFAULT_GRADIENT;
@@ -110,7 +110,7 @@
     if (gallery.length) {
       // Real product photos — click a thumb to swap the main image.
       thumbs.innerHTML = gallery.map((src, i) =>
-        `<div class="pd-thumb${i === 0 ? ' active' : ''}" data-img="${src}"><img src="${src}" alt=""></div>`).join('');
+        `<div class="pd-thumb has-photo${i === 0 ? ' active' : ''}" data-img="${src}"><img src="${src}" alt=""></div>`).join('');
       thumbs.querySelectorAll('.pd-thumb').forEach((t) => t.addEventListener('click', () => {
         thumbs.querySelectorAll('.pd-thumb').forEach((x) => x.classList.remove('active'));
         t.classList.add('active');
