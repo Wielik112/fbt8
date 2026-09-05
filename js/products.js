@@ -105,7 +105,7 @@ function initShop() {
     sizes: new Set(),       // empty = all
     colors: new Set(),      // empty = all
     priceMin: 0,
-    priceMax: 600,
+    priceMax: 2000,
     sort: 'default',
   };
 
@@ -194,7 +194,7 @@ function initShop() {
   const minNum   = document.querySelector('#price-min-num');
   const maxNum   = document.querySelector('#price-max-num');
   const rangeBar = document.querySelector('#price-range');
-  const SLIDER_MAX = 600;
+  const SLIDER_MAX = 2000;
 
   function applyPrice(lo, hi, source) {
     lo = Math.max(0, Math.min(SLIDER_MAX, lo || 0));

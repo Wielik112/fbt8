@@ -68,7 +68,8 @@
       mainLogo.src = gallery[0];
       mainLogo.style.width = '100%';
       mainLogo.style.height = '100%';
-      mainLogo.style.objectFit = 'cover';
+      mainLogo.style.objectFit = 'contain';
+      mainLogo.style.padding = '24px';
       mainLogo.style.opacity = '1';
     } else {
       mainEl.style.background = p.gradient || DEFAULT_GRADIENT;
