@@ -123,7 +123,7 @@ function renderCart() {
 
   wrap.innerHTML = cart.map((item, i) => `
     <div class="cart-item">
-      <div class="cart-item-img" style="background:${gradients[i % 3]}"></div>
+      <div class="cart-item-img"${item.image ? '' : ` style="background:${gradients[i % 3]}"`}>${item.image ? `<img src="${item.image}" alt="">` : ''}</div>
       <div>
         <div class="cart-item-name">${item.name}</div>
         <div class="cart-item-meta">${item.size ? 'Rozmiar: ' + item.size + ' · ' : ''}Cena jedn.: ${item.price} zł</div>
