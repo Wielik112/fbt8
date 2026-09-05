@@ -11,6 +11,23 @@ function toStringArray(v) {
   return [];
 }
 
+// Accepts an image reference: a data: URL (uploaded photo) or an http(s) URL.
+// Anything else is dropped. Length is capped to keep DB rows sane.
+const MAX_IMG_LEN = 8_000_000; // ~8 MB of base64 per image
+function cleanImage(v) {
+  const s = String(v ?? '').trim();
+  if (!s) return '';
+  if (s.length > MAX_IMG_LEN) return '';
+  if (/^data:image\/[a-z0-9.+-]+;base64,/i.test(s)) return s;
+  if (/^https?:\/\//i.test(s)) return s;
+  return '';
+}
+
+function toImageArray(v) {
+  const arr = Array.isArray(v) ? v : [];
+  return arr.map(cleanImage).filter(Boolean).slice(0, 8); // max 8 gallery photos
+}
+
 function toInt(v) {
   const n = Math.round(Number(v));
   return Number.isFinite(n) ? n : NaN;
@@ -40,19 +57,18 @@ export function normalizeProduct(body) {
   let old = body.old === '' || body.old == null ? null : toInt(body.old);
   if (old != null && (!Number.isFinite(old) || old < 0)) old = null;
 
-  let stars = toInt(body.stars);
-  if (!Number.isFinite(stars)) stars = 5;
-  stars = Math.min(5, Math.max(1, stars));
-
   const tag      = String(body.tag ?? '').trim() || null;
   const gradient = String(body.gradient ?? '').trim() || DEFAULT_GRADIENT;
   const description = String(body.description ?? '').trim().slice(0, 2000) || null;
+  const image  = cleanImage(body.image);
+  const images = toImageArray(body.images);
 
   const value = {
     id: String(body.id ?? '').trim() || null,
-    name, brand, cat, condition, price, old, description, tag, tagType, stars,
+    name, brand, cat, condition, price, old, description, tag, tagType,
     sizes:  toStringArray(body.sizes),
     colors: toStringArray(body.colors),
+    image, images,
     gradient,
   };
   return { value };

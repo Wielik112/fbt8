@@ -15,6 +15,38 @@ const views = { login: $('login-view'), panel: $('panel-view') };
 
 let products = [];
 
+/* ---------- Product photos (in-modal state) ---------- */
+const MAX_GALLERY = 8;
+let mainImage = '';       // data URL of the main photo (or '')
+let galleryImages = [];   // data URLs of extra gallery photos
+
+// Reads an image file, downscales it and returns a compact JPEG data URL.
+// Downscaling keeps request payloads well under the serverless body limit.
+function fileToScaledDataURL(file, maxDim = 1400, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type?.startsWith('image/')) { reject(new Error('Wybierz plik graficzny.')); return; }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Nie udało się wczytać pliku.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Nie udało się otworzyć obrazu.'));
+      img.onload = () => {
+        let { width: w, height: h } = img;
+        if (w > maxDim || h > maxDim) {
+          const s = Math.min(maxDim / w, maxDim / h);
+          w = Math.round(w * s); h = Math.round(h * s);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 /* ---------- Fetch helper ---------- */
 function authHeaders(extra = {}) {
   const h = { ...extra };
@@ -111,9 +143,12 @@ function renderRows() {
   tbody.innerHTML = products.map((p) => {
     const condClass = p.condition === 'Nowy' ? 'new' : 'used';
     const old = p.old ? `<span class="old">${esc(p.old)} zł</span>` : '';
+    const media = p.image
+      ? `<img class="thumb-img" src="${esc(p.image)}" alt="">`
+      : `<div class="swatch" style="background:${esc(p.gradient || DEFAULT_GRADIENT)}"></div>`;
     return `
     <tr data-id="${esc(p.id)}">
-      <td><div class="swatch" style="background:${esc(p.gradient || DEFAULT_GRADIENT)}"></div></td>
+      <td>${media}</td>
       <td>
         <div class="pname">${esc(p.name)}</div>
         <div class="pmeta">${esc(p.brand)} · ${esc(p.id)}</div>
@@ -190,14 +225,18 @@ function openModal(product) {
   $('f-brand').value     = product?.brand || '';
   $('f-price').value     = product?.price ?? '';
   $('f-old').value       = product?.old ?? '';
-  $('f-stars').value     = product?.stars ?? 5;
   $('f-description').value = product?.description || '';
   $('f-tag').value       = product?.tag || '';
   $('f-tagType').value   = product?.tagType || 'sale';
   $('f-sizes').value     = (product?.sizes || []).join(', ');
   $('f-colors').value    = (product?.colors || []).join(', ');
-  $('f-gradient').value  = product?.gradient || DEFAULT_GRADIENT;
-  updateGradPreview();
+
+  mainImage = product?.image || '';
+  galleryImages = Array.isArray(product?.images) ? [...product.images] : [];
+  $('f-image-input').value = '';
+  $('f-gallery-input').value = '';
+  renderMainPreview();
+  renderGalleryPreview();
 
   modal.classList.remove('hidden');
   $('f-name').focus();
@@ -205,10 +244,52 @@ function openModal(product) {
 
 function closeModal() { modal.classList.add('hidden'); }
 
-function updateGradPreview() {
-  $('grad-preview').style.background = $('f-gradient').value.trim() || DEFAULT_GRADIENT;
+/* ---------- Photo previews ---------- */
+function renderMainPreview() {
+  const box = $('main-preview');
+  box.innerHTML = mainImage
+    ? `<div class="img-thumb"><img src="${mainImage}" alt="">
+         <button type="button" class="rm" data-rm-main aria-label="Usuń">×</button>
+         <span class="main-badge">Główne</span></div>`
+    : '';
 }
-$('f-gradient').addEventListener('input', updateGradPreview);
+
+function renderGalleryPreview() {
+  const box = $('gallery-preview');
+  box.innerHTML = galleryImages.map((src, i) =>
+    `<div class="img-thumb"><img src="${src}" alt="">
+       <button type="button" class="rm" data-rm-gallery="${i}" aria-label="Usuń">×</button></div>`).join('');
+}
+
+$('main-preview').addEventListener('click', (e) => {
+  if (e.target.closest('[data-rm-main]')) { mainImage = ''; renderMainPreview(); }
+});
+$('gallery-preview').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-rm-gallery]');
+  if (btn) { galleryImages.splice(Number(btn.dataset.rmGallery), 1); renderGalleryPreview(); }
+});
+
+$('f-image-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try { mainImage = await fileToScaledDataURL(file); renderMainPreview(); notice($('form-error'), '', 'err'); }
+  catch (err) { notice($('form-error'), err.message, 'err'); }
+});
+
+$('f-gallery-input').addEventListener('change', async (e) => {
+  const files = [...e.target.files];
+  e.target.value = '';
+  for (const file of files) {
+    if (galleryImages.length >= MAX_GALLERY) {
+      notice($('form-error'), `Galeria może zawierać maksymalnie ${MAX_GALLERY} zdjęć.`, 'err');
+      break;
+    }
+    try { galleryImages.push(await fileToScaledDataURL(file)); }
+    catch (err) { notice($('form-error'), err.message, 'err'); }
+  }
+  renderGalleryPreview();
+});
 
 $('add-btn').addEventListener('click', () => openModal(null));
 $('modal-close').addEventListener('click', closeModal);
@@ -232,12 +313,12 @@ $('product-form').addEventListener('submit', async (e) => {
     price: $('f-price').value,
     old: $('f-old').value,
     description: $('f-description').value.trim(),
-    stars: $('f-stars').value,
     tag: $('f-tag').value.trim(),
     tagType: $('f-tagType').value,
     sizes: splitList($('f-sizes').value),
     colors: splitList($('f-colors').value),
-    gradient: $('f-gradient').value.trim(),
+    image: mainImage,
+    images: galleryImages,
   };
 
   const btn = $('save-btn');

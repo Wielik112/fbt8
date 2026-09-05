@@ -75,6 +75,11 @@ session cookie (valid 12h), signed with HMAC-SHA256.
   others → the dynamic template.
 - Products have an optional **description** field (editable in the admin panel);
   when empty, the page shows a generated fallback description.
+- The admin panel lets you upload a **main product photo** and a **gallery** of
+  extra photos (downscaled client-side and stored on the product). When no photo
+  is uploaded the card/detail page falls back to a neutral tile.
+- **Brand** is a free-text field with quick-pick suggestions (Nike, Adidas, Puma,
+  Reebok, New Balance, Under Armour) — you can also type any other brand.
 
 ## Notes / possible next steps
 
