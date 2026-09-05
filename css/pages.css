@@ -115,10 +115,11 @@
   background: linear-gradient(135deg, var(--surface-2), var(--black-2));
   display: grid; place-items: center;
 }
+/* Product photos are shown in full inside the dark square (contain), never
+   cropped, with a little breathing room. */
 .product-media img { width: 100%; height: 100%; object-fit: contain; padding: 18px; transition: transform 0.6s var(--ease); }
-/* Real product photos sit on a clean light panel so the whole product is
-   always visible inside the square and stands out sharply. */
-.product-media.has-photo { background: #f2f2f4; }
+/* Whole card is clickable — opens the product page. */
+.card-link { position: absolute; inset: 0; z-index: 2; }
 .product-card:hover .product-media img { transform: scale(1.06); }
 .product-badges { position: absolute; top: 14px; left: 14px; z-index: 3; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .product-fav {
@@ -128,13 +129,6 @@
 }
 .product-fav:hover { color: var(--red); }
 .product-fav svg { width: 18px; height: 18px; }
-.product-quick {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
-  background: var(--red); color: #fff; padding: 14px;
-  font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase;
-  text-align: center; transform: translateY(100%); transition: transform 0.35s var(--ease);
-}
-.product-card:hover .product-quick { transform: translateY(0); }
 .product-info { padding: 20px; }
 .product-cat { font-size: 12px; color: var(--red); font-family: var(--display); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
 .product-name { font-family: var(--display); font-weight: 700; font-size: 19px; font-style: italic; text-transform: uppercase; margin-bottom: 12px; line-height: 1.1; }
@@ -220,15 +214,11 @@
   border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; margin-bottom: 16px;
 }
 .pd-main-img img { width: 100%; height: 100%; object-fit: cover; }
-/* When a real photo is shown, keep it fully inside the square on a light
-   panel instead of cropping it (the image sizing is set inline in JS,
-   overriding the placeholder logo's inline styles). */
-.pd-main-img.has-photo { background: #f2f2f4; }
 .pd-thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .pd-thumb { aspect-ratio: 1; border: 1px solid var(--line); background: var(--surface-2); cursor: pointer; overflow: hidden; transition: border-color 0.25s; display:grid; place-items:center; }
 .pd-thumb.active, .pd-thumb:hover { border-color: var(--red); }
 .pd-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.pd-thumb.has-photo { background: #f2f2f4; }
+/* Photo thumbnails show the whole image inside the dark square. */
 .pd-thumb.has-photo img { object-fit: contain; padding: 6px; }
 
 .pd-info .tag { margin-bottom: 18px; }
