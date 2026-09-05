@@ -36,9 +36,16 @@ async function loadProducts() {
 
 function starStr(n) { return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
 
+// Original seeded products (ids p01..p12) have hand-crafted static pages;
+// everything else uses the dynamic template produkt.html?id=<id>.
+function productHref(p) {
+  return /^p\d{2}$/.test(p.id) ? `produkt-${p.id}.html` : `produkt.html?id=${encodeURIComponent(p.id)}`;
+}
+
 function productCard(p) {
   const condClass = p.condition === 'Nowy' ? 'cond-new' : 'cond-used';
   const oldPrice = p.old ? ` <span class="old">${p.old} zł</span>` : '';
+  const href = productHref(p);
   return `
   <article class="product-card reveal" data-product="${p.id}" data-name="${p.name}" data-price="${p.price}">
     <div class="product-media" style="background:${p.gradient}">
@@ -46,11 +53,11 @@ function productCard(p) {
         ${p.tag ? `<span class="tag ${p.tagType === 'sale' ? '' : 'grey'}">${p.tag}</span>` : ''}
         <span class="tag ${condClass}">${p.condition}</span>
       </div>
-      <a href="produkt-${p.id}.html" class="product-quick">Zobacz produkt</a>
+      <a href="${href}" class="product-quick">Zobacz produkt</a>
     </div>
     <div class="product-info">
       <div class="product-cat">${p.brand} · ${p.cat}</div>
-      <h3 class="product-name"><a href="produkt-${p.id}.html">${p.name}</a></h3>
+      <h3 class="product-name"><a href="${href}">${p.name}</a></h3>
       <div class="product-foot">
         <div class="product-price">${p.price} zł${oldPrice}</div>
       </div>
