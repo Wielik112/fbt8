@@ -34,8 +34,6 @@ async function loadProducts() {
   return FALLBACK_PRODUCTS;
 }
 
-function starStr(n) { return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
-
 // Original seeded products (ids p01..p12) have hand-crafted static pages;
 // everything else uses the dynamic template produkt.html?id=<id>.
 function productHref(p) {
@@ -46,9 +44,12 @@ function productCard(p) {
   const condClass = p.condition === 'Nowy' ? 'cond-new' : 'cond-used';
   const oldPrice = p.old ? ` <span class="old">${p.old} zł</span>` : '';
   const href = productHref(p);
+  const bg = p.gradient ? ` style="background:${p.gradient}"` : '';
+  const media = p.image ? `<img src="${p.image}" alt="${p.name}" loading="lazy">` : '';
   return `
   <article class="product-card reveal" data-product="${p.id}" data-name="${p.name}" data-price="${p.price}">
-    <div class="product-media" style="background:${p.gradient}">
+    <div class="product-media"${bg}>
+      ${media}
       <div class="product-badges">
         ${p.tag ? `<span class="tag ${p.tagType === 'sale' ? '' : 'grey'}">${p.tag}</span>` : ''}
         <span class="tag ${condClass}">${p.condition}</span>
@@ -119,7 +120,6 @@ function initShop() {
     );
     if (state.sort === 'low')  list = [...list].sort((a, b) => a.price - b.price);
     if (state.sort === 'high') list = [...list].sort((a, b) => b.price - a.price);
-    if (state.sort === 'rating') list = [...list].sort((a, b) => b.stars - a.stars);
     return list;
   }
 

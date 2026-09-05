@@ -118,7 +118,26 @@ h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:.5px;text-transform:
 .modal-body{padding:22px 24px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .modal-foot{display:flex;justify-content:flex-end;gap:12px;padding:18px 24px;border-top:1px solid var(--line)}
-.preview-media{height:90px;border-radius:10px;border:1px solid var(--line-bright)}
+
+/* ---- Image upload ---- */
+input[type=file]{width:100%;padding:10px 12px;background:var(--black-2);border:1px dashed var(--line-bright);
+  border-radius:10px;color:var(--grey-1);font-size:13px;cursor:pointer}
+input[type=file]:hover{border-color:var(--grey-2)}
+input[type=file]::file-selector-button{margin-right:12px;padding:7px 13px;border-radius:8px;
+  border:1px solid var(--line-bright);background:var(--surface-2);color:#fff;cursor:pointer;
+  font-family:inherit;font-size:13px;transition:.15s}
+input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
+.img-preview-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.img-preview-grid:empty{margin-top:0}
+.img-thumb{position:relative;width:78px;height:78px;border-radius:10px;overflow:hidden;
+  border:1px solid var(--line-bright);background:var(--black-2)}
+.img-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.img-thumb .rm{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:6px;
+  background:rgba(8,8,10,.78);color:#fff;font-size:15px;line-height:1;display:grid;place-items:center}
+.img-thumb .rm:hover{background:var(--red)}
+.img-thumb .main-badge{position:absolute;left:0;right:0;bottom:0;background:var(--red);color:#fff;
+  font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;text-align:center;padding:2px 0}
+.thumb-img{width:40px;height:40px;border-radius:9px;border:1px solid var(--line-bright);object-fit:cover;display:block}
 
 @media(max-width:720px){
   .grid2{grid-template-columns:1fr}
@@ -209,7 +228,16 @@ h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:.5px;text-transform:
       <div class="grid2">
         <div class="field">
           <label for="f-brand">Marka</label>
-          <input type="text" id="f-brand" required>
+          <input type="text" id="f-brand" list="brand-list" required placeholder="Wybierz lub wpisz markę">
+          <datalist id="brand-list">
+            <option value="Nike"></option>
+            <option value="Adidas"></option>
+            <option value="Puma"></option>
+            <option value="Reebok"></option>
+            <option value="New Balance"></option>
+            <option value="Under Armour"></option>
+          </datalist>
+          <div class="hint">Wybierz z listy lub wpisz własną markę.</div>
         </div>
         <div class="field">
           <label for="f-cat">Kategoria</label>
@@ -226,15 +254,9 @@ h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:.5px;text-transform:
           <input type="number" id="f-old" min="0" step="1">
         </div>
       </div>
-      <div class="grid2">
-        <div class="field">
-          <label for="f-condition">Stan</label>
-          <select id="f-condition"></select>
-        </div>
-        <div class="field">
-          <label for="f-stars">Ocena (1–5)</label>
-          <input type="number" id="f-stars" min="1" max="5" step="1" value="5">
-        </div>
+      <div class="field">
+        <label for="f-condition">Stan</label>
+        <select id="f-condition"></select>
       </div>
       <div class="grid2">
         <div class="field">
@@ -251,8 +273,9 @@ h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:.5px;text-transform:
         </div>
       </div>
       <div class="field">
-        <label for="f-description">Opis (opcjonalnie)</label>
-        <textarea id="f-description" rows="3" placeholder="Krótki opis produktu widoczny na stronie produktu."></textarea>
+        <label for="f-description">Opis produktu</label>
+        <textarea id="f-description" rows="5" placeholder="Opisz produkt — materiał, krój, przeznaczenie, stan itp. Tekst pojawi się na stronie produktu."></textarea>
+        <div class="hint">Opcjonalny, ale zalecany — jeśli pusty, na stronie produktu pojawi się opis automatyczny.</div>
       </div>
       <div class="grid2">
         <div class="field">
@@ -265,10 +288,16 @@ h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:.5px;text-transform:
         </div>
       </div>
       <div class="field">
-        <label for="f-gradient">Tło kafelka (CSS gradient)</label>
-        <input type="text" id="f-gradient" placeholder="linear-gradient(135deg,#2a0409,#1c1c22)">
-        <div class="hint">Podgląd tła produktu w sklepie:</div>
-        <div id="grad-preview" class="preview-media" style="margin-top:8px"></div>
+        <label for="f-image-input">Zdjęcie główne</label>
+        <input type="file" id="f-image-input" accept="image/*">
+        <div class="hint">Główne zdjęcie produktu — widoczne na kafelku w sklepie i jako pierwsze w galerii.</div>
+        <div id="main-preview" class="img-preview-grid"></div>
+      </div>
+      <div class="field">
+        <label for="f-gallery-input">Galeria (dodatkowe zdjęcia)</label>
+        <input type="file" id="f-gallery-input" accept="image/*" multiple>
+        <div class="hint">Możesz dodać maksymalnie 8 dodatkowych zdjęć. Kliknij „×”, aby usunąć zdjęcie.</div>
+        <div id="gallery-preview" class="img-preview-grid"></div>
       </div>
     </div>
     <div class="modal-foot">
