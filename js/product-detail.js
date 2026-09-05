@@ -102,6 +102,7 @@
     addBtn.dataset.add = p.id;
     addBtn.dataset.name = p.name;
     addBtn.dataset.price = p.price;
+    addBtn.dataset.image = gallery.length ? gallery[0] : '';
 
     // Gallery thumbnails
     const thumbs = $('#pd-thumbs');
