@@ -49,17 +49,17 @@ function productCard(p) {
   const media = hasImg ? `<img src="${p.image}" alt="${p.name}" loading="lazy">` : '';
   return `
   <article class="product-card reveal" data-product="${p.id}" data-name="${p.name}" data-price="${p.price}">
-    <div class="product-media${hasImg ? ' has-photo' : ''}"${bg}>
+    <a class="card-link" href="${href}" aria-label="${p.name}"></a>
+    <div class="product-media"${bg}>
       ${media}
       <div class="product-badges">
         ${p.tag ? `<span class="tag ${p.tagType === 'sale' ? '' : 'grey'}">${p.tag}</span>` : ''}
         <span class="tag ${condClass}">${p.condition}</span>
       </div>
-      <a href="${href}" class="product-quick">Zobacz produkt</a>
     </div>
     <div class="product-info">
       <div class="product-cat">${p.brand} · ${p.cat}</div>
-      <h3 class="product-name"><a href="${href}">${p.name}</a></h3>
+      <h3 class="product-name">${p.name}</h3>
       <div class="product-foot">
         <div class="product-price">${p.price} zł${oldPrice}</div>
       </div>
