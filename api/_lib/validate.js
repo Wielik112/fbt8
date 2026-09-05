@@ -46,10 +46,11 @@ export function normalizeProduct(body) {
 
   const tag      = String(body.tag ?? '').trim() || null;
   const gradient = String(body.gradient ?? '').trim() || DEFAULT_GRADIENT;
+  const description = String(body.description ?? '').trim().slice(0, 2000) || null;
 
   const value = {
     id: String(body.id ?? '').trim() || null,
-    name, brand, cat, condition, price, old, tag, tagType, stars,
+    name, brand, cat, condition, price, old, description, tag, tagType, stars,
     sizes:  toStringArray(body.sizes),
     colors: toStringArray(body.colors),
     gradient,

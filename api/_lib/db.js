@@ -81,6 +81,7 @@ export async function ensureSchema() {
       condition   TEXT NOT NULL DEFAULT 'Nowy',
       price       INTEGER NOT NULL,
       old_price   INTEGER,
+      description TEXT,
       tag         TEXT,
       tag_type    TEXT,
       stars       INTEGER NOT NULL DEFAULT 5,
@@ -91,6 +92,8 @@ export async function ensureSchema() {
       created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
     )`;
+  // Migration for databases created before `description` existed.
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS description TEXT`;
   schemaReady = true;
 }
 
@@ -120,6 +123,7 @@ export function mapRow(r) {
     condition: r.condition,
     price: r.price,
     old: r.old_price,
+    description: r.description || '',
     tag: r.tag,
     tagType: r.tag_type,
     stars: r.stars,
@@ -143,9 +147,9 @@ export async function insertProduct(p, sortOrder = null) {
   const order = sortOrder == null ? await nextSortOrder() : sortOrder;
   const { rows } = await sql`
     INSERT INTO products
-      (id, name, cat, brand, condition, price, old_price, tag, tag_type, stars, sizes, colors, gradient, sort_order)
+      (id, name, cat, brand, condition, price, old_price, description, tag, tag_type, stars, sizes, colors, gradient, sort_order)
     VALUES
-      (${p.id}, ${p.name}, ${p.cat}, ${p.brand}, ${p.condition}, ${p.price}, ${p.old},
+      (${p.id}, ${p.name}, ${p.cat}, ${p.brand}, ${p.condition}, ${p.price}, ${p.old}, ${p.description || null},
        ${p.tag}, ${p.tagType}, ${p.stars},
        ${JSON.stringify(p.sizes || [])}::jsonb, ${JSON.stringify(p.colors || [])}::jsonb,
        ${p.gradient}, ${order})
@@ -157,8 +161,8 @@ export async function updateProduct(id, p) {
   const { rows } = await sql`
     UPDATE products SET
       name = ${p.name}, cat = ${p.cat}, brand = ${p.brand}, condition = ${p.condition},
-      price = ${p.price}, old_price = ${p.old}, tag = ${p.tag}, tag_type = ${p.tagType},
-      stars = ${p.stars},
+      price = ${p.price}, old_price = ${p.old}, description = ${p.description || null},
+      tag = ${p.tag}, tag_type = ${p.tagType}, stars = ${p.stars},
       sizes = ${JSON.stringify(p.sizes || [])}::jsonb,
       colors = ${JSON.stringify(p.colors || [])}::jsonb,
       gradient = ${p.gradient}, updated_at = now()

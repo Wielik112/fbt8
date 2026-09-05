@@ -63,10 +63,22 @@ uses its fallback catalog.
 Admin requests are authorized by an HttpOnly, `Secure`, `SameSite=Strict`
 session cookie (valid 12h), signed with HMAC-SHA256.
 
+## Product detail pages
+
+- The original 12 products keep their hand-crafted static pages
+  (`produkt-p01.html` … `produkt-p12.html`).
+- Every product added through the admin panel gets a working detail page via the
+  dynamic template **`produkt.html?id=<id>`** (`js/product-detail.js`), which
+  loads the product from `GET /api/products/:id` and renders gallery, price,
+  sizes, colors, description, add-to-cart, and related products.
+- Product cards route automatically: ids matching `pNN` → static page, all
+  others → the dynamic template.
+- Products have an optional **description** field (editable in the admin panel);
+  when empty, the page shows a generated fallback description.
+
 ## Notes / possible next steps
 
-- Individual `produkt-pXX.html` detail pages are still static. The shop grid,
-  homepage, and "related products" are all DB-driven. Making detail pages fully
-  dynamic (one template reading `?id=`) is a natural follow-up.
 - Scope today is **products**. Orders and stored contact-form submissions were
   intentionally left out.
+- The 12 original static pages could be migrated onto `produkt.html?id=` too, so
+  admin edits to those products reflect on their detail pages.
