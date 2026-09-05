@@ -44,11 +44,12 @@ function productCard(p) {
   const condClass = p.condition === 'Nowy' ? 'cond-new' : 'cond-used';
   const oldPrice = p.old ? ` <span class="old">${p.old} zł</span>` : '';
   const href = productHref(p);
-  const bg = p.gradient ? ` style="background:${p.gradient}"` : '';
-  const media = p.image ? `<img src="${p.image}" alt="${p.name}" loading="lazy">` : '';
+  const hasImg = !!p.image;
+  const bg = (!hasImg && p.gradient) ? ` style="background:${p.gradient}"` : '';
+  const media = hasImg ? `<img src="${p.image}" alt="${p.name}" loading="lazy">` : '';
   return `
   <article class="product-card reveal" data-product="${p.id}" data-name="${p.name}" data-price="${p.price}">
-    <div class="product-media"${bg}>
+    <div class="product-media${hasImg ? ' has-photo' : ''}"${bg}>
       ${media}
       <div class="product-badges">
         ${p.tag ? `<span class="tag ${p.tagType === 'sale' ? '' : 'grey'}">${p.tag}</span>` : ''}
