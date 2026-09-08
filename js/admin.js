@@ -184,7 +184,9 @@ async function enterPanel() {
   document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === 'products'));
   $('tab-products').hidden = false;
   $('tab-orders').hidden = true;
+  $('tab-reviews').hidden = true;
   ordersState.loaded = false;
+  reviewsLoaded = false;
   await loadProducts();
 }
 
@@ -222,7 +224,7 @@ function starStr(n) {
 function fmtDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
-  return isNaN(d) ? '' : d.toLocaleDateString('pl-PL', { year: 'numeric', month: 'short', day: 'numeric' });
+  return isNaN(d) ? '' : d.toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' });
 }
 function reviewsNotice(msg, kind) {
   const box = $('reviews-notice');
@@ -282,17 +284,6 @@ async function removeReview(review) {
     reviewsNotice(err.message, 'err');
   }
 }
-
-/* ---------- Tabs ---------- */
-document.querySelectorAll('.tab').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const tab = btn.dataset.tab;
-    document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === btn));
-    $('products-panel').classList.toggle('hidden', tab !== 'products');
-    $('reviews-panel').classList.toggle('hidden', tab !== 'reviews');
-    if (tab === 'reviews' && !reviewsLoaded) { reviewsLoaded = true; loadReviews(); }
-  });
-});
 
 /* ---------- Modal (add / edit) ---------- */
 const modal = $('modal');
@@ -451,20 +442,21 @@ const PAYMENT_LABELS = {
   failed: 'Nieudane', refunded: 'Zwrócone',
 };
 const fmtPLN = (gr) => (Number(gr || 0) / 100).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
-const fmtDate = (s) => { try { return new Date(s).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' }); } catch { return s; } };
 
 const ordersState = { status: '', offset: 0, limit: 25, total: 0, loaded: false };
 let ordersCache = [];
 let currentOrder = null;
 
-// Tab switching
+// Tab switching (Produkty / Zamówienia / Opinie)
 document.querySelectorAll('.tab').forEach((tab) => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
     const name = tab.dataset.tab;
     $('tab-products').hidden = name !== 'products';
     $('tab-orders').hidden = name !== 'orders';
+    $('tab-reviews').hidden = name !== 'reviews';
     if (name === 'orders' && !ordersState.loaded) loadOrders();
+    if (name === 'reviews' && !reviewsLoaded) { reviewsLoaded = true; loadReviews(); }
   });
 });
 
