@@ -113,6 +113,45 @@ h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:.5px;text-transform:
 .empty{padding:50px 20px;text-align:center;color:var(--grey-2)}
 .loading{padding:50px 20px;text-align:center;color:var(--grey-2)}
 
+/* ---- Tabs ---- */
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.tab{padding:12px 20px;font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.5px;
+  text-transform:uppercase;color:var(--grey-2);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab:hover{color:var(--grey-1)}
+.tab.active{color:#fff;border-bottom-color:var(--red)}
+
+/* ---- Order stats + toolbar ---- */
+.stat-row{display:flex;gap:22px;flex-wrap:wrap}
+.stat-box{text-align:right}
+.stat-box .n{font-family:var(--display);font-size:26px;font-weight:800;line-height:1}
+.stat-box .l{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--grey-2)}
+.orders-toolbar{display:flex;gap:12px;align-items:center;margin-bottom:16px}
+.orders-toolbar select{padding:10px 14px;background:var(--black-2);border:1px solid var(--line-bright);
+  border-radius:10px;color:#fff;font-size:14px;font-family:inherit}
+.orders-pager{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:18px;color:var(--grey-2);font-size:13px}
+.order-id{font-weight:600;font-family:var(--display);letter-spacing:.5px}
+.ostatus{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.4px;
+  border:1px solid var(--line-bright);color:var(--grey-1);white-space:nowrap}
+.ostatus.paid{color:#7fe0af;border-color:#1a6b45}
+.ostatus.pending{color:#e6c07f;border-color:#6b551a}
+.ostatus.shipped,.ostatus.fulfilled{color:#8fb8ff;border-color:#274a86}
+.ostatus.completed{color:#c9c9d2;border-color:#4a4a55}
+.ostatus.cancelled,.ostatus.failed{color:#ff9ba2;border-color:var(--red-deep)}
+.ostatus.processing{color:#e6c07f;border-color:#6b551a}
+.clickable{cursor:pointer}
+
+/* ---- Order detail ---- */
+.od-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:640px){.od-grid{grid-template-columns:1fr}}
+.od-block h3{font-family:var(--display);font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--grey-2);margin:0 0 8px}
+.od-block .kv{font-size:14px;line-height:1.7}
+.od-block .kv b{color:var(--grey-2);font-weight:500}
+.od-items{margin:6px 0 0}
+.od-item{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid var(--line)}
+.od-item:last-child{border-bottom:none}
+.od-tot{display:flex;justify-content:space-between;font-size:14px;padding:5px 0}
+.od-tot.grand{font-family:var(--display);font-size:20px;text-transform:uppercase;padding-top:10px;border-top:1px solid var(--line);margin-top:6px}
+
 /* ---- Modal ---- */
 .modal-back{position:fixed;inset:0;z-index:40;background:rgba(4,4,6,.7);backdrop-filter:blur(4px);
   display:grid;place-items:start center;padding:40px 16px;overflow:auto}
@@ -190,11 +229,11 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
 <main id="panel-view" class="wrap hidden">
   <div class="tabs">
     <button class="tab active" data-tab="products">Produkty</button>
-    <button class="tab" data-tab="reviews">Opinie</button>
+    <button class="tab" data-tab="orders">Zamówienia</button>
   </div>
 
-  <!-- PRODUCTS -->
-  <section id="products-panel">
+  <!-- PRODUCTS TAB -->
+  <section id="tab-products">
     <div class="page-head">
       <div>
         <h1>Produkty</h1>
@@ -227,36 +266,49 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
     </div>
   </section>
 
-  <!-- REVIEWS -->
-  <section id="reviews-panel" class="hidden">
+  <!-- ORDERS TAB -->
+  <section id="tab-orders" hidden>
     <div class="page-head">
       <div>
-        <h1>Opinie</h1>
-        <div class="sub">Przeglądaj opinie klientów i usuwaj te fałszywe lub nieodpowiednie.</div>
+        <h1>Zamówienia</h1>
+        <div class="sub">Podgląd i obsługa zamówień oraz statusów wysyłki.</div>
       </div>
-      <div style="display:flex;align-items:center;gap:16px">
-        <span class="stat"><span id="rev-count">0</span> opinii</span>
-      </div>
+      <div class="stat-row" id="order-stats"></div>
     </div>
 
-    <div id="reviews-notice"></div>
+    <div class="orders-toolbar">
+      <select id="order-filter">
+        <option value="">Wszystkie statusy</option>
+        <option value="paid">Opłacone (do realizacji)</option>
+        <option value="fulfilled">W realizacji</option>
+        <option value="shipped">Wysłane</option>
+        <option value="completed">Zrealizowane</option>
+        <option value="pending">Oczekujące na płatność</option>
+        <option value="cancelled">Anulowane</option>
+      </select>
+      <button id="orders-refresh" class="btn btn-ghost btn-sm">Odśwież</button>
+    </div>
+
+    <div id="orders-notice"></div>
 
     <div class="table-wrap">
       <table class="tbl">
         <thead>
           <tr>
-            <th style="width:130px">Ocena</th>
-            <th>Opinia</th>
-            <th class="hide-sm">Zamówienie</th>
+            <th>Nr zamówienia</th>
             <th class="hide-sm">Data</th>
-            <th style="text-align:right">Akcje</th>
+            <th class="hide-sm">Klient</th>
+            <th>Kwota</th>
+            <th>Płatność</th>
+            <th>Status</th>
           </tr>
         </thead>
-        <tbody id="rev-rows">
-          <tr><td colspan="5" class="loading">Ładowanie…</td></tr>
+        <tbody id="order-rows">
+          <tr><td colspan="6" class="loading">Ładowanie…</td></tr>
         </tbody>
       </table>
     </div>
+    <div class="orders-pager" id="orders-pager"></div>
   </section>
 </main>
 
@@ -360,6 +412,66 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
       <button type="submit" class="btn btn-primary" id="save-btn">Zapisz</button>
     </div>
   </form>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div id="order-modal" class="modal-back hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="om-title">Zamówienie</h2>
+      <button type="button" class="modal-close" id="om-close" aria-label="Zamknij">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="om-error" class="notice notice-err hidden"></div>
+      <div class="od-grid" style="margin-bottom:20px">
+        <div class="od-block">
+          <h3>Klient</h3>
+          <div class="kv" id="om-customer"></div>
+        </div>
+        <div class="od-block">
+          <h3>Dostawa</h3>
+          <div class="kv" id="om-shipping"></div>
+        </div>
+      </div>
+
+      <div class="od-block" style="margin-bottom:20px">
+        <h3>Produkty</h3>
+        <div class="od-items" id="om-items"></div>
+        <div style="margin-top:10px">
+          <div class="od-tot"><span>Wartość produktów</span><span id="om-subtotal"></span></div>
+          <div class="od-tot" id="om-disc-row" style="display:none;color:var(--red)"><span>Rabat</span><span id="om-discount"></span></div>
+          <div class="od-tot"><span>Dostawa</span><span id="om-ship-cost"></span></div>
+          <div class="od-tot grand"><span>Razem</span><span id="om-total"></span></div>
+        </div>
+      </div>
+
+      <div class="od-grid">
+        <div class="field">
+          <label for="om-status">Status realizacji</label>
+          <select id="om-status">
+            <option value="paid">Opłacone (do realizacji)</option>
+            <option value="fulfilled">W realizacji</option>
+            <option value="shipped">Wysłane</option>
+            <option value="completed">Zrealizowane</option>
+            <option value="cancelled">Anulowane</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="om-tracking">Numer przesyłki (InPost / kurier)</label>
+          <input type="text" id="om-tracking" placeholder="np. 6200000000000000">
+        </div>
+      </div>
+      <div class="field">
+        <label for="om-notes">Notatka wewnętrzna</label>
+        <textarea id="om-notes" rows="2" placeholder="Widoczna tylko w panelu."></textarea>
+      </div>
+      <div class="hint" id="om-meta"></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-ghost" id="om-cancel">Zamknij</button>
+      <button type="button" class="btn btn-primary" id="om-save">Zapisz zmiany</button>
+    </div>
+  </div>
 </div>
 
 <script src="js/admin.js"></script>
