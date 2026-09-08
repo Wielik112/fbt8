@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Opinie | FBT Outlet</title>
+<meta name="description" content="Opinie klientów FBT Outlet. Zobacz, co mówią kupujący, i dodaj własną opinię o swoim zamówieniu.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/favicon.png">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="shell">
+    <a href="index.html" class="nav-logo"><img src="assets/logo.png" alt="FBT Outlet"></a>
+    <div class="nav-links">
+      <a href="index.html">Start</a><a href="sklep.html">Sklep</a><a href="o-nas.html">O nas</a><a href="kontakt.html">Kontakt</a><a href="opinie.html">Opinie</a>
+    </div>
+    <div class="nav-actions">
+      <a href="sklep.html" class="icon-btn" aria-label="Szukaj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></a>
+      <a href="koszyk.html" class="icon-btn" aria-label="Koszyk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6L5 3H2"/></svg><span class="cart-count">0</span></a>
+      <a href="sklep.html" class="btn btn-primary">Kup teraz</a>
+      <button class="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-menu">
+  <a href="index.html">Start</a><a href="sklep.html">Sklep</a><a href="o-nas.html">O nas</a><a href="kontakt.html">Kontakt</a><a href="opinie.html">Opinie</a><a href="koszyk.html">Koszyk</a>
+</div>
+
+<header class="page-hero">
+  <div class="shell">
+    <span class="eyebrow">Opinie klientów</span>
+    <h1>Co mówią<br>kupujący</h1>
+    <p>Kupiłeś u nas? Podziel się wrażeniami. Podaj numer zamówienia, wystaw ocenę i napisz kilka słów — opinia pojawi się na tej stronie.</p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="shell">
+    <div class="reviews-layout">
+      <!-- FORM -->
+      <div class="review-form-wrap reveal">
+        <h2 class="h-card" style="margin-bottom:18px">Dodaj opinię</h2>
+        <div id="review-notice"></div>
+        <form id="review-form" class="form">
+          <div class="field">
+            <label for="rv-order">Numer zamówienia</label>
+            <input type="text" id="rv-order" placeholder="np. FBT-2026-00123" required>
+          </div>
+          <div class="field">
+            <label for="rv-rating">Ocena</label>
+            <div class="select-wrap" style="width:100%">
+              <select id="rv-rating" style="width:100%">
+                <option value="5">★★★★★ (5) — Rewelacja</option>
+                <option value="4">★★★★ (4) — Bardzo dobrze</option>
+                <option value="3">★★★ (3) — W porządku</option>
+                <option value="2">★★ (2) — Słabo</option>
+                <option value="1">★ (1) — Źle</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="rv-body">Twoja opinia</label>
+            <textarea id="rv-body" placeholder="Napisz, jak oceniasz produkt i zamówienie…" required></textarea>
+          </div>
+          <button type="submit" id="rv-submit" class="btn btn-primary">Opublikuj opinię
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </form>
+      </div>
+
+      <!-- LIST -->
+      <div>
+        <div class="reviews-head">
+          <h2 class="h-card">Opinie <span id="rv-count" class="rv-count"></span></h2>
+        </div>
+        <div id="reviews-grid" class="reviews-grid">
+          <p class="rv-loading">Ładowanie opinii…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="shell">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <img src="assets/logo.png" alt="FBT Outlet">
+        <p>Premium sprzęt sportowy w outletowych cenach. Rozpędź się z nami.</p>
+      </div>
+      <div><h4>Sklep</h4><div class="footer-links"><a href="sklep.html">Wszystkie produkty</a><a href="sklep.html">Obuwie</a><a href="sklep.html">Bluzy</a><a href="sklep.html">Wyprzedaż</a></div></div>
+      <div><h4>Firma</h4><div class="footer-links"><a href="o-nas.html">O nas</a><a href="kontakt.html">Kontakt</a><a href="opinie.html">Opinie</a><a href="regulamin.html">Regulamin</a></div></div>
+      <div><h4>Pomoc</h4><div class="footer-links"><a href="kontakt.html">Centrum pomocy</a><a href="kontakt.html">Śledzenie zamówienia</a><a href="regulamin.html">Polityka prywatności</a><a href="kontakt.html">FAQ</a></div></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 FBT Outlet. Wszelkie prawa zastrzeżone.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script src="js/reviews.js"></script>
+</body>
+</html>
