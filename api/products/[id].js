@@ -2,6 +2,10 @@ import { ensureSchema, getProduct, updateProduct, deleteProduct, dbErrorMessage 
 import { isAdmin, readJsonBody } from '../_lib/auth.js';
 import { normalizeProduct } from '../_lib/validate.js';
 
+// Product payloads can include base64-encoded photos, so lift the default
+// 1 MB body-parser limit (the platform still caps the request at ~4.5 MB).
+export const config = { api: { bodyParser: { sizeLimit: '8mb' } } };
+
 // GET    /api/products/:id  -> single product (public)
 // PUT    /api/products/:id  -> update a product (admin only)
 // DELETE /api/products/:id  -> delete a product (admin only)

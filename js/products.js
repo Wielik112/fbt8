@@ -34,8 +34,6 @@ async function loadProducts() {
   return FALLBACK_PRODUCTS;
 }
 
-function starStr(n) { return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
-
 // Original seeded products (ids p01..p12) have hand-crafted static pages;
 // everything else uses the dynamic template produkt.html?id=<id>.
 function productHref(p) {
@@ -46,18 +44,22 @@ function productCard(p) {
   const condClass = p.condition === 'Nowy' ? 'cond-new' : 'cond-used';
   const oldPrice = p.old ? ` <span class="old">${p.old} zł</span>` : '';
   const href = productHref(p);
+  const hasImg = !!p.image;
+  const bg = (!hasImg && p.gradient) ? ` style="background:${p.gradient}"` : '';
+  const media = hasImg ? `<img src="${p.image}" alt="${p.name}" loading="lazy">` : '';
   return `
   <article class="product-card reveal" data-product="${p.id}" data-name="${p.name}" data-price="${p.price}">
-    <div class="product-media" style="background:${p.gradient}">
+    <a class="card-link" href="${href}" aria-label="${p.name}"></a>
+    <div class="product-media"${bg}>
+      ${media}
       <div class="product-badges">
         ${p.tag ? `<span class="tag ${p.tagType === 'sale' ? '' : 'grey'}">${p.tag}</span>` : ''}
         <span class="tag ${condClass}">${p.condition}</span>
       </div>
-      <a href="${href}" class="product-quick">Zobacz produkt</a>
     </div>
     <div class="product-info">
       <div class="product-cat">${p.brand} · ${p.cat}</div>
-      <h3 class="product-name"><a href="${href}">${p.name}</a></h3>
+      <h3 class="product-name">${p.name}</h3>
       <div class="product-foot">
         <div class="product-price">${p.price} zł${oldPrice}</div>
       </div>
@@ -82,6 +84,22 @@ function renderFeatured() {
   renderProducts('#featured-products', PRODUCTS.slice(0, 8));
 }
 
+// Polish plural for "produkt": 1 produkt, 2–4 produkty, else produktów.
+function plProdukty(n) {
+  if (n === 1) return 'produkt';
+  const d = n % 10, h = n % 100;
+  return (d >= 2 && d <= 4 && !(h >= 12 && h <= 14)) ? 'produkty' : 'produktów';
+}
+
+// Fills the homepage category tiles with the real number of products in
+// each category (no more fake counts).
+function fillCategoryCounts() {
+  document.querySelectorAll('.cat-count[data-cat]').forEach((el) => {
+    const n = PRODUCTS.filter((p) => p.cat === el.dataset.cat).length;
+    el.textContent = `${n} ${plProdukty(n)}`;
+  });
+}
+
 function renderRelated() {
   const rel = document.querySelector('#related-products');
   if (!rel) return;
@@ -99,18 +117,44 @@ function initShop() {
 
   const state = {
     cat: 'Wszystkie',
+    gender: 'Wszystkie',    // Wszystkie | Męskie | Damskie (Unisex shows in both)
     brand: 'Wszystkie',     // single active brand chip
     conditions: new Set(),  // empty = all
     sizes: new Set(),       // empty = all
     colors: new Set(),      // empty = all
     priceMin: 0,
-    priceMax: 600,
+    priceMax: 2000,
     sort: 'default',
   };
+
+  // Preselect a category/gender when arriving from a link (sklep.html?cat=…&gender=…).
+  const params = new URLSearchParams(location.search);
+  const wantedCat = params.get('cat');
+  if (wantedCat && document.querySelector(`.chip[data-cat="${wantedCat}"]`)) {
+    state.cat = wantedCat;
+    document.querySelectorAll('.chip[data-cat]').forEach(c =>
+      c.classList.toggle('active', c.dataset.cat === wantedCat));
+    const radio = document.querySelector(`input[name="cat"][value="${wantedCat}"]`);
+    if (radio) radio.checked = true;
+  }
+  const wantedGender = params.get('gender');
+  if (wantedGender && ['Męskie', 'Damskie'].includes(wantedGender)) {
+    state.gender = wantedGender;
+    const gr = document.querySelector(`input[name="gender"][value="${wantedGender}"]`);
+    if (gr) gr.checked = true;
+  }
+
+  // A product matches the gender filter if it is that gender or Unisex.
+  function matchGender(p) {
+    if (state.gender === 'Wszystkie') return true;
+    const g = p.gender || 'Unisex';
+    return g === state.gender || g === 'Unisex';
+  }
 
   function currentList() {
     let list = PRODUCTS.filter(p =>
       (state.cat === 'Wszystkie' || p.cat === state.cat) &&
+      matchGender(p) &&
       (state.brand === 'Wszystkie' || p.brand === state.brand) &&
       (!state.conditions.size || state.conditions.has(p.condition)) &&
       (!state.sizes.size || p.sizes.some(s => state.sizes.has(s))) &&
@@ -119,7 +163,6 @@ function initShop() {
     );
     if (state.sort === 'low')  list = [...list].sort((a, b) => a.price - b.price);
     if (state.sort === 'high') list = [...list].sort((a, b) => b.price - a.price);
-    if (state.sort === 'rating') list = [...list].sort((a, b) => b.stars - a.stars);
     return list;
   }
 
@@ -150,6 +193,11 @@ function initShop() {
         c.classList.toggle('active', c.dataset.cat === state.cat));
       draw();
     });
+  });
+
+  // Gender radios (Wszystkie / Męskie / Damskie)
+  document.querySelectorAll('input[name="gender"]').forEach(r => {
+    r.addEventListener('change', () => { state.gender = r.value; draw(); });
   });
 
   // Brand chips (single active, like "Wszystkie")
@@ -194,7 +242,7 @@ function initShop() {
   const minNum   = document.querySelector('#price-min-num');
   const maxNum   = document.querySelector('#price-max-num');
   const rangeBar = document.querySelector('#price-range');
-  const SLIDER_MAX = 600;
+  const SLIDER_MAX = 2000;
 
   function applyPrice(lo, hi, source) {
     lo = Math.max(0, Math.min(SLIDER_MAX, lo || 0));
@@ -233,13 +281,15 @@ function initShop() {
 
   // Reset
   document.querySelector('#filter-reset')?.addEventListener('click', () => {
-    state.cat = 'Wszystkie'; state.brand = 'Wszystkie';
+    state.cat = 'Wszystkie'; state.brand = 'Wszystkie'; state.gender = 'Wszystkie';
     state.conditions.clear(); state.sizes.clear(); state.colors.clear();
     state.sort = 'default';
 
     document.querySelectorAll('.filters input[type="checkbox"]').forEach(c => c.checked = false);
     const allRadio = document.querySelector('input[name="cat"][value="Wszystkie"]');
     if (allRadio) allRadio.checked = true;
+    const allGender = document.querySelector('input[name="gender"][value="Wszystkie"]');
+    if (allGender) allGender.checked = true;
     const sortSel = document.querySelector('#sort'); if (sortSel) sortSel.value = 'default';
 
     document.querySelectorAll('.chip[data-cat]').forEach(c => c.classList.toggle('active', c.dataset.cat === 'Wszystkie'));
@@ -257,5 +307,6 @@ function initShop() {
   PRODUCTS = await loadProducts();
   renderFeatured();
   renderRelated();
+  fillCategoryCounts();
   initShop();
 })();

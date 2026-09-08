@@ -123,6 +123,7 @@ document.querySelectorAll('[data-add]').forEach(btn => {
         id: card.dataset.product,
         name: card.dataset.name,
         price: +card.dataset.price,
+        image: card.querySelector('.product-media img')?.src || '',
         qty: 1
       };
     } else {
@@ -133,6 +134,7 @@ document.querySelectorAll('[data-add]').forEach(btn => {
         id: btn.dataset.add,
         name: btn.dataset.name,
         price: +btn.dataset.price,
+        image: btn.dataset.image || '',
         size,
         qty: qtyEl ? +qtyEl.value : 1
       };

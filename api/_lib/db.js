@@ -80,6 +80,7 @@ export async function ensureSchema() {
       cat         TEXT NOT NULL,
       brand       TEXT NOT NULL,
       condition   TEXT NOT NULL DEFAULT 'Nowy',
+      gender      TEXT NOT NULL DEFAULT 'Unisex',
       price       INTEGER NOT NULL,
       old_price   INTEGER,
       description TEXT,
@@ -88,13 +89,27 @@ export async function ensureSchema() {
       stars       INTEGER NOT NULL DEFAULT 5,
       sizes       JSONB NOT NULL DEFAULT '[]'::jsonb,
       colors      JSONB NOT NULL DEFAULT '[]'::jsonb,
+      image       TEXT,
+      images      JSONB NOT NULL DEFAULT '[]'::jsonb,
       gradient    TEXT,
       sort_order  INTEGER NOT NULL DEFAULT 0,
       created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
     )`;
-  // Migration for databases created before `description` existed.
+  // Migrations for databases created before these columns existed.
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS description TEXT`;
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image TEXT`;
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB NOT NULL DEFAULT '[]'::jsonb`;
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS gender TEXT NOT NULL DEFAULT 'Unisex'`;
+  // Customer reviews (simple, public).
+  await sql`
+    CREATE TABLE IF NOT EXISTS reviews (
+      id          TEXT PRIMARY KEY,
+      order_no    TEXT NOT NULL,
+      rating      INTEGER NOT NULL DEFAULT 5,
+      body        TEXT NOT NULL,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`;
   schemaReady = true;
 }
 
@@ -122,14 +137,16 @@ export function mapRow(r) {
     cat: r.cat,
     brand: r.brand,
     condition: r.condition,
+    gender: r.gender || 'Unisex',
     price: r.price,
     old: r.old_price,
     description: r.description || '',
     tag: r.tag,
     tagType: r.tag_type,
-    stars: r.stars,
     sizes: r.sizes || [],
     colors: r.colors || [],
+    image: r.image || '',
+    images: r.images || [],
     gradient: r.gradient,
   };
 }
@@ -148,11 +165,12 @@ export async function insertProduct(p, sortOrder = null) {
   const order = sortOrder == null ? await nextSortOrder() : sortOrder;
   const { rows } = await sql`
     INSERT INTO products
-      (id, name, cat, brand, condition, price, old_price, description, tag, tag_type, stars, sizes, colors, gradient, sort_order)
+      (id, name, cat, brand, condition, gender, price, old_price, description, tag, tag_type, sizes, colors, image, images, gradient, sort_order)
     VALUES
-      (${p.id}, ${p.name}, ${p.cat}, ${p.brand}, ${p.condition}, ${p.price}, ${p.old}, ${p.description || null},
-       ${p.tag}, ${p.tagType}, ${p.stars},
+      (${p.id}, ${p.name}, ${p.cat}, ${p.brand}, ${p.condition}, ${p.gender || 'Unisex'}, ${p.price}, ${p.old}, ${p.description || null},
+       ${p.tag}, ${p.tagType},
        ${JSON.stringify(p.sizes || [])}::jsonb, ${JSON.stringify(p.colors || [])}::jsonb,
+       ${p.image || null}, ${JSON.stringify(p.images || [])}::jsonb,
        ${p.gradient}, ${order})
     RETURNING *`;
   return mapRow(rows[0]);
@@ -162,10 +180,12 @@ export async function updateProduct(id, p) {
   const { rows } = await sql`
     UPDATE products SET
       name = ${p.name}, cat = ${p.cat}, brand = ${p.brand}, condition = ${p.condition},
+      gender = ${p.gender || 'Unisex'},
       price = ${p.price}, old_price = ${p.old}, description = ${p.description || null},
-      tag = ${p.tag}, tag_type = ${p.tagType}, stars = ${p.stars},
+      tag = ${p.tag}, tag_type = ${p.tagType},
       sizes = ${JSON.stringify(p.sizes || [])}::jsonb,
       colors = ${JSON.stringify(p.colors || [])}::jsonb,
+      image = ${p.image || null}, images = ${JSON.stringify(p.images || [])}::jsonb,
       gradient = ${p.gradient}, updated_at = now()
     WHERE id = ${id}
     RETURNING *`;
@@ -174,6 +194,29 @@ export async function updateProduct(id, p) {
 
 export async function deleteProduct(id) {
   const { rowCount } = await sql`DELETE FROM products WHERE id = ${id}`;
+  return rowCount > 0;
+}
+
+// ---- Reviews ----
+export function mapReview(r) {
+  return { id: r.id, orderNo: r.order_no, rating: r.rating, body: r.body, createdAt: r.created_at };
+}
+
+export async function listReviews() {
+  const { rows } = await sql`SELECT * FROM reviews ORDER BY created_at DESC`;
+  return rows.map(mapReview);
+}
+
+export async function insertReview(rv) {
+  const { rows } = await sql`
+    INSERT INTO reviews (id, order_no, rating, body)
+    VALUES (${rv.id}, ${rv.orderNo}, ${rv.rating}, ${rv.body})
+    RETURNING *`;
+  return mapReview(rows[0]);
+}
+
+export async function deleteReview(id) {
+  const { rowCount } = await sql`DELETE FROM reviews WHERE id = ${id}`;
   return rowCount > 0;
 }
 

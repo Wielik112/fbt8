@@ -58,8 +58,23 @@
       const save = $('#pd-save'); save.textContent = `Oszczędzasz ${p.old - p.price} zł`; save.hidden = false;
     }
 
-    $('#pd-main').style.background = p.gradient || DEFAULT_GRADIENT;
-    $('#pd-main-logo').alt = p.name;
+    // Photo gallery: main photo first, then any extra gallery photos.
+    const gallery = [p.image, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean);
+    const mainEl = $('#pd-main');
+    const mainLogo = $('#pd-main-logo');
+    mainLogo.alt = p.name;
+    if (gallery.length) {
+      mainEl.classList.add('has-photo');
+      mainLogo.src = gallery[0];
+      mainLogo.style.width = '100%';
+      mainLogo.style.height = '100%';
+      mainLogo.style.objectFit = 'contain';
+      mainLogo.style.padding = '30px';
+      mainLogo.style.opacity = '1';
+    } else {
+      mainEl.style.background = p.gradient || DEFAULT_GRADIENT;
+    }
+
     $('#pd-desc').textContent = (p.description && p.description.trim()) ? p.description : defaultDesc(p);
 
     // Sizes
@@ -79,6 +94,8 @@
     $('#pd-code').textContent = 'FBT-' + String(p.id).toUpperCase();
     $('#pd-brand').textContent = p.brand;
     $('#pd-cat').textContent = p.cat;
+    const genderEl = $('#pd-gender');
+    if (genderEl) genderEl.textContent = p.gender || 'Unisex';
     $('#pd-cond').textContent = p.condition;
     $('#pd-colors').textContent = (Array.isArray(p.colors) && p.colors.length) ? p.colors.join(', ') : '—';
 
@@ -88,20 +105,32 @@
     addBtn.dataset.add = p.id;
     addBtn.dataset.name = p.name;
     addBtn.dataset.price = p.price;
+    addBtn.dataset.image = gallery.length ? gallery[0] : '';
 
     // Gallery thumbnails
     const thumbs = $('#pd-thumbs');
-    const grads = [p.gradient || DEFAULT_GRADIENT,
-      'linear-gradient(135deg,#2a0409,#0f0f12)',
-      'linear-gradient(135deg,#151519,#2a0409)',
-      'linear-gradient(315deg,#320810,#1c1c22)'];
-    thumbs.innerHTML = grads.map((g, i) => `<div class="pd-thumb${i === 0 ? ' active' : ''}" data-bg="${g}"></div>`).join('');
-    const mainImg = $('#pd-main');
-    thumbs.querySelectorAll('.pd-thumb').forEach((t) => t.addEventListener('click', () => {
-      thumbs.querySelectorAll('.pd-thumb').forEach((x) => x.classList.remove('active'));
-      t.classList.add('active');
-      if (t.dataset.bg) mainImg.style.background = t.dataset.bg;
-    }));
+    if (gallery.length) {
+      // Real product photos — click a thumb to swap the main image.
+      thumbs.innerHTML = gallery.map((src, i) =>
+        `<div class="pd-thumb has-photo${i === 0 ? ' active' : ''}" data-img="${src}"><img src="${src}" alt=""></div>`).join('');
+      thumbs.querySelectorAll('.pd-thumb').forEach((t) => t.addEventListener('click', () => {
+        thumbs.querySelectorAll('.pd-thumb').forEach((x) => x.classList.remove('active'));
+        t.classList.add('active');
+        mainLogo.src = t.dataset.img;
+      }));
+    } else {
+      // No photos uploaded — fall back to decorative gradient tiles.
+      const grads = [p.gradient || DEFAULT_GRADIENT,
+        'linear-gradient(135deg,#2a0409,#0f0f12)',
+        'linear-gradient(135deg,#151519,#2a0409)',
+        'linear-gradient(315deg,#320810,#1c1c22)'];
+      thumbs.innerHTML = grads.map((g, i) => `<div class="pd-thumb${i === 0 ? ' active' : ''}" data-bg="${g}"></div>`).join('');
+      thumbs.querySelectorAll('.pd-thumb').forEach((t) => t.addEventListener('click', () => {
+        thumbs.querySelectorAll('.pd-thumb').forEach((x) => x.classList.remove('active'));
+        t.classList.add('active');
+        if (t.dataset.bg) mainEl.style.background = t.dataset.bg;
+      }));
+    }
 
     // Related: prefer same category, then fill with others
     let rel = all.filter((x) => x.id !== p.id && x.cat === p.cat);
