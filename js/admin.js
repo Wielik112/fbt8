@@ -180,6 +180,11 @@ async function loadProducts() {
 
 async function enterPanel() {
   show('panel');
+  // Always open on the Products tab.
+  reviewsLoaded = false;
+  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === 'products'));
+  $('products-panel').classList.remove('hidden');
+  $('reviews-panel').classList.add('hidden');
   await loadProducts();
 }
 
@@ -205,6 +210,89 @@ async function removeProduct(product) {
     panelNotice(err.message, 'err');
   }
 }
+
+/* ---------- Reviews (opinie) ---------- */
+let reviews = [];
+let reviewsLoaded = false;
+
+function starStr(n) {
+  n = Math.min(5, Math.max(1, Number(n) || 0));
+  return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n);
+}
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return isNaN(d) ? '' : d.toLocaleDateString('pl-PL', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+function reviewsNotice(msg, kind) {
+  const box = $('reviews-notice');
+  box.innerHTML = '';
+  if (!msg) return;
+  const div = document.createElement('div');
+  div.className = `notice ${kind === 'ok' ? 'notice-ok' : 'notice-err'}`;
+  div.textContent = msg;
+  box.appendChild(div);
+  if (kind === 'ok') setTimeout(() => { if (box.contains(div)) box.removeChild(div); }, 3500);
+}
+
+function renderReviews() {
+  const tbody = $('rev-rows');
+  $('rev-count').textContent = reviews.length;
+  if (!reviews.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">Brak opinii.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = reviews.map((r) => `
+    <tr data-id="${esc(r.id)}">
+      <td><span class="rev-stars">${starStr(r.rating)}</span></td>
+      <td><div class="rev-body">${esc(r.body)}</div></td>
+      <td class="hide-sm">${esc(r.orderNo)}</td>
+      <td class="hide-sm">${esc(fmtDate(r.createdAt))}</td>
+      <td><div class="row-actions"><button class="btn btn-danger btn-sm" data-act="del-rev">Usuń</button></div></td>
+    </tr>`).join('');
+}
+
+async function loadReviews() {
+  const tbody = $('rev-rows');
+  tbody.innerHTML = '<tr><td colspan="5" class="loading">Ładowanie…</td></tr>';
+  try {
+    reviews = await api('/api/reviews');
+    renderReviews();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty">${esc(err.message)}</td></tr>`;
+  }
+}
+
+$('rev-rows').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-act="del-rev"]');
+  if (!btn) return;
+  const id = btn.closest('tr')?.dataset.id;
+  const review = reviews.find((r) => r.id === id);
+  if (review) removeReview(review);
+});
+
+async function removeReview(review) {
+  if (!confirm('Usunąć tę opinię? Tej operacji nie można cofnąć.')) return;
+  try {
+    await api(`/api/reviews/${encodeURIComponent(review.id)}`, { method: 'DELETE' });
+    reviews = reviews.filter((r) => r.id !== review.id);
+    renderReviews();
+    reviewsNotice('Opinia usunięta.', 'ok');
+  } catch (err) {
+    reviewsNotice(err.message, 'err');
+  }
+}
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === btn));
+    $('products-panel').classList.toggle('hidden', tab !== 'products');
+    $('reviews-panel').classList.toggle('hidden', tab !== 'reviews');
+    if (tab === 'reviews' && !reviewsLoaded) { reviewsLoaded = true; loadReviews(); }
+  });
+});
 
 /* ---------- Modal (add / edit) ---------- */
 const modal = $('modal');
