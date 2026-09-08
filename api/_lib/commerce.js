@@ -26,6 +26,23 @@ export const SHIPPING_METHODS = {
 // Free shipping at/above this order value (grosze). 300 zł.
 export const FREE_SHIPPING_THRESHOLD = 30000;
 
+// Maps our shipping method -> InPost ShipX service. Only these methods can
+// have an InPost label generated; `courier` is a generic (non-InPost) carrier.
+export const INPOST_SERVICES = {
+  inpost_locker:  { service: 'inpost_locker_standard',  sendingMethod: 'parcel_locker',  locker: true },
+  inpost_courier: { service: 'inpost_courier_standard', sendingMethod: 'dispatch_order', locker: false },
+};
+export function inpostServiceFor(method) {
+  return INPOST_SERVICES[method] || null;
+}
+
+// InPost Paczkomat parcel templates (gabaryty). Dimensions in millimetres.
+export const PARCEL_TEMPLATES = {
+  small:  { label: 'Gabaryt A', dimensions: { length: 640, width: 380, height: 80,  unit: 'mm' } },
+  medium: { label: 'Gabaryt B', dimensions: { length: 640, width: 380, height: 190, unit: 'mm' } },
+  large:  { label: 'Gabaryt C', dimensions: { length: 640, width: 380, height: 410, unit: 'mm' } },
+};
+
 // Discount codes -> percent off. Validated server-side at checkout.
 export const COUPONS = { FBT15: 15, START10: 10 };
 
