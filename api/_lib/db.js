@@ -100,6 +100,15 @@ export async function ensureSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image TEXT`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB NOT NULL DEFAULT '[]'::jsonb`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS gender TEXT NOT NULL DEFAULT 'Unisex'`;
+  // Customer reviews (simple, public).
+  await sql`
+    CREATE TABLE IF NOT EXISTS reviews (
+      id          TEXT PRIMARY KEY,
+      order_no    TEXT NOT NULL,
+      rating      INTEGER NOT NULL DEFAULT 5,
+      body        TEXT NOT NULL,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`;
   schemaReady = true;
 }
 
@@ -185,6 +194,24 @@ export async function updateProduct(id, p) {
 export async function deleteProduct(id) {
   const { rowCount } = await sql`DELETE FROM products WHERE id = ${id}`;
   return rowCount > 0;
+}
+
+// ---- Reviews ----
+export function mapReview(r) {
+  return { id: r.id, orderNo: r.order_no, rating: r.rating, body: r.body, createdAt: r.created_at };
+}
+
+export async function listReviews() {
+  const { rows } = await sql`SELECT * FROM reviews ORDER BY created_at DESC`;
+  return rows.map(mapReview);
+}
+
+export async function insertReview(rv) {
+  const { rows } = await sql`
+    INSERT INTO reviews (id, order_no, rating, body)
+    VALUES (${rv.id}, ${rv.orderNo}, ${rv.rating}, ${rv.body})
+    RETURNING *`;
+  return mapReview(rows[0]);
 }
 
 async function nextSortOrder() {
