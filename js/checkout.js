@@ -45,12 +45,9 @@
       const live = productMap[it.id] || {};
       const img = live.image || it.image || '';
       const grad = live.gradient || gradients[i % 3];
-      const imgStyle = img
-        ? `background-image:url("${img}");background-size:cover;background-position:center`
-        : `background:${grad}`;
       return `
       <div class="co-item">
-        <div class="co-item-img" style="${imgStyle}"></div>
+        <div class="co-item-img${img ? ' has-photo' : ''}"${img ? '' : ` style="background:${grad}"`}>${img ? `<img src="${img}" alt="">` : ''}</div>
         <div>
           <div class="co-item-name">${it.name}</div>
           <div class="co-item-meta">${it.size ? 'Rozm. ' + it.size + ' · ' : ''}${it.qty} szt.</div>
