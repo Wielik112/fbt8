@@ -94,6 +94,8 @@
     $('#pd-code').textContent = 'FBT-' + String(p.id).toUpperCase();
     $('#pd-brand').textContent = p.brand;
     $('#pd-cat').textContent = p.cat;
+    const genderEl = $('#pd-gender');
+    if (genderEl) genderEl.textContent = p.gender || 'Unisex';
     $('#pd-cond').textContent = p.condition;
     $('#pd-colors').textContent = (Array.isArray(p.colors) && p.colors.length) ? p.colors.join(', ') : '—';
 

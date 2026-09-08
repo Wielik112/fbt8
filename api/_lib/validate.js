@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 
 export const CATEGORIES  = ['Koszulki', 'Bluzy', 'Spodnie', 'Kurtki', 'Obuwie', 'Akcesoria'];
 export const CONDITIONS  = ['Nowy', 'Używany'];
+export const GENDERS     = ['Męskie', 'Damskie', 'Unisex'];
 export const TAG_TYPES   = ['sale', 'hit', 'new'];
 const DEFAULT_GRADIENT   = 'linear-gradient(135deg,#2a0409,#1c1c22)';
 
@@ -51,6 +52,9 @@ export function normalizeProduct(body) {
   let condition = String(body.condition ?? '').trim();
   if (!CONDITIONS.includes(condition)) condition = 'Nowy';
 
+  let gender = String(body.gender ?? '').trim();
+  if (!GENDERS.includes(gender)) gender = 'Unisex';
+
   let tagType = String(body.tagType ?? '').trim();
   if (!TAG_TYPES.includes(tagType)) tagType = 'sale';
 
@@ -65,7 +69,7 @@ export function normalizeProduct(body) {
 
   const value = {
     id: String(body.id ?? '').trim() || null,
-    name, brand, cat, condition, price, old, description, tag, tagType,
+    name, brand, cat, condition, gender, price, old, description, tag, tagType,
     sizes:  toStringArray(body.sizes),
     colors: toStringArray(body.colors),
     image, images,

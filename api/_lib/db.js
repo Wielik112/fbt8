@@ -79,6 +79,7 @@ export async function ensureSchema() {
       cat         TEXT NOT NULL,
       brand       TEXT NOT NULL,
       condition   TEXT NOT NULL DEFAULT 'Nowy',
+      gender      TEXT NOT NULL DEFAULT 'Unisex',
       price       INTEGER NOT NULL,
       old_price   INTEGER,
       description TEXT,
@@ -98,6 +99,7 @@ export async function ensureSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS description TEXT`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image TEXT`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB NOT NULL DEFAULT '[]'::jsonb`;
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS gender TEXT NOT NULL DEFAULT 'Unisex'`;
   schemaReady = true;
 }
 
@@ -125,6 +127,7 @@ export function mapRow(r) {
     cat: r.cat,
     brand: r.brand,
     condition: r.condition,
+    gender: r.gender || 'Unisex',
     price: r.price,
     old: r.old_price,
     description: r.description || '',
@@ -152,9 +155,9 @@ export async function insertProduct(p, sortOrder = null) {
   const order = sortOrder == null ? await nextSortOrder() : sortOrder;
   const { rows } = await sql`
     INSERT INTO products
-      (id, name, cat, brand, condition, price, old_price, description, tag, tag_type, sizes, colors, image, images, gradient, sort_order)
+      (id, name, cat, brand, condition, gender, price, old_price, description, tag, tag_type, sizes, colors, image, images, gradient, sort_order)
     VALUES
-      (${p.id}, ${p.name}, ${p.cat}, ${p.brand}, ${p.condition}, ${p.price}, ${p.old}, ${p.description || null},
+      (${p.id}, ${p.name}, ${p.cat}, ${p.brand}, ${p.condition}, ${p.gender || 'Unisex'}, ${p.price}, ${p.old}, ${p.description || null},
        ${p.tag}, ${p.tagType},
        ${JSON.stringify(p.sizes || [])}::jsonb, ${JSON.stringify(p.colors || [])}::jsonb,
        ${p.image || null}, ${JSON.stringify(p.images || [])}::jsonb,
@@ -167,6 +170,7 @@ export async function updateProduct(id, p) {
   const { rows } = await sql`
     UPDATE products SET
       name = ${p.name}, cat = ${p.cat}, brand = ${p.brand}, condition = ${p.condition},
+      gender = ${p.gender || 'Unisex'},
       price = ${p.price}, old_price = ${p.old}, description = ${p.description || null},
       tag = ${p.tag}, tag_type = ${p.tagType},
       sizes = ${JSON.stringify(p.sizes || [])}::jsonb,
