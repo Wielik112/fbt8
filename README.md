@@ -10,9 +10,10 @@ managed from `/admin`.
 |------|-------|
 | Storefront pages | `index.html`, `sklep.html`, `produkt-*.html`, `koszyk.html`, … |
 | Storefront logic | `js/main.js`, `js/products.js` |
-| Admin panel UI | `admin.html`, `js/admin.js` |
-| API (serverless) | `api/login.js`, `api/products/index.js`, `api/products/[id].js` |
-| Shared server code | `api/_lib/*` (DB, auth, validation, seed data) |
+| Admin panel UI | `admin.html`, `js/admin.js` (Products + Orders tabs) |
+| Checkout | `koszyk.html` → `zamowienie.html` (`js/checkout.js`) → Stripe → `dziekujemy.html` |
+| API (serverless) | `api/login.js`, `api/products/*`, `api/checkout.js`, `api/stripe-webhook.js`, `api/orders/*`, `api/order-status.js`, `api/health.js` |
+| Shared server code | `api/_lib/*` (db, auth, validation, seed, `commerce`, `stripe`, `orders`) |
 
 - `js/products.js` fetches the catalog from `GET /api/products`. If the API is
   unreachable (e.g. the page is opened directly as a file, or the DB isn't
@@ -59,9 +60,77 @@ uses its fallback catalog.
 | `GET` | `/api/login` | — | Session status `{ authed }` |
 | `POST` | `/api/login` | — | Sign in with `{ password }` |
 | `DELETE` | `/api/login` | — | Sign out |
+| `POST` | `/api/checkout` | public | Re-price cart, create order + Stripe session |
+| `POST` | `/api/stripe-webhook` | Stripe sig | Payment confirmation (source of truth) |
+| `GET` | `/api/order-status?session_id=` | public | Buyer confirmation summary |
+| `GET` | `/api/orders` | admin | List orders (`?status=&limit=&offset=&stats=1`) |
+| `GET` | `/api/orders/:id` | admin | Full order detail |
+| `PATCH` | `/api/orders/:id` | admin | Update status / tracking / notes |
+| `GET` | `/api/health` | public | DB + config diagnostics (names only) |
 
 Admin requests are authorized by an HttpOnly, `Secure`, `SameSite=Strict`
-session cookie (valid 12h), signed with HMAC-SHA256.
+session cookie (valid 12h), signed with HMAC-SHA256; a bearer token is also
+accepted as a same-origin fallback.
+
+## Payments & orders (Stripe)
+
+Checkout uses **Stripe Checkout** (hosted, redirect) in **PLN** with **card,
+BLIK and Przelewy24**. The design keeps the shop as the source of truth:
+
+- **Server-side pricing.** `POST /api/checkout` ignores any prices sent by the
+  browser and re-reads every product's price from the database, recomputes the
+  subtotal, applies shipping and any (server-validated) discount code, and only
+  then creates the Stripe session. The client cannot influence what is charged.
+- **The webhook is the source of truth for "paid".** `POST /api/stripe-webhook`
+  verifies the Stripe signature against `STRIPE_WEBHOOK_SECRET` and marks the
+  order paid. Marking is idempotent, so repeated deliveries are safe. Async
+  methods (P24) are settled on `async_payment_succeeded`.
+- **Immutable order record.** Each order snapshots its line items and prices, so
+  later product edits never change a historical order. All money is stored in
+  grosze (integers).
+- **Flow:** `koszyk.html` → `zamowienie.html` (contact, delivery, summary) →
+  Stripe → `dziekujemy.html?session_id=…` (polls `/api/order-status` until the
+  webhook confirms payment, then clears the cart).
+
+Manage orders in **/admin → Zamówienia**: list + status filter, revenue and
+to-fulfil stats, and a detail view where you set the fulfilment status, add a
+tracking number, and leave internal notes.
+
+### Stripe setup
+
+1. Create a Stripe account; enable **card, BLIK, Przelewy24** (Settings → Payment
+   methods). Use **test mode** first.
+2. Set env vars in Vercel: `STRIPE_SECRET_KEY` (`sk_test_…`), and after step 3
+   `STRIPE_WEBHOOK_SECRET` (`whsec_…`).
+3. Add a webhook endpoint → `https://<your-domain>/api/stripe-webhook`, subscribe
+   to: `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+   `checkout.session.async_payment_failed`, `checkout.session.expired`,
+   `charge.refunded`. Copy its signing secret into `STRIPE_WEBHOOK_SECRET`.
+4. Redeploy. Test with Stripe test cards / the BLIK test flow. Switch to live
+   keys when ready.
+
+The webhook route reads the **raw request body** (needed for signature
+verification) via `export const config = { api: { bodyParser: false } }`.
+
+## Shipping & InPost
+
+Shipping methods and prices live in `api/_lib/commerce.js` (`SHIPPING_METHODS`,
+`FREE_SHIPPING_THRESHOLD`) — the server-authoritative config:
+
+- **InPost Paczkomat 24/7** (parcel locker, requires a point) — 12,99 zł
+- **Kurier InPost** — 15,99 zł
+- **Kurier standardowy** — 19,99 zł
+- Free shipping from **300 zł**.
+
+**InPost — current state (structure ready, ShipX later).** The checkout captures
+the Paczkomat point, orders store `inpost_point` and the shipping method, and the
+admin shows/edits method, point/address and a tracking number. Point selection
+uses the official **InPost Geowidget** map when a token is set in
+`js/config.js` (`inpostGeowidgetToken`); with no token it falls back to manual
+Paczkomat code entry. Not yet wired: **ShipX** (auto-creating shipments and
+printing labels from admin) — that needs an InPost ShipX API token + org id and
+a new `api/_lib/inpost.js` client; the data model already carries everything it
+needs.
 
 ## Product detail pages
 

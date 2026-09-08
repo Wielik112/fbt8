@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dziękujemy za zamówienie | FBT Outlet</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<style>
+.ty-wrap{max-width:620px;margin:0 auto;padding:70px 20px 90px;text-align:center}
+.ty-badge{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;margin:0 auto 24px;background:rgba(31,191,107,.12);border:1px solid #1a6b45}
+.ty-badge.pending{background:rgba(224,16,32,.08);border-color:var(--red-deep)}
+.ty-badge svg{width:38px;height:38px;stroke:#4ade80}
+.ty-badge.pending svg{stroke:#ff9ba2}
+.ty-wrap h1{font-family:var(--display);font-size:40px;text-transform:uppercase;letter-spacing:.5px;margin:0 0 12px}
+.ty-wrap p{color:var(--grey-2);font-size:15px;margin:0 0 8px}
+.ty-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;margin:28px 0;text-align:left}
+.ty-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.ty-row:last-child{border-bottom:none}
+.ty-row .lbl{color:var(--grey-2)}
+.ty-row .val{font-weight:600}
+.ty-status{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--line-bright)}
+.ty-status.paid{color:#7fe0af;border-color:#1a6b45}
+.ty-status.pending{color:#e6c07f;border-color:#6b551a}
+.ty-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.spin{width:18px;height:18px;border:2px solid var(--line-bright);border-top-color:var(--red);border-radius:50%;display:inline-block;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="shell">
+    <a href="index.html" class="nav-logo"><img src="assets/logo.png" alt="FBT Outlet"></a>
+    <div class="nav-links">
+      <a href="index.html">Start</a><a href="sklep.html">Sklep</a><a href="o-nas.html">O nas</a><a href="kontakt.html">Kontakt</a>
+    </div>
+    <div class="nav-actions">
+      <a href="koszyk.html" class="icon-btn" aria-label="Koszyk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6L5 3H2"/></svg><span class="cart-count">0</span></a>
+      <a href="sklep.html" class="btn btn-primary">Kup teraz</a>
+    </div>
+  </div>
+</nav>
+
+<div class="shell">
+  <div class="ty-wrap">
+    <div id="ty-badge" class="ty-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+    </div>
+    <h1 id="ty-title">Dziękujemy!</h1>
+    <p id="ty-lead"><span class="spin"></span>Potwierdzamy Twoje zamówienie…</p>
+
+    <div class="ty-card" id="ty-card" hidden>
+      <div class="ty-row"><span class="lbl">Numer zamówienia</span><span class="val" id="ty-id">—</span></div>
+      <div class="ty-row"><span class="lbl">Status płatności</span><span class="val"><span class="ty-status" id="ty-status">—</span></span></div>
+      <div class="ty-row"><span class="lbl">Dostawa</span><span class="val" id="ty-ship">—</span></div>
+      <div class="ty-row"><span class="lbl">Liczba produktów</span><span class="val" id="ty-count">—</span></div>
+      <div class="ty-row"><span class="lbl">Kwota</span><span class="val" id="ty-total">—</span></div>
+      <div class="ty-row"><span class="lbl">E-mail</span><span class="val" id="ty-email">—</span></div>
+    </div>
+
+    <p id="ty-note" style="font-size:13px;color:var(--grey-3)"></p>
+
+    <div class="ty-actions">
+      <a href="sklep.html" class="btn btn-primary">Kontynuuj zakupy</a>
+      <a href="index.html" class="btn btn-ghost">Strona główna</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  const sessionId = params.get('session_id');
+  const fmt = (gr) => (gr / 100).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
+
+  // Payment succeeded from the buyer's side — clear the cart immediately.
+  try { const s = JSON.parse(window.name || '{}'); delete s.cart; window.name = JSON.stringify(s); } catch {}
+  if (typeof updateCartCount === 'function') updateCartCount();
+
+  if (!sessionId) {
+    $('ty-lead').textContent = 'Brak informacji o zamówieniu.';
+    $('ty-lead').innerHTML = 'Brak informacji o zamówieniu.';
+    return;
+  }
+
+  let attempts = 0;
+  async function poll() {
+    attempts++;
+    try {
+      const res = await fetch('/api/order-status?session_id=' + encodeURIComponent(sessionId));
+      const o = await res.json();
+      if (res.ok) render(o);
+      else if (attempts < 6) return setTimeout(poll, 2000);
+      else showFallback();
+    } catch {
+      if (attempts < 6) return setTimeout(poll, 2000);
+      showFallback();
+    }
+  }
+
+  function render(o) {
+    $('ty-card').hidden = false;
+    $('ty-id').textContent = o.id;
+    $('ty-ship').textContent = o.shippingLabel || '—';
+    $('ty-count').textContent = o.itemsCount;
+    $('ty-total').textContent = fmt(o.total);
+    $('ty-email').textContent = o.email || '—';
+
+    const paid = o.paymentStatus === 'paid';
+    const statusEl = $('ty-status');
+    statusEl.textContent = paid ? 'Opłacone' : (o.paymentStatus === 'processing' ? 'W trakcie' : 'Oczekuje');
+    statusEl.className = 'ty-status ' + (paid ? 'paid' : 'pending');
+
+    if (paid) {
+      $('ty-title').textContent = 'Dziękujemy za zakup!';
+      $('ty-lead').textContent = 'Twoja płatność została potwierdzona. Wysłaliśmy potwierdzenie na e-mail.';
+      $('ty-note').textContent = 'Zajmiemy się realizacją zamówienia. O wysyłce poinformujemy osobno.';
+    } else {
+      $('ty-badge').classList.add('pending');
+      $('ty-title').textContent = 'Zamówienie przyjęte';
+      $('ty-lead').textContent = 'Oczekujemy na potwierdzenie płatności. To może chwilę potrwać.';
+      $('ty-note').textContent = 'Status zaktualizuje się automatycznie. Numer zamówienia: ' + o.id + '.';
+      if (attempts < 6) setTimeout(poll, 2500);
+    }
+  }
+
+  function showFallback() {
+    $('ty-lead').textContent = 'Zamówienie zostało przyjęte. Jeśli płatność się powiodła, wkrótce otrzymasz e-mail z potwierdzeniem.';
+  }
+
+  poll();
+})();
+</script>
+</body>
+</html>

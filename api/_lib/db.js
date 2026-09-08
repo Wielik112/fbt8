@@ -57,7 +57,8 @@ function getPool() {
 
 // Tagged-template runner: `` sql`SELECT ... ${v}` `` -> parameterized query.
 // Literal text between interpolations (e.g. `::jsonb`) is preserved verbatim.
-async function sql(strings, ...values) {
+// Exported so other data modules (e.g. orders) share the same pool.
+export async function sql(strings, ...values) {
   let text = '';
   strings.forEach((s, i) => {
     text += s;

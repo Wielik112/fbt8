@@ -59,7 +59,8 @@
         <button id="promo-btn">Zastosuj</button>
       </div>
       <div class="summary-row"><span>Wartość produktów</span><span id="sum-sub">0 zł</span></div>
-      <div class="summary-row"><span>Dostawa</span><span id="sum-ship">0 zł</span></div>
+      <div class="summary-row"><span>Dostawa</span><span id="sum-ship">—</span></div>
+      <div class="summary-row" style="border:none;padding-top:0"><span style="font-size:12px;color:var(--grey-3)">Metodę i koszt dostawy wybierzesz w następnym kroku. Darmowa dostawa od 300 zł.</span></div>
       <div class="summary-row" id="sum-disc-row" style="display:none;color:var(--red)"><span>Rabat</span><span id="sum-disc">0 zł</span></div>
       <div class="summary-row total"><span>Razem</span><span id="sum-total">0 zł</span></div>
       <a href="#" class="btn btn-primary btn-block" style="margin-top:24px" id="checkout-btn">
@@ -141,12 +142,12 @@ function renderCart() {
   `).join('');
 
   const sub = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  const ship = sub >= 199 ? 0 : 15;
+  const freeShip = sub >= 300;
   const discAmt = Math.round(sub * discount);
-  const total = sub + ship - discAmt;
+  const total = sub - discAmt; // shipping is chosen and added at checkout
 
   document.getElementById('sum-sub').textContent = sub + ' zł';
-  document.getElementById('sum-ship').textContent = ship === 0 ? 'Gratis' : ship + ' zł';
+  document.getElementById('sum-ship').textContent = freeShip ? 'Gratis' : 'od 12,99 zł';
   document.getElementById('sum-total').textContent = total + ' zł';
   const dRow = document.getElementById('sum-disc-row');
   if (discAmt > 0) { dRow.style.display = 'flex'; document.getElementById('sum-disc').textContent = '−' + discAmt + ' zł'; }
@@ -178,16 +179,9 @@ document.getElementById('promo-btn').addEventListener('click', () => {
 document.getElementById('checkout-btn').addEventListener('click', (e) => {
   e.preventDefault();
   if (getCart().length === 0) { showToast('Koszyk jest pusty'); return; }
-  showToast('Przekierowanie do płatności...');
+  window.location.href = 'zamowienie.html';
 });
 
-// seed demo items if empty (so page isn't blank on first view)
-if (getCart().length === 0) {
-  saveCart([
-    { id: 'p02', name: 'Apex Track Jacket', price: 259, size: 'M', qty: 1 },
-    { id: 'p05', name: 'Boost Runner GT', price: 419, size: 'L', qty: 1 },
-  ]);
-}
 renderCart();
 </script>
 </body>
