@@ -214,6 +214,11 @@ export async function insertReview(rv) {
   return mapReview(rows[0]);
 }
 
+export async function deleteReview(id) {
+  const { rowCount } = await sql`DELETE FROM reviews WHERE id = ${id}`;
+  return rowCount > 0;
+}
+
 async function nextSortOrder() {
   const { rows } = await sql`SELECT COALESCE(MAX(sort_order), -1) + 1 AS n FROM products`;
   return rows[0].n;
