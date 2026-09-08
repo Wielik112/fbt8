@@ -96,6 +96,19 @@
 const gradients = ['linear-gradient(135deg,#2a0409,#1c1c22)','linear-gradient(135deg,#1c1c22,#320810)','linear-gradient(135deg,#151519,#2a0409)'];
 let discount = 0;
 
+// Live product data (by id) so the cart shows the real, current product photo.
+let productMap = {};
+async function loadProductMap() {
+  try {
+    const r = await fetch('/api/products', { headers: { Accept: 'application/json' } });
+    if (!r.ok) return;
+    const data = await r.json();
+    if (Array.isArray(data)) data.forEach((p) => {
+      if (p && p.id) productMap[p.id] = { image: p.image || '', gradient: p.gradient || '' };
+    });
+  } catch { /* offline — fall back to stored image */ }
+}
+
 function renderCart() {
   const cart = getCart();
   const wrap = document.getElementById('cart-items');
@@ -116,9 +129,13 @@ function renderCart() {
   summary.style.opacity = '1';
   summary.style.pointerEvents = 'auto';
 
-  wrap.innerHTML = cart.map((item, i) => `
+  wrap.innerHTML = cart.map((item, i) => {
+    const live = productMap[item.id] || {};
+    const img = live.image || item.image || '';
+    const grad = live.gradient || gradients[i % 3];
+    return `
     <div class="cart-item">
-      <div class="cart-item-img"${item.image ? '' : ` style="background:${gradients[i % 3]}"`}>${item.image ? `<img src="${item.image}" alt="">` : ''}</div>
+      <div class="cart-item-img${img ? ' has-photo' : ''}"${img ? '' : ` style="background:${grad}"`}>${img ? `<img src="${img}" alt="">` : ''}</div>
       <div>
         <div class="cart-item-name">${item.name}</div>
         <div class="cart-item-meta">${item.size ? 'Rozmiar: ' + item.size + ' · ' : ''}Cena jedn.: ${item.price} zł</div>
@@ -133,7 +150,8 @@ function renderCart() {
       </div>
       <div class="cart-item-price">${item.price * item.qty} zł</div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   const sub = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const freeShip = sub >= 300;
@@ -177,6 +195,8 @@ document.getElementById('checkout-btn').addEventListener('click', (e) => {
 });
 
 renderCart();
+// Pull live product photos, then re-render so the cart shows the real images.
+loadProductMap().then(renderCart);
 </script>
 </body>
 </html>
