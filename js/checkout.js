@@ -23,20 +23,41 @@
   let discountPercent = 0;
   let discountCode = '';
 
+  // Live product data (by id) so the summary shows the real, current product photo.
+  let productMap = {};
+  async function loadProductMap() {
+    try {
+      const r = await fetch('/api/products', { headers: { Accept: 'application/json' } });
+      if (!r.ok) return;
+      const data = await r.json();
+      if (Array.isArray(data)) data.forEach((p) => {
+        if (p && p.id) productMap[p.id] = { image: p.image || '', gradient: p.gradient || '' };
+      });
+    } catch { /* offline — fall back to stored image */ }
+  }
+
   function cart() { return (typeof getCart === 'function' ? getCart() : []); }
   function subtotalGrosze() { return cart().reduce((s, i) => s + Math.round(i.price * 100) * i.qty, 0); }
 
   function renderItems() {
     const box = $('co-items');
-    box.innerHTML = cart().map((it, i) => `
+    box.innerHTML = cart().map((it, i) => {
+      const live = productMap[it.id] || {};
+      const img = live.image || it.image || '';
+      const grad = live.gradient || gradients[i % 3];
+      const imgStyle = img
+        ? `background-image:url("${img}");background-size:cover;background-position:center`
+        : `background:${grad}`;
+      return `
       <div class="co-item">
-        <div class="co-item-img" style="background:${gradients[i % 3]}"></div>
+        <div class="co-item-img" style="${imgStyle}"></div>
         <div>
           <div class="co-item-name">${it.name}</div>
           <div class="co-item-meta">${it.size ? 'Rozm. ' + it.size + ' · ' : ''}${it.qty} szt.</div>
         </div>
         <div class="co-item-price">${fmt(Math.round(it.price * 100) * it.qty)}</div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   function renderShipping() {
@@ -220,5 +241,7 @@
     renderItems();
     renderShipping();
     renderTotals();
+    // Pull live product photos, then re-render so the summary shows the real images.
+    loadProductMap().then(renderItems);
   })();
 })();
