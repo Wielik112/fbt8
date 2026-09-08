@@ -82,3 +82,20 @@ export function normalizeProduct(body) {
 export function genId() {
   return 'p-' + crypto.randomBytes(4).toString('hex');
 }
+
+// Validates + coerces an incoming customer review payload.
+export function normalizeReview(body) {
+  if (!body || typeof body !== 'object') return { error: 'Brak danych opinii.' };
+
+  const orderNo = String(body.orderNo ?? body.order_no ?? '').trim();
+  const text    = String(body.body ?? body.text ?? '').trim();
+  let rating    = Math.round(Number(body.rating));
+
+  if (!orderNo) return { error: 'Podaj numer zamówienia.' };
+  if (orderNo.length > 60) return { error: 'Numer zamówienia jest za długi.' };
+  if (!text) return { error: 'Napisz treść opinii.' };
+  if (!Number.isFinite(rating)) rating = 5;
+  rating = Math.min(5, Math.max(1, rating));
+
+  return { value: { id: 'r-' + crypto.randomBytes(4).toString('hex'), orderNo, rating, body: text.slice(0, 1000) } };
+}
