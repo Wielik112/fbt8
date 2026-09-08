@@ -66,6 +66,9 @@ uses its fallback catalog.
 | `GET` | `/api/orders` | admin | List orders (`?status=&limit=&offset=&stats=1`) |
 | `GET` | `/api/orders/:id` | admin | Full order detail |
 | `PATCH` | `/api/orders/:id` | admin | Update status / tracking / notes |
+| `POST` | `/api/orders/:id/shipment` | admin | Create an InPost shipment |
+| `GET` | `/api/orders/:id/shipment` | admin | Refresh InPost shipment status |
+| `GET` | `/api/orders/:id/label` | admin | InPost label PDF (`?type=A6\|normal`) |
 | `GET` | `/api/health` | public | DB + config diagnostics (names only) |
 
 Admin requests are authorized by an HttpOnly, `Secure`, `SameSite=Strict`
@@ -122,15 +125,32 @@ Shipping methods and prices live in `api/_lib/commerce.js` (`SHIPPING_METHODS`,
 - **Kurier standardowy** — 19,99 zł
 - Free shipping from **300 zł**.
 
-**InPost — current state (structure ready, ShipX later).** The checkout captures
-the Paczkomat point, orders store `inpost_point` and the shipping method, and the
-admin shows/edits method, point/address and a tracking number. Point selection
-uses the official **InPost Geowidget** map when a token is set in
-`js/config.js` (`inpostGeowidgetToken`); with no token it falls back to manual
-Paczkomat code entry. Not yet wired: **ShipX** (auto-creating shipments and
-printing labels from admin) — that needs an InPost ShipX API token + org id and
-a new `api/_lib/inpost.js` client; the data model already carries everything it
-needs.
+### InPost shipping labels (ShipX)
+
+The full fulfilment loop is wired via **InPost ShipX** (`api/_lib/inpost.js`):
+
+1. Order is paid → shows in **/admin → Zamówienia** as *Opłacone*.
+2. Open the order → **Przesyłka InPost**: pick the parcel size (Gabaryt A/B/C,
+   plus weight for courier) → **Utwórz przesyłkę InPost**. The server calls
+   ShipX, creates the shipment, and stores its id + **tracking number** on the
+   order.
+3. **Etykieta A6 / A4** downloads the label **PDF** to print.
+4. Stick the label on the parcel and drop it in any Paczkomat (locker) or hand
+   it to the InPost courier. **Odśwież status** re-polls ShipX.
+
+The customer gets InPost tracking + notifications automatically — nothing is
+sent by hand. Only **InPost Paczkomat** and **Kurier InPost** orders get a label
+(the generic *Kurier* method is a non-InPost carrier you handle yourself).
+
+**Setup:** set `INPOST_SHIPX_TOKEN`, `INPOST_ORG_ID` and `INPOST_ENV`
+(`sandbox` → `production`) in the Vercel env. Get the API token + organization
+id from the InPost manager (API / ShipX section). For the checkout **map**
+picker, also set the public `inpostGeowidgetToken` in `js/config.js`; with no
+token, checkout falls back to manual Paczkomat code entry.
+
+Endpoints: `POST /api/orders/:id/shipment` (create), `GET
+/api/orders/:id/shipment` (refresh status), `GET /api/orders/:id/label?type=A6|normal`
+(label PDF) — all admin-only.
 
 ## Product detail pages
 

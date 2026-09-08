@@ -425,8 +425,104 @@ async function openOrder(id) {
     + (o.paidAt ? ` · Opłacono ${fmtDate(o.paidAt)}` : '')
     + (o.stripePaymentIntent ? ` · ${o.stripePaymentIntent}` : '');
 
+  renderInpostSection(o);
   orderModal.classList.remove('hidden');
 }
+
+/* ---------- InPost shipments ---------- */
+const INPOST_METHODS = ['inpost_locker', 'inpost_courier'];
+const SHIP_STATUS_LABELS = {
+  created: 'Utworzona', confirmed: 'Potwierdzona', offer_selected: 'Wybrano ofertę',
+  offers_prepared: 'Oferty gotowe', dispatched_by_sender: 'Nadana',
+  collected_from_sender: 'Odebrana od nadawcy', taken_by_courier: 'U kuriera',
+  adopted_at_source_branch: 'W sortowni', out_for_delivery: 'W doręczeniu',
+  ready_to_pickup: 'Gotowa do odbioru', delivered: 'Doręczona',
+  canceled: 'Anulowana', cancelled: 'Anulowana',
+};
+
+function renderInpostSection(o) {
+  const box = $('om-inpost');
+  if (!INPOST_METHODS.includes(o.shippingMethod)) { box.hidden = true; return; }
+  box.hidden = false;
+  const have = !!o.inpostShipmentId;
+  $('om-inpost-create').hidden = have;
+  $('om-inpost-have').hidden = !have;
+  $('om-weight-field').style.display = o.shippingMethod === 'inpost_courier' ? '' : 'none';
+
+  if (have) {
+    $('om-ship-tracking').textContent = o.trackingNumber || '—';
+    const raw = o.inpostStatus || '—';
+    const st = $('om-ship-status');
+    st.textContent = SHIP_STATUS_LABELS[raw] || raw;
+    st.className = 'ostatus ' + (raw === 'delivered' ? 'completed' : (raw === 'cancelled' || raw === 'canceled' ? 'cancelled' : 'shipped'));
+    $('om-ship-id').textContent = o.inpostShipmentId;
+  } else {
+    $('om-inpost-hint').textContent = o.paymentStatus !== 'paid'
+      ? 'Przesyłkę InPost można utworzyć po opłaceniu zamówienia.' : '';
+  }
+}
+
+async function createShipment() {
+  if (!currentOrder) return;
+  const btn = $('om-create-ship');
+  btn.disabled = true;
+  notice($('om-error'), '', 'err');
+  try {
+    const body = { template: $('om-parcel').value, weightKg: Number($('om-weight').value) || 1 };
+    const updated = await api(`/api/orders/${encodeURIComponent(currentOrder.id)}/shipment`, { method: 'POST', body });
+    currentOrder = updated;
+    const idx = ordersCache.findIndex((x) => x.id === updated.id);
+    if (idx >= 0) ordersCache[idx] = updated;
+    renderInpostSection(updated);
+    if (updated.trackingNumber) $('om-tracking').value = updated.trackingNumber;
+    ordersNotice(`Utworzono przesyłkę InPost dla ${updated.id}.`, 'ok');
+  } catch (err) {
+    if (err.status === 401) { notice($('om-error'), 'Sesja wygasła. Zaloguj się ponownie.', 'err'); setTimeout(() => { closeOrder(); show('login'); }, 1200); }
+    else notice($('om-error'), err.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function refreshShipment() {
+  if (!currentOrder?.inpostShipmentId) return;
+  try {
+    const updated = await api(`/api/orders/${encodeURIComponent(currentOrder.id)}/shipment`);
+    currentOrder = updated;
+    const idx = ordersCache.findIndex((x) => x.id === updated.id);
+    if (idx >= 0) ordersCache[idx] = updated;
+    renderInpostSection(updated);
+    ordersNotice('Zaktualizowano status przesyłki.', 'ok');
+  } catch (err) {
+    notice($('om-error'), err.message, 'err');
+  }
+}
+
+async function downloadLabel(type) {
+  if (!currentOrder?.inpostShipmentId) return;
+  notice($('om-error'), '', 'err');
+  try {
+    const res = await fetch(`/api/orders/${encodeURIComponent(currentOrder.id)}/label?type=${type}`, {
+      headers: authHeaders(), credentials: 'same-origin',
+    });
+    if (!res.ok) {
+      let m = 'Nie udało się pobrać etykiety.';
+      try { m = (await res.json()).error || m; } catch { /* not json */ }
+      throw new Error(m);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (err) {
+    notice($('om-error'), err.message, 'err');
+  }
+}
+
+$('om-create-ship').addEventListener('click', createShipment);
+$('om-refresh-ship').addEventListener('click', refreshShipment);
+$('om-label-a6').addEventListener('click', () => downloadLabel('A6'));
+$('om-label-a4').addEventListener('click', () => downloadLabel('normal'));
 
 function closeOrder() { orderModal.classList.add('hidden'); currentOrder = null; }
 
