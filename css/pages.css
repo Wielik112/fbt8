@@ -146,12 +146,12 @@
 
 .shop-layout { display: grid; grid-template-columns: 260px 1fr; gap: 44px; align-items: start; padding: 50px 0 120px; }
 .filters {
-  /* Pinned to the top: all filters stay visible in one block and the panel
-     stays in place while the product list scrolls (no inner scrollbar). */
-  position: sticky;
-  top: calc(var(--nav-h) + 24px);
+  /* Normal left-hand column: all filters visible at the top, scrolls away
+     with the page instead of being dragged along the whole shop. */
+  position: static;
+  align-self: start;
 }
-.filter-group { border-bottom: 1px solid var(--line); padding: 24px 0; }
+.filter-group { border-bottom: 1px solid var(--line); padding: 20px 0; }
 .filter-group:first-child { padding-top: 0; }
 .filter-group h4 { font-size: 15px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 18px; font-style: normal; }
 .filter-opt { display: flex; align-items: center; gap: 12px; padding: 7px 0; color: var(--grey-1); font-size: 15px; cursor: pointer; transition: color 0.2s; }
