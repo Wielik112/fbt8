@@ -7,6 +7,7 @@
 
 const CATEGORIES = ['Koszulki', 'Bluzy', 'Spodnie', 'Kurtki', 'Obuwie', 'Akcesoria'];
 const CONDITIONS = ['Nowy', 'Używany'];
+const GENDERS = ['Męskie', 'Damskie', 'Unisex'];
 const TOKEN_KEY = 'fbt_admin_token';
 const DEFAULT_GRADIENT = 'linear-gradient(135deg,#2a0409,#1c1c22)';
 
@@ -151,7 +152,7 @@ function renderRows() {
       <td>${media}</td>
       <td>
         <div class="pname">${esc(p.name)}</div>
-        <div class="pmeta">${esc(p.brand)} · ${esc(p.id)}</div>
+        <div class="pmeta">${esc(p.brand)} · ${esc(p.gender || 'Unisex')} · ${esc(p.id)}</div>
       </td>
       <td class="hide-sm">${esc(p.cat)}</td>
       <td class="hide-sm"><span class="pill ${condClass}">${esc(p.condition)}</span></td>
@@ -219,6 +220,7 @@ function openModal(product) {
 
   fillSelect($('f-cat'), CATEGORIES, product?.cat || CATEGORIES[0]);
   fillSelect($('f-condition'), CONDITIONS, product?.condition || CONDITIONS[0]);
+  fillSelect($('f-gender'), GENDERS, product?.gender || 'Unisex');
 
   $('f-id').value        = product?.id || '';
   $('f-name').value      = product?.name || '';
@@ -310,6 +312,7 @@ $('product-form').addEventListener('submit', async (e) => {
     brand: $('f-brand').value.trim(),
     cat: $('f-cat').value,
     condition: $('f-condition').value,
+    gender: $('f-gender').value,
     price: $('f-price').value,
     old: $('f-old').value,
     description: $('f-description').value.trim(),

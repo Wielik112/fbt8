@@ -117,6 +117,7 @@ function initShop() {
 
   const state = {
     cat: 'Wszystkie',
+    gender: 'Wszystkie',    // Wszystkie | Męskie | Damskie (Unisex shows in both)
     brand: 'Wszystkie',     // single active brand chip
     conditions: new Set(),  // empty = all
     sizes: new Set(),       // empty = all
@@ -126,8 +127,9 @@ function initShop() {
     sort: 'default',
   };
 
-  // Preselect a category when arriving from a homepage tile (sklep.html?cat=…).
-  const wantedCat = new URLSearchParams(location.search).get('cat');
+  // Preselect a category/gender when arriving from a link (sklep.html?cat=…&gender=…).
+  const params = new URLSearchParams(location.search);
+  const wantedCat = params.get('cat');
   if (wantedCat && document.querySelector(`.chip[data-cat="${wantedCat}"]`)) {
     state.cat = wantedCat;
     document.querySelectorAll('.chip[data-cat]').forEach(c =>
@@ -135,10 +137,24 @@ function initShop() {
     const radio = document.querySelector(`input[name="cat"][value="${wantedCat}"]`);
     if (radio) radio.checked = true;
   }
+  const wantedGender = params.get('gender');
+  if (wantedGender && ['Męskie', 'Damskie'].includes(wantedGender)) {
+    state.gender = wantedGender;
+    const gr = document.querySelector(`input[name="gender"][value="${wantedGender}"]`);
+    if (gr) gr.checked = true;
+  }
+
+  // A product matches the gender filter if it is that gender or Unisex.
+  function matchGender(p) {
+    if (state.gender === 'Wszystkie') return true;
+    const g = p.gender || 'Unisex';
+    return g === state.gender || g === 'Unisex';
+  }
 
   function currentList() {
     let list = PRODUCTS.filter(p =>
       (state.cat === 'Wszystkie' || p.cat === state.cat) &&
+      matchGender(p) &&
       (state.brand === 'Wszystkie' || p.brand === state.brand) &&
       (!state.conditions.size || state.conditions.has(p.condition)) &&
       (!state.sizes.size || p.sizes.some(s => state.sizes.has(s))) &&
@@ -177,6 +193,11 @@ function initShop() {
         c.classList.toggle('active', c.dataset.cat === state.cat));
       draw();
     });
+  });
+
+  // Gender radios (Wszystkie / Męskie / Damskie)
+  document.querySelectorAll('input[name="gender"]').forEach(r => {
+    r.addEventListener('change', () => { state.gender = r.value; draw(); });
   });
 
   // Brand chips (single active, like "Wszystkie")
@@ -260,13 +281,15 @@ function initShop() {
 
   // Reset
   document.querySelector('#filter-reset')?.addEventListener('click', () => {
-    state.cat = 'Wszystkie'; state.brand = 'Wszystkie';
+    state.cat = 'Wszystkie'; state.brand = 'Wszystkie'; state.gender = 'Wszystkie';
     state.conditions.clear(); state.sizes.clear(); state.colors.clear();
     state.sort = 'default';
 
     document.querySelectorAll('.filters input[type="checkbox"]').forEach(c => c.checked = false);
     const allRadio = document.querySelector('input[name="cat"][value="Wszystkie"]');
     if (allRadio) allRadio.checked = true;
+    const allGender = document.querySelector('input[name="gender"][value="Wszystkie"]');
+    if (allGender) allGender.checked = true;
     const sortSel = document.querySelector('#sort'); if (sortSel) sortSel.value = 'default';
 
     document.querySelectorAll('.chip[data-cat]').forEach(c => c.classList.toggle('active', c.dataset.cat === 'Wszystkie'));
