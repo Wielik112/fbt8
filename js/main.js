@@ -164,43 +164,17 @@ document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
 });
 
 /* ============================================
-   Search overlay — animated placeholder + live suggestions
+   Inline nav search — bar next to the magnifier,
+   animated placeholder + live suggestions dropdown
    ============================================ */
 (function initSearch() {
-  // Build the overlay once and attach to <body>.
-  const overlay = document.createElement('div');
-  overlay.className = 'search-overlay';
-  overlay.innerHTML = `
-    <div class="search-panel" role="dialog" aria-label="Wyszukiwarka produktów">
-      <form class="search-box" role="search">
-        <svg class="search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input type="search" class="search-input" autocomplete="off" aria-label="Szukaj produktów">
-        <button type="button" class="search-close" aria-label="Zamknij">×</button>
-      </form>
-      <div class="search-results" id="search-results"></div>
-    </div>`;
-  document.body.appendChild(overlay);
+  const icons = document.querySelectorAll('.nav-actions [aria-label="Szukaj"]');
+  if (!icons.length) return;
 
-  const input   = overlay.querySelector('.search-input');
-  const results = overlay.querySelector('#search-results');
-  const form    = overlay.querySelector('.search-box');
-
-  // ---- Animated typewriter placeholder ----
   const SAMPLES = ['Nike', 'Adidas', 'Puma', 'Mercurial', 'korki', 'rękawice bramkarskie', 'Predator', 'halówki', 'piłki'];
-  let sIdx = 0, cIdx = 0, deleting = false, typeTimer = null;
-  function tick() {
-    const word = SAMPLES[sIdx];
-    cIdx += deleting ? -1 : 1;
-    input.setAttribute('placeholder', 'Szukaj: ' + word.slice(0, cIdx) + '▍');
-    let delay = deleting ? 45 : 90;
-    if (!deleting && cIdx === word.length) { deleting = true; delay = 1100; }
-    else if (deleting && cIdx === 0) { deleting = false; sIdx = (sIdx + 1) % SAMPLES.length; delay = 350; }
-    typeTimer = setTimeout(tick, delay);
-  }
-  function startType() { if (!typeTimer && !input.value) tick(); }
-  function stopType() { clearTimeout(typeTimer); typeTimer = null; }
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  // ---- Product data (fetched once, cached) ----
+  // Product data fetched once and shared by every search bar on the page.
   let cache = null;
   async function getProducts() {
     if (cache) return cache;
@@ -211,66 +185,88 @@ document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
     return Array.isArray(cache) ? cache : [];
   }
 
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  icons.forEach(setup);
 
-  let debounce;
-  async function renderResults() {
-    const q = input.value.trim().toLowerCase();
-    if (!q) { results.innerHTML = ''; results.classList.remove('has'); return; }
-    const list = (await getProducts()).filter((p) => {
-      const hay = `${p.name || ''} ${p.brand || ''} ${p.cat || ''} ${p.level || ''} ${p.surface || ''}`.toLowerCase();
-      return hay.includes(q);
-    }).slice(0, 8);
+  function setup(icon) {
+    // Build the inline bar: [ input ][ 🔍 ] with the icon kept on the right.
+    const form = document.createElement('form');
+    form.className = 'nav-search';
+    form.setAttribute('role', 'search');
 
-    results.classList.add('has');
-    if (!list.length) {
-      results.innerHTML = `<div class="search-empty">Brak wyników dla „${esc(input.value.trim())}”. Naciśnij Enter, aby przejść do sklepu.</div>`;
-      return;
+    const input = document.createElement('input');
+    input.type = 'search';
+    input.className = 'nav-search-input';
+    input.autocomplete = 'off';
+    input.setAttribute('aria-label', 'Szukaj produktów');
+
+    const results = document.createElement('div');
+    results.className = 'nav-search-results';
+
+    icon.parentNode.insertBefore(form, icon);
+    form.appendChild(input);   // input on the LEFT
+    form.appendChild(icon);    // magnifier stays on the right
+    form.appendChild(results);
+    icon.classList.add('nav-search-btn');
+
+    // ---- Animated typewriter placeholder (runs while the field is empty) ----
+    let sIdx = 0, cIdx = 0, deleting = false, timer = null;
+    function tick() {
+      const word = SAMPLES[sIdx];
+      cIdx += deleting ? -1 : 1;
+      input.setAttribute('placeholder', 'Szukaj: ' + word.slice(0, cIdx) + '▍');
+      let delay = deleting ? 45 : 95;
+      if (!deleting && cIdx === word.length) { deleting = true; delay = 1100; }
+      else if (deleting && cIdx === 0) { deleting = false; sIdx = (sIdx + 1) % SAMPLES.length; delay = 350; }
+      timer = setTimeout(tick, delay);
     }
-    results.innerHTML = list.map((p) => {
-      const img = p.image
-        ? `<span class="sr-img" style="background-image:url('${esc(p.image)}')"></span>`
-        : `<span class="sr-img" style="background:${esc(p.gradient || 'linear-gradient(135deg,#2a0409,#1c1c22)')}"></span>`;
-      return `<a class="search-result" href="produkt.html?id=${encodeURIComponent(p.id)}">
-        ${img}
-        <span class="sr-main"><span class="sr-name">${esc(p.name)}</span><span class="sr-meta">${esc(p.brand)} · ${esc(p.cat)}</span></span>
-        <span class="sr-price">${esc(p.price)} zł</span>
-      </a>`;
-    }).join('');
-  }
+    function startType() { if (!timer && !input.value) tick(); }
+    function stopType() { clearTimeout(timer); timer = null; }
 
-  function open() {
-    overlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    input.value = '';
-    results.innerHTML = '';
-    results.classList.remove('has');
+    // ---- Live suggestions ----
+    let debounce;
+    function hide() { results.classList.remove('show'); }
+    async function render() {
+      const q = input.value.trim().toLowerCase();
+      if (!q) { results.innerHTML = ''; hide(); return; }
+      const list = (await getProducts()).filter((p) => {
+        const hay = `${p.name || ''} ${p.brand || ''} ${p.cat || ''} ${p.level || ''} ${p.surface || ''}`.toLowerCase();
+        return hay.includes(q);
+      }).slice(0, 7);
+
+      if (!list.length) {
+        results.innerHTML = `<div class="search-empty">Brak wyników. Naciśnij Enter, aby przejść do sklepu.</div>`;
+      } else {
+        results.innerHTML = list.map((p) => {
+          const img = p.image
+            ? `<span class="sr-img" style="background-image:url('${esc(p.image)}')"></span>`
+            : `<span class="sr-img" style="background:${esc(p.gradient || 'linear-gradient(135deg,#2a0409,#1c1c22)')}"></span>`;
+          return `<a class="search-result" href="produkt.html?id=${encodeURIComponent(p.id)}">
+            ${img}
+            <span class="sr-main"><span class="sr-name">${esc(p.name)}</span><span class="sr-meta">${esc(p.brand)} · ${esc(p.cat)}</span></span>
+            <span class="sr-price">${esc(p.price)} zł</span>
+          </a>`;
+        }).join('');
+      }
+      results.classList.add('show');
+    }
+
+    function goToShop() {
+      const q = input.value.trim();
+      if (!q) { input.focus(); return; }
+      location.href = `sklep.html?q=${encodeURIComponent(q)}`;
+    }
+
+    input.addEventListener('input', () => {
+      if (input.value) stopType(); else startType();
+      clearTimeout(debounce);
+      debounce = setTimeout(render, 160);
+    });
+    input.addEventListener('focus', () => { getProducts(); if (results.innerHTML) results.classList.add('show'); });
+    input.addEventListener('blur', () => setTimeout(hide, 160));
+    form.addEventListener('submit', (e) => { e.preventDefault(); goToShop(); });
+    // The magnifier acts as the submit button.
+    icon.addEventListener('click', (e) => { e.preventDefault(); goToShop(); });
+
     startType();
-    setTimeout(() => input.focus(), 60);
-    getProducts(); // warm the cache
   }
-  function close() {
-    overlay.classList.remove('open');
-    document.body.style.overflow = '';
-    stopType();
-  }
-  function goToShop() {
-    const q = input.value.trim();
-    location.href = q ? `sklep.html?q=${encodeURIComponent(q)}` : 'sklep.html';
-  }
-
-  // Wire every search icon in the nav to open the overlay.
-  document.querySelectorAll('[aria-label="Szukaj"]').forEach((btn) => {
-    btn.addEventListener('click', (e) => { e.preventDefault(); open(); });
-  });
-
-  input.addEventListener('input', () => {
-    if (input.value) stopType(); else startType();
-    clearTimeout(debounce);
-    debounce = setTimeout(renderResults, 160);
-  });
-  form.addEventListener('submit', (e) => { e.preventDefault(); goToShop(); });
-  overlay.querySelector('.search-close').addEventListener('click', close);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.classList.contains('open')) close(); });
 })();
