@@ -151,7 +151,7 @@
     $('c-point').value = v;
     $('point-picked').style.display = v ? 'block' : 'none';
     $('point-code').textContent = v;
-    $('point-name').textContent = name ? ` — ${name}` : '';
+    $('point-name').textContent = name ? `, ${name}` : '';
   }
 
   function openGeowidget() {

@@ -80,12 +80,14 @@ export function normalizeProduct(body) {
   const tag      = String(body.tag ?? '').trim() || null;
   const gradient = String(body.gradient ?? '').trim() || DEFAULT_GRADIENT;
   const description = String(body.description ?? '').trim().slice(0, 2000) || null;
+  // Uwagi outletowe / cechy charakterystyczne egzemplarza (np. uszkodzone opakowanie).
+  const note = String(body.note ?? '').trim().slice(0, 1000) || null;
   const image  = cleanImage(body.image);
   const images = toImageArray(body.images);
 
   const value = {
     id: String(body.id ?? '').trim() || null,
-    name, brand, cat, condition, gender, price, old, description, tag, tagType,
+    name, brand, cat, condition, gender, price, old, description, note, tag, tagType,
     level, surface,
     sizes:  toStringArray(body.sizes),
     colors: toStringArray(body.colors),

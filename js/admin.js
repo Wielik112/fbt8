@@ -311,6 +311,7 @@ function openModal(product) {
   $('f-price').value     = product?.price ?? '';
   $('f-old').value       = product?.old ?? '';
   $('f-description').value = product?.description || '';
+  $('f-note').value      = product?.note || '';
   $('f-tag').value       = product?.tag || '';
   $('f-tagType').value   = product?.tagType || 'sale';
   $('f-sizes').value     = (product?.sizes || []).join(', ');
@@ -400,6 +401,7 @@ $('product-form').addEventListener('submit', async (e) => {
     price: $('f-price').value,
     old: $('f-old').value,
     description: $('f-description').value.trim(),
+    note: $('f-note').value.trim(),
     tag: $('f-tag').value.trim(),
     tagType: $('f-tagType').value,
     sizes: splitList($('f-sizes').value),
@@ -530,7 +532,7 @@ function renderPager() {
   const canNext = to < ordersState.total;
   pager.innerHTML = `
     <button class="btn btn-ghost btn-sm" ${canPrev ? '' : 'disabled'} id="pg-prev">← Poprzednie</button>
-    <span>${from}–${to} z ${ordersState.total}</span>
+    <span>${from} do ${to} z ${ordersState.total}</span>
     <button class="btn btn-ghost btn-sm" ${canNext ? '' : 'disabled'} id="pg-next">Następne →</button>`;
   if (canPrev) $('pg-prev').addEventListener('click', () => { ordersState.offset = Math.max(0, ordersState.offset - ordersState.limit); loadOrders(); });
   if (canNext) $('pg-next').addEventListener('click', () => { ordersState.offset += ordersState.limit; loadOrders(); });

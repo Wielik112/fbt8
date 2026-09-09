@@ -39,7 +39,7 @@
   }
 
   function defaultDesc(p) {
-    return `${p.name} od ${p.brand}. ${p.cat} w outletowej cenie — sprawdzona jakość i sportowy charakter. `
+    return `${p.name} od ${p.brand}. ${p.cat} w outletowej cenie. Sprawdzona jakość i sportowy charakter. `
       + `Idealne uzupełnienie Twojej garderoby treningowej.`;
   }
 
@@ -99,6 +99,7 @@
     $('#pd-cond').textContent = `${p.condition} · Kat. A`;
     if (p.level) { $('#pd-level').textContent = p.level; $('#pd-level-row').hidden = false; }
     if (p.surface) { $('#pd-surface').textContent = p.surface; $('#pd-surface-row').hidden = false; }
+    if (p.note && p.note.trim()) { $('#pd-note-text').textContent = p.note.trim(); $('#pd-note').hidden = false; }
 
     // Add-to-cart: main.js already bound the click handler to this button;
     // it reads these data-* attributes at click time.
