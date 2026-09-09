@@ -34,10 +34,11 @@ async function loadProducts() {
   return FALLBACK_PRODUCTS;
 }
 
-// Original seeded products (ids p01..p12) have hand-crafted static pages;
-// everything else uses the dynamic template produkt.html?id=<id>.
+// All products use the dynamic template produkt.html?id=<id>, which renders
+// from the live catalog (API, or FALLBACK_PRODUCTS offline). The old
+// hand-crafted produkt-pNN.html pages are no longer linked.
 function productHref(p) {
-  return /^p\d{2}$/.test(p.id) ? `produkt-${p.id}.html` : `produkt.html?id=${encodeURIComponent(p.id)}`;
+  return `produkt.html?id=${encodeURIComponent(p.id)}`;
 }
 
 function productCard(p) {

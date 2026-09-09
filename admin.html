@@ -384,14 +384,20 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
         <textarea id="f-description" rows="5" placeholder="Opisz produkt — materiał, krój, przeznaczenie, stan itp. Tekst pojawi się na stronie produktu."></textarea>
         <div class="hint">Opcjonalny, ale zalecany — jeśli pusty, na stronie produktu pojawi się opis automatyczny.</div>
       </div>
+      <div class="field">
+        <label for="f-sizes">Rozmiary (po przecinku)</label>
+        <input type="text" id="f-sizes" placeholder="40, 41, 42, 43">
+      </div>
       <div class="grid2">
         <div class="field">
-          <label for="f-sizes">Rozmiary (po przecinku)</label>
-          <input type="text" id="f-sizes" placeholder="S, M, L, XL">
+          <label for="f-level">Zaawansowanie (buty piłkarskie)</label>
+          <select id="f-level"></select>
+          <div class="hint">Dotyczy butów piłkarskich. Zostaw „—” dla pozostałych produktów.</div>
         </div>
         <div class="field">
-          <label for="f-colors">Kolory (po przecinku)</label>
-          <input type="text" id="f-colors" placeholder="Czarny, Czerwony">
+          <label for="f-surface">Przeznaczenie (buty piłkarskie)</label>
+          <select id="f-surface"></select>
+          <div class="hint">Rodzaj nawierzchni. Zostaw „—” dla pozostałych produktów.</div>
         </div>
       </div>
       <div class="field">

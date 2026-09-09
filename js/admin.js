@@ -300,7 +300,7 @@ document.querySelectorAll('.tab').forEach((btn) => {
 const modal = $('modal');
 
 function fillSelect(sel, options, current) {
-  sel.innerHTML = options.map((o) => `<option value="${esc(o)}"${o === current ? ' selected' : ''}>${esc(o)}</option>`).join('');
+  sel.innerHTML = options.map((o) => `<option value="${esc(o)}"${o === current ? ' selected' : ''}>${esc(o) || '—'}</option>`).join('');
 }
 
 function openModal(product) {
@@ -311,6 +311,8 @@ function openModal(product) {
   fillSelect($('f-cat'), CATEGORIES, product?.cat || CATEGORIES[0]);
   fillSelect($('f-condition'), CONDITIONS, product?.condition || CONDITIONS[0]);
   fillSelect($('f-gender'), GENDERS, product?.gender || 'Unisex');
+  fillSelect($('f-level'), ['', ...LEVELS], product?.level || '');
+  fillSelect($('f-surface'), ['', ...SURFACES], product?.surface || '');
 
   $('f-id').value        = product?.id || '';
   $('f-name').value      = product?.name || '';
@@ -321,7 +323,6 @@ function openModal(product) {
   $('f-tag').value       = product?.tag || '';
   $('f-tagType').value   = product?.tagType || 'sale';
   $('f-sizes').value     = (product?.sizes || []).join(', ');
-  $('f-colors').value    = (product?.colors || []).join(', ');
 
   mainImage = product?.image || '';
   galleryImages = Array.isArray(product?.images) ? [...product.images] : [];
@@ -403,13 +404,14 @@ $('product-form').addEventListener('submit', async (e) => {
     cat: $('f-cat').value,
     condition: $('f-condition').value,
     gender: $('f-gender').value,
+    level: $('f-level').value,
+    surface: $('f-surface').value,
     price: $('f-price').value,
     old: $('f-old').value,
     description: $('f-description').value.trim(),
     tag: $('f-tag').value.trim(),
     tagType: $('f-tagType').value,
     sizes: splitList($('f-sizes').value),
-    colors: splitList($('f-colors').value),
     image: mainImage,
     images: galleryImages,
   };
