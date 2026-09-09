@@ -149,15 +149,17 @@ function renderRows() {
     const media = p.image
       ? `<img class="thumb-img" src="${esc(p.image)}" alt="">`
       : `<div class="swatch" style="background:${esc(p.gradient || DEFAULT_GRADIENT)}"></div>`;
+    const extra = [p.level, p.surface].filter(Boolean).map(esc).join(' · ');
+    const noteFlag = (p.note && p.note.trim()) ? ' · 📝 uwagi' : '';
     return `
     <tr data-id="${esc(p.id)}">
       <td>${media}</td>
       <td>
         <div class="pname">${esc(p.name)}</div>
-        <div class="pmeta">${esc(p.brand)} · ${esc(p.gender || 'Unisex')} · ${esc(p.id)}</div>
+        <div class="pmeta">${esc(p.brand)} · ${esc(p.gender || 'Unisex')} · ${esc(p.id)}${extra ? ' · ' + extra : ''}${noteFlag}</div>
       </td>
       <td class="hide-sm">${esc(p.cat)}</td>
-      <td class="hide-sm"><span class="pill ${condClass}">${esc(p.condition)}</span></td>
+      <td class="hide-sm"><span class="pill ${condClass}">${esc(p.condition)} · Kat. A</span></td>
       <td><span class="price">${esc(p.price)} zł ${old}</span></td>
       <td>
         <div class="row-actions">
