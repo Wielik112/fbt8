@@ -35,6 +35,9 @@ export async function ensureOrdersSchema() {
   await sql`CREATE INDEX IF NOT EXISTS orders_created_idx ON orders (created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS orders_status_idx ON orders (status)`;
   await sql`CREATE INDEX IF NOT EXISTS orders_session_idx ON orders (stripe_session_id)`;
+  // InPost ShipX shipment linkage (added after the table first shipped).
+  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS inpost_shipment_id TEXT`;
+  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS inpost_status TEXT`;
   ordersSchemaReady = true;
 }
 
@@ -63,6 +66,8 @@ export function mapOrder(r) {
     customer: { email: r.customer_email, name: r.customer_name, phone: r.customer_phone },
     shippingAddress: r.shipping_address || null,
     inpostPoint: r.inpost_point,
+    inpostShipmentId: r.inpost_shipment_id,
+    inpostStatus: r.inpost_status,
     trackingNumber: r.tracking_number,
     notes: r.notes,
     stripeSessionId: r.stripe_session_id,
@@ -135,6 +140,31 @@ export async function markPaymentStatus(id, paymentStatus, { cancel = false } = 
     UPDATE orders SET
       payment_status = ${paymentStatus},
       status = CASE WHEN ${cancel} AND status = 'pending' THEN 'cancelled' ELSE status END,
+      updated_at = now()
+    WHERE id = ${id}
+    RETURNING *`;
+  return rows[0] ? mapOrder(rows[0]) : null;
+}
+
+// Records the created InPost shipment (id, tracking, status) on the order.
+export async function setInpostShipment(id, { shipmentId, trackingNumber, status }) {
+  const { rows } = await sql`
+    UPDATE orders SET
+      inpost_shipment_id = ${shipmentId},
+      inpost_status = ${status || null},
+      tracking_number = COALESCE(${trackingNumber || null}, tracking_number),
+      updated_at = now()
+    WHERE id = ${id}
+    RETURNING *`;
+  return rows[0] ? mapOrder(rows[0]) : null;
+}
+
+// Refreshes just the InPost shipment status / tracking after polling ShipX.
+export async function updateInpostStatus(id, { status, trackingNumber }) {
+  const { rows } = await sql`
+    UPDATE orders SET
+      inpost_status = COALESCE(${status || null}, inpost_status),
+      tracking_number = COALESCE(${trackingNumber || null}, tracking_number),
       updated_at = now()
     WHERE id = ${id}
     RETURNING *`;
