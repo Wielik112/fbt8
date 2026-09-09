@@ -124,6 +124,7 @@ function initShop() {
     sizes: new Set(),       // empty = all
     levels: new Set(),      // zaawansowanie — empty = all
     surfaces: new Set(),    // przeznaczenie — empty = all
+    q: '',                  // free-text search (from ?q= or search overlay)
     priceMin: 0,
     priceMax: 2000,
     sort: 'default',
@@ -146,6 +147,21 @@ function initShop() {
     if (gr) gr.checked = true;
   }
 
+  // Free-text search coming from the search overlay (sklep.html?q=…).
+  const wantedQ = (params.get('q') || '').trim();
+  if (wantedQ) {
+    state.q = wantedQ.toLowerCase();
+    const bar = document.querySelector('.count-txt');
+    if (bar) bar.insertAdjacentHTML('afterend',
+      `<span class="search-tag" style="margin-left:12px;color:var(--grey-2);font-size:13px">Wyniki dla: <strong style="color:#fff">${wantedQ.replace(/[<>&]/g, '')}</strong></span>`);
+  }
+
+  function matchQuery(p) {
+    if (!state.q) return true;
+    return `${p.name || ''} ${p.brand || ''} ${p.cat || ''} ${p.level || ''} ${p.surface || ''}`
+      .toLowerCase().includes(state.q);
+  }
+
   // A product matches the gender filter if it is that gender or Unisex.
   function matchGender(p) {
     if (state.gender === 'Wszystkie') return true;
@@ -162,6 +178,7 @@ function initShop() {
       (!state.sizes.size || p.sizes.some(s => state.sizes.has(s))) &&
       (!state.levels.size || state.levels.has(p.level)) &&
       (!state.surfaces.size || state.surfaces.has(p.surface)) &&
+      matchQuery(p) &&
       (p.price >= state.priceMin && p.price <= state.priceMax)
     );
     if (state.sort === 'low')  list = [...list].sort((a, b) => a.price - b.price);
@@ -309,6 +326,7 @@ function initShop() {
   document.querySelector('#filter-reset')?.addEventListener('click', () => {
     state.cat = 'Wszystkie'; state.brand = 'Wszystkie'; state.gender = 'Wszystkie';
     state.conditions.clear(); state.sizes.clear(); state.levels.clear(); state.surfaces.clear();
+    state.q = ''; document.querySelector('.search-tag')?.remove();
     state.sort = 'default';
 
     document.querySelectorAll('.filters input[type="checkbox"]').forEach(c => c.checked = false);

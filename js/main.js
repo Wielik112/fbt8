@@ -162,3 +162,115 @@ const path = location.pathname.split('/').pop() || 'index.html';
 document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
   if (a.getAttribute('href') === path) a.classList.add('active');
 });
+
+/* ============================================
+   Search overlay — animated placeholder + live suggestions
+   ============================================ */
+(function initSearch() {
+  // Build the overlay once and attach to <body>.
+  const overlay = document.createElement('div');
+  overlay.className = 'search-overlay';
+  overlay.innerHTML = `
+    <div class="search-panel" role="dialog" aria-label="Wyszukiwarka produktów">
+      <form class="search-box" role="search">
+        <svg class="search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="search" class="search-input" autocomplete="off" aria-label="Szukaj produktów">
+        <button type="button" class="search-close" aria-label="Zamknij">×</button>
+      </form>
+      <div class="search-results" id="search-results"></div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const input   = overlay.querySelector('.search-input');
+  const results = overlay.querySelector('#search-results');
+  const form    = overlay.querySelector('.search-box');
+
+  // ---- Animated typewriter placeholder ----
+  const SAMPLES = ['Nike', 'Adidas', 'Puma', 'Mercurial', 'korki', 'rękawice bramkarskie', 'Predator', 'halówki', 'piłki'];
+  let sIdx = 0, cIdx = 0, deleting = false, typeTimer = null;
+  function tick() {
+    const word = SAMPLES[sIdx];
+    cIdx += deleting ? -1 : 1;
+    input.setAttribute('placeholder', 'Szukaj: ' + word.slice(0, cIdx) + '▍');
+    let delay = deleting ? 45 : 90;
+    if (!deleting && cIdx === word.length) { deleting = true; delay = 1100; }
+    else if (deleting && cIdx === 0) { deleting = false; sIdx = (sIdx + 1) % SAMPLES.length; delay = 350; }
+    typeTimer = setTimeout(tick, delay);
+  }
+  function startType() { if (!typeTimer && !input.value) tick(); }
+  function stopType() { clearTimeout(typeTimer); typeTimer = null; }
+
+  // ---- Product data (fetched once, cached) ----
+  let cache = null;
+  async function getProducts() {
+    if (cache) return cache;
+    try {
+      const r = await fetch('/api/products', { headers: { Accept: 'application/json' } });
+      cache = r.ok ? await r.json() : [];
+    } catch { cache = []; }
+    return Array.isArray(cache) ? cache : [];
+  }
+
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  let debounce;
+  async function renderResults() {
+    const q = input.value.trim().toLowerCase();
+    if (!q) { results.innerHTML = ''; results.classList.remove('has'); return; }
+    const list = (await getProducts()).filter((p) => {
+      const hay = `${p.name || ''} ${p.brand || ''} ${p.cat || ''} ${p.level || ''} ${p.surface || ''}`.toLowerCase();
+      return hay.includes(q);
+    }).slice(0, 8);
+
+    results.classList.add('has');
+    if (!list.length) {
+      results.innerHTML = `<div class="search-empty">Brak wyników dla „${esc(input.value.trim())}”. Naciśnij Enter, aby przejść do sklepu.</div>`;
+      return;
+    }
+    results.innerHTML = list.map((p) => {
+      const img = p.image
+        ? `<span class="sr-img" style="background-image:url('${esc(p.image)}')"></span>`
+        : `<span class="sr-img" style="background:${esc(p.gradient || 'linear-gradient(135deg,#2a0409,#1c1c22)')}"></span>`;
+      return `<a class="search-result" href="produkt.html?id=${encodeURIComponent(p.id)}">
+        ${img}
+        <span class="sr-main"><span class="sr-name">${esc(p.name)}</span><span class="sr-meta">${esc(p.brand)} · ${esc(p.cat)}</span></span>
+        <span class="sr-price">${esc(p.price)} zł</span>
+      </a>`;
+    }).join('');
+  }
+
+  function open() {
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    input.value = '';
+    results.innerHTML = '';
+    results.classList.remove('has');
+    startType();
+    setTimeout(() => input.focus(), 60);
+    getProducts(); // warm the cache
+  }
+  function close() {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    stopType();
+  }
+  function goToShop() {
+    const q = input.value.trim();
+    location.href = q ? `sklep.html?q=${encodeURIComponent(q)}` : 'sklep.html';
+  }
+
+  // Wire every search icon in the nav to open the overlay.
+  document.querySelectorAll('[aria-label="Szukaj"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => { e.preventDefault(); open(); });
+  });
+
+  input.addEventListener('input', () => {
+    if (input.value) stopType(); else startType();
+    clearTimeout(debounce);
+    debounce = setTimeout(renderResults, 160);
+  });
+  form.addEventListener('submit', (e) => { e.preventDefault(); goToShop(); });
+  overlay.querySelector('.search-close').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.classList.contains('open')) close(); });
+})();
