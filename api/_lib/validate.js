@@ -1,9 +1,19 @@
 import crypto from 'node:crypto';
 
-export const CATEGORIES  = ['Koszulki', 'Bluzy', 'Spodnie', 'Kurtki', 'Obuwie', 'Akcesoria'];
-export const CONDITIONS  = ['Nowy', 'Używany'];
+export const CATEGORIES  = ['Buty piłkarskie', 'Buty sportowe', 'Rękawice bramkarskie', 'Piłki', 'Akcesoria'];
+export const CONDITIONS  = ['Nowy']; // sklep sprzedaje wyłącznie nowe produkty (Kategoria A)
 export const GENDERS     = ['Męskie', 'Damskie', 'Unisex'];
 export const TAG_TYPES   = ['sale', 'hit', 'new'];
+
+// Poziom zaawansowania — istotny głównie dla butów piłkarskich.
+export const LEVELS = ['Rekreacyjne', 'Treningowe', 'Półprofesjonalne', 'Profesjonalne'];
+// Przeznaczenie (rodzaj nawierzchni) — dla butów piłkarskich.
+export const SURFACES = [
+  'Na trawę (lanki)',
+  'Na sztuczną trawę/orlika (turfy)',
+  'Na mokrą trawę (wkręty/mixy)',
+  'Na halę (halówki)',
+];
 const DEFAULT_GRADIENT   = 'linear-gradient(135deg,#2a0409,#1c1c22)';
 
 function toStringArray(v) {
@@ -52,6 +62,12 @@ export function normalizeProduct(body) {
   let condition = String(body.condition ?? '').trim();
   if (!CONDITIONS.includes(condition)) condition = 'Nowy';
 
+  // Zaawansowanie i przeznaczenie — opcjonalne (używane dla butów piłkarskich).
+  let level = String(body.level ?? '').trim();
+  if (!LEVELS.includes(level)) level = '';
+  let surface = String(body.surface ?? '').trim();
+  if (!SURFACES.includes(surface)) surface = '';
+
   let gender = String(body.gender ?? '').trim();
   if (!GENDERS.includes(gender)) gender = 'Unisex';
 
@@ -70,6 +86,7 @@ export function normalizeProduct(body) {
   const value = {
     id: String(body.id ?? '').trim() || null,
     name, brand, cat, condition, gender, price, old, description, tag, tagType,
+    level, surface,
     sizes:  toStringArray(body.sizes),
     colors: toStringArray(body.colors),
     image, images,

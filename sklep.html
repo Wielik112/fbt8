@@ -50,11 +50,10 @@
       <div class="filter-group">
         <h4>Kategorie</h4>
         <label class="filter-opt"><input type="radio" name="cat" value="Wszystkie" checked> Wszystkie</label>
-        <label class="filter-opt"><input type="radio" name="cat" value="Obuwie"> Obuwie</label>
-        <label class="filter-opt"><input type="radio" name="cat" value="Bluzy"> Bluzy</label>
-        <label class="filter-opt"><input type="radio" name="cat" value="Koszulki"> Koszulki</label>
-        <label class="filter-opt"><input type="radio" name="cat" value="Spodnie"> Spodnie</label>
-        <label class="filter-opt"><input type="radio" name="cat" value="Kurtki"> Kurtki</label>
+        <label class="filter-opt"><input type="radio" name="cat" value="Buty piłkarskie"> Buty piłkarskie</label>
+        <label class="filter-opt"><input type="radio" name="cat" value="Buty sportowe"> Buty sportowe</label>
+        <label class="filter-opt"><input type="radio" name="cat" value="Rękawice bramkarskie"> Rękawice bramkarskie</label>
+        <label class="filter-opt"><input type="radio" name="cat" value="Piłki"> Piłki</label>
         <label class="filter-opt"><input type="radio" name="cat" value="Akcesoria"> Akcesoria</label>
       </div>
       <div class="filter-group">
@@ -77,20 +76,29 @@
       </div>
       <div class="filter-group">
         <h4>Stan</h4>
-        <label class="filter-opt"><input type="checkbox" data-cond="Nowy"> Nowy</label>
-        <label class="filter-opt"><input type="checkbox" data-cond="Używany"> Używany</label>
+        <p class="filter-note" style="font-size:12.5px;color:var(--grey-2);margin:0">Wszystkie produkty są <strong>nowe</strong> — Kategoria A (100% oryginalne).</p>
       </div>
       <div class="filter-group">
         <h4>Rozmiar</h4>
         <div class="chip-row">
-          <span class="chip" data-size="XS">XS</span><span class="chip" data-size="S">S</span><span class="chip" data-size="M">M</span>
-          <span class="chip" data-size="L">L</span><span class="chip" data-size="XL">XL</span><span class="chip" data-size="XXL">XXL</span>
+          <span class="chip" data-size="39">39</span><span class="chip" data-size="40">40</span><span class="chip" data-size="41">41</span>
+          <span class="chip" data-size="42">42</span><span class="chip" data-size="43">43</span><span class="chip" data-size="44">44</span><span class="chip" data-size="45">45</span>
         </div>
       </div>
-      <div class="filter-group">
-        <h4>Kolor</h4>
+      <div class="filter-group" data-football-filter>
+        <h4>Zaawansowanie</h4>
         <div class="chip-row">
-          <span class="chip" data-color="Czarny">Czarny</span><span class="chip" data-color="Czerwony">Czerwony</span><span class="chip" data-color="Biały">Biały</span><span class="chip" data-color="Szary">Szary</span>
+          <span class="chip" data-level="Rekreacyjne">Rekreacyjne</span><span class="chip" data-level="Treningowe">Treningowe</span>
+          <span class="chip" data-level="Półprofesjonalne">Półprofesjonalne</span><span class="chip" data-level="Profesjonalne">Profesjonalne</span>
+        </div>
+      </div>
+      <div class="filter-group" data-football-filter>
+        <h4>Przeznaczenie</h4>
+        <div class="chip-row" style="flex-direction:column;align-items:flex-start">
+          <span class="chip" data-surface="Na trawę (lanki)">Na trawę (lanki)</span>
+          <span class="chip" data-surface="Na sztuczną trawę/orlika (turfy)">Na sztuczną trawę/orlika (turfy)</span>
+          <span class="chip" data-surface="Na mokrą trawę (wkręty/mixy)">Na mokrą trawę (wkręty/mixy)</span>
+          <span class="chip" data-surface="Na halę (halówki)">Na halę (halówki)</span>
         </div>
       </div>
       <div class="filter-group">
@@ -129,11 +137,10 @@
       <!-- category chips (visible row) -->
       <div class="chip-row" style="margin-bottom:28px">
         <span class="chip active" data-cat="Wszystkie">Wszystkie</span>
-        <span class="chip" data-cat="Obuwie">Obuwie</span>
-        <span class="chip" data-cat="Bluzy">Bluzy</span>
-        <span class="chip" data-cat="Koszulki">Koszulki</span>
-        <span class="chip" data-cat="Spodnie">Spodnie</span>
-        <span class="chip" data-cat="Kurtki">Kurtki</span>
+        <span class="chip" data-cat="Buty piłkarskie">Buty piłkarskie</span>
+        <span class="chip" data-cat="Buty sportowe">Buty sportowe</span>
+        <span class="chip" data-cat="Rękawice bramkarskie">Rękawice bramkarskie</span>
+        <span class="chip" data-cat="Piłki">Piłki</span>
         <span class="chip" data-cat="Akcesoria">Akcesoria</span>
       </div>
 

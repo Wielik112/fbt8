@@ -23,8 +23,8 @@ export const SHIPPING_METHODS = {
   courier:        { label: 'Kurier standardowy',    price: 1999, requiresPoint: false, carrier: 'courier' },
 };
 
-// Free shipping at/above this order value (grosze). 300 zł.
-export const FREE_SHIPPING_THRESHOLD = 30000;
+// Free shipping is disabled — shipping is always charged per method.
+export const FREE_SHIPPING_THRESHOLD = Infinity;
 
 // Maps our shipping method -> InPost ShipX service. Only these methods can
 // have an InPost label generated; `courier` is a generic (non-InPost) carrier.
@@ -51,7 +51,6 @@ export const COUPONS = { FBT15: 15, START10: 10 };
 export function shippingCostFor(methodKey, subtotalGrosze) {
   const m = SHIPPING_METHODS[methodKey];
   if (!m) return null;
-  if (subtotalGrosze >= FREE_SHIPPING_THRESHOLD) return 0;
   return m.price;
 }
 

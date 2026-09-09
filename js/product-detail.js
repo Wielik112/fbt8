@@ -96,8 +96,9 @@
     $('#pd-cat').textContent = p.cat;
     const genderEl = $('#pd-gender');
     if (genderEl) genderEl.textContent = p.gender || 'Unisex';
-    $('#pd-cond').textContent = p.condition;
-    $('#pd-colors').textContent = (Array.isArray(p.colors) && p.colors.length) ? p.colors.join(', ') : '—';
+    $('#pd-cond').textContent = `${p.condition} · Kat. A`;
+    if (p.level) { $('#pd-level').textContent = p.level; $('#pd-level-row').hidden = false; }
+    if (p.surface) { $('#pd-surface').textContent = p.surface; $('#pd-surface-row').hidden = false; }
 
     // Add-to-cart: main.js already bound the click handler to this button;
     // it reads these data-* attributes at click time.

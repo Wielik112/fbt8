@@ -15,6 +15,28 @@
 <link rel="stylesheet" href="css/pages.css">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/favicon.png">
+<style>
+/* Nav dropdown: Piłka nożna */
+.nav-drop{position:relative}
+.nav-drop>a{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.nav-drop>a::after{content:'';width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-top:-3px;transition:.15s}
+.nav-drop-menu{position:absolute;top:100%;left:0;min-width:230px;background:var(--surface,#141419);border:1px solid var(--line-bright,#2a2a33);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:2px;opacity:0;visibility:hidden;transform:translateY(6px);transition:.16s;z-index:50;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.nav-drop:hover .nav-drop-menu,.nav-drop:focus-within .nav-drop-menu{opacity:1;visibility:visible;transform:translateY(0)}
+.nav-drop-menu a{padding:10px 14px;border-radius:8px;font-size:14px;color:var(--grey-1,#cfcfd6);white-space:nowrap}
+.nav-drop-menu a:hover{background:var(--surface-2,#1d1d24);color:#fff}
+/* Value props under hero */
+.usp-band{border-top:1px solid var(--line,#22222a);border-bottom:1px solid var(--line,#22222a);background:var(--black-2,#0d0d10)}
+.usp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.usp{padding:34px 26px;border-left:1px solid var(--line,#22222a)}
+.usp:first-child{border-left:none}
+.usp h3{font-family:var(--display,inherit);font-size:15px;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px;color:#fff}
+.usp p{margin:0;font-size:13.5px;color:var(--grey-2,#8b8b95);line-height:1.55}
+.usp-intro{max-width:760px;margin:0 auto;text-align:center;padding:46px 20px 8px}
+.usp-intro h2{font-family:var(--display,inherit);font-size:clamp(22px,3vw,30px);text-transform:uppercase;margin:0 0 14px}
+.usp-intro p{color:var(--grey-1,#cfcfd6);font-size:15px;line-height:1.7;margin:0 0 10px}
+@media(max-width:860px){.usp-grid{grid-template-columns:repeat(2,1fr)}.usp:nth-child(3){border-left:none}}
+@media(max-width:520px){.usp-grid{grid-template-columns:1fr}.usp{border-left:none;border-top:1px solid var(--line,#22222a)}.usp:first-child{border-top:none}}
+</style>
 </head>
 <body>
 
@@ -25,6 +47,15 @@
     <div class="nav-links">
       <a href="index.html">Start</a>
       <a href="sklep.html">Sklep</a>
+      <span class="nav-drop">
+        <a href="sklep.html" aria-haspopup="true">Piłka nożna</a>
+        <span class="nav-drop-menu">
+          <a href="sklep.html?cat=Buty%20pi%C5%82karskie">Buty piłkarskie</a>
+          <a href="sklep.html?cat=R%C4%99kawice%20bramkarskie">Rękawice bramkarskie</a>
+          <a href="sklep.html?cat=Pi%C5%82ki">Piłki</a>
+          <a href="sklep.html?cat=Akcesoria">Akcesoria</a>
+        </span>
+      </span>
       <a href="o-nas.html">O nas</a>
       <a href="kontakt.html">Kontakt</a><a href="opinie.html">Opinie</a>
     </div>
@@ -45,6 +76,10 @@
 <div class="mobile-menu">
   <a href="index.html">Start</a>
   <a href="sklep.html">Sklep</a>
+  <a href="sklep.html?cat=Buty%20pi%C5%82karskie">Piłka nożna — Buty piłkarskie</a>
+  <a href="sklep.html?cat=R%C4%99kawice%20bramkarskie">Piłka nożna — Rękawice bramkarskie</a>
+  <a href="sklep.html?cat=Pi%C5%82ki">Piłka nożna — Piłki</a>
+  <a href="sklep.html?cat=Akcesoria">Piłka nożna — Akcesoria</a>
   <a href="o-nas.html">O nas</a>
   <a href="kontakt.html">Kontakt</a>
   <a href="opinie.html">Opinie</a>
@@ -72,10 +107,45 @@
 <!-- MARQUEE -->
 <div class="marquee">
   <div class="marquee-track">
-    <span>Darmowa dostawa od 199 zł</span><span>Zwrot 30 dni</span><span>Najlepsze marki</span><span>Gwarancja jakości</span>
-    <span>Darmowa dostawa od 199 zł</span><span>Zwrot 30 dni</span><span>Najlepsze marki</span><span>Gwarancja jakości</span>
+    <span>100% oryginalne produkty</span><span>Zwrot 30 dni</span><span>Marki premium</span><span>Ceny outletowe</span>
+    <span>100% oryginalne produkty</span><span>Zwrot 30 dni</span><span>Marki premium</span><span>Ceny outletowe</span>
   </div>
 </div>
+
+<!-- VALUE PROPS (under hero banner) -->
+<section class="usp-band">
+  <div class="shell">
+    <div class="usp-grid">
+      <div class="usp reveal">
+        <h3>Oryginalne produkty</h3>
+        <p>Tylko sprawdzone, oryginalne produkty renomowanych marek.</p>
+      </div>
+      <div class="usp reveal">
+        <h3>Marki premium</h3>
+        <p>Wybieramy marki cenione za jakość, funkcjonalność i design.</p>
+      </div>
+      <div class="usp reveal">
+        <h3>Ceny outletowe</h3>
+        <p>Szukamy najlepszych okazji, aby oferować atrakcyjne ceny.</p>
+      </div>
+      <div class="usp reveal">
+        <h3>Sport i styl</h3>
+        <p>Odzież, obuwie, akcesoria i sprzęt – dla aktywnych i nie tylko.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BRAND INTRO -->
+<section class="usp-intro-wrap">
+  <div class="shell">
+    <div class="usp-intro reveal">
+      <h2>FBT Outlet – markowe produkty w cenach, które naprawdę się opłacają</h2>
+      <p>Szukasz oryginalnych produktów znanych i cenionych marek w atrakcyjnych cenach? Nie czekaj – sprawdź, co mamy dziś w ofercie i wybierz swoją okazję!</p>
+      <p>Zrób zakupy w FBT Outlet i ciesz się markową jakością w outletowej cenie.</p>
+    </div>
+  </div>
+</section>
 
 <!-- CATEGORIES -->
 <section class="section">
@@ -85,21 +155,21 @@
       <h2 class="h-section">Wybierz swój<br>tor</h2>
     </div>
     <div class="cats-grid">
-      <a href="sklep.html?cat=Obuwie" class="cat cat-1 reveal" style="background:linear-gradient(135deg,#2a0409,#0f0f12)">
+      <a href="sklep.html?cat=Buty%20pi%C5%82karskie" class="cat cat-1 reveal" style="background:linear-gradient(135deg,#2a0409,#0f0f12)">
         <div class="cat-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg></div>
-        <div class="cat-body"><h3>Obuwie</h3><span class="cat-count" data-cat="Obuwie"></span></div>
+        <div class="cat-body"><h3>Buty piłkarskie</h3><span class="cat-count" data-cat="Buty piłkarskie"></span></div>
       </a>
-      <a href="sklep.html?cat=Bluzy" class="cat reveal" style="background:linear-gradient(135deg,#1c1c22,#320810)">
+      <a href="sklep.html?cat=Buty%20sportowe" class="cat reveal" style="background:linear-gradient(135deg,#1c1c22,#320810)">
         <div class="cat-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg></div>
-        <div class="cat-body"><h3>Bluzy</h3><span class="cat-count" data-cat="Bluzy"></span></div>
+        <div class="cat-body"><h3>Buty sportowe</h3><span class="cat-count" data-cat="Buty sportowe"></span></div>
       </a>
-      <a href="sklep.html?cat=Koszulki" class="cat reveal" style="background:linear-gradient(135deg,#151519,#2a0409)">
+      <a href="sklep.html?cat=R%C4%99kawice%20bramkarskie" class="cat reveal" style="background:linear-gradient(135deg,#151519,#2a0409)">
         <div class="cat-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg></div>
-        <div class="cat-body"><h3>Koszulki</h3><span class="cat-count" data-cat="Koszulki"></span></div>
+        <div class="cat-body"><h3>Rękawice bramkarskie</h3><span class="cat-count" data-cat="Rękawice bramkarskie"></span></div>
       </a>
-      <a href="sklep.html?cat=Spodnie" class="cat reveal" style="background:linear-gradient(135deg,#0f0f12,#2a0409)">
+      <a href="sklep.html?cat=Pi%C5%82ki" class="cat reveal" style="background:linear-gradient(135deg,#0f0f12,#2a0409)">
         <div class="cat-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg></div>
-        <div class="cat-body"><h3>Spodnie</h3><span class="cat-count" data-cat="Spodnie"></span></div>
+        <div class="cat-body"><h3>Piłki</h3><span class="cat-count" data-cat="Piłki"></span></div>
       </a>
       <a href="sklep.html?cat=Akcesoria" class="cat reveal" style="background:linear-gradient(135deg,#320810,#151519)">
         <div class="cat-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg></div>

@@ -5,9 +5,11 @@
    token is also kept as a same-origin fallback.
    ============================================ */
 
-const CATEGORIES = ['Koszulki', 'Bluzy', 'Spodnie', 'Kurtki', 'Obuwie', 'Akcesoria'];
-const CONDITIONS = ['Nowy', 'Używany'];
+const CATEGORIES = ['Buty piłkarskie', 'Buty sportowe', 'Rękawice bramkarskie', 'Piłki', 'Akcesoria'];
+const CONDITIONS = ['Nowy'];
 const GENDERS = ['Męskie', 'Damskie', 'Unisex'];
+const LEVELS = ['Rekreacyjne', 'Treningowe', 'Półprofesjonalne', 'Profesjonalne'];
+const SURFACES = ['Na trawę (lanki)', 'Na sztuczną trawę/orlika (turfy)', 'Na mokrą trawę (wkręty/mixy)', 'Na halę (halówki)'];
 const TOKEN_KEY = 'fbt_admin_token';
 const DEFAULT_GRADIENT = 'linear-gradient(135deg,#2a0409,#1c1c22)';
 
@@ -289,7 +291,7 @@ async function removeReview(review) {
 const modal = $('modal');
 
 function fillSelect(sel, options, current) {
-  sel.innerHTML = options.map((o) => `<option value="${esc(o)}"${o === current ? ' selected' : ''}>${esc(o)}</option>`).join('');
+  sel.innerHTML = options.map((o) => `<option value="${esc(o)}"${o === current ? ' selected' : ''}>${esc(o) || '—'}</option>`).join('');
 }
 
 function openModal(product) {
@@ -300,6 +302,8 @@ function openModal(product) {
   fillSelect($('f-cat'), CATEGORIES, product?.cat || CATEGORIES[0]);
   fillSelect($('f-condition'), CONDITIONS, product?.condition || CONDITIONS[0]);
   fillSelect($('f-gender'), GENDERS, product?.gender || 'Unisex');
+  fillSelect($('f-level'), ['', ...LEVELS], product?.level || '');
+  fillSelect($('f-surface'), ['', ...SURFACES], product?.surface || '');
 
   $('f-id').value        = product?.id || '';
   $('f-name').value      = product?.name || '';
@@ -310,7 +314,6 @@ function openModal(product) {
   $('f-tag').value       = product?.tag || '';
   $('f-tagType').value   = product?.tagType || 'sale';
   $('f-sizes').value     = (product?.sizes || []).join(', ');
-  $('f-colors').value    = (product?.colors || []).join(', ');
 
   mainImage = product?.image || '';
   galleryImages = Array.isArray(product?.images) ? [...product.images] : [];
@@ -392,13 +395,14 @@ $('product-form').addEventListener('submit', async (e) => {
     cat: $('f-cat').value,
     condition: $('f-condition').value,
     gender: $('f-gender').value,
+    level: $('f-level').value,
+    surface: $('f-surface').value,
     price: $('f-price').value,
     old: $('f-old').value,
     description: $('f-description').value.trim(),
     tag: $('f-tag').value.trim(),
     tagType: $('f-tagType').value,
     sizes: splitList($('f-sizes').value),
-    colors: splitList($('f-colors').value),
     image: mainImage,
     images: galleryImages,
   };
@@ -442,6 +446,7 @@ const PAYMENT_LABELS = {
   failed: 'Nieudane', refunded: 'Zwrócone',
 };
 const fmtPLN = (gr) => (Number(gr || 0) / 100).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
+const fmtDateTime = (s) => { try { return new Date(s).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' }); } catch { return s; } };
 
 const ordersState = { status: '', offset: 0, limit: 25, total: 0, loaded: false };
 let ordersCache = [];
@@ -509,7 +514,7 @@ function renderOrders(list) {
   tbody.innerHTML = list.map((o) => `
     <tr class="clickable" data-id="${esc(o.id)}">
       <td><span class="order-id">${esc(o.id)}</span></td>
-      <td class="hide-sm">${esc(fmtDate(o.createdAt))}</td>
+      <td class="hide-sm">${esc(fmtDateTime(o.createdAt))}</td>
       <td class="hide-sm">${esc(o.customer?.name || '—')}<div class="pmeta">${esc(o.customer?.email || '')}</div></td>
       <td class="price">${fmtPLN(o.total)}</td>
       <td><span class="ostatus ${esc(o.paymentStatus)}">${esc(PAYMENT_LABELS[o.paymentStatus] || o.paymentStatus)}</span></td>
@@ -580,8 +585,8 @@ async function openOrder(id) {
   $('om-notes').value = o.notes || '';
   $('om-meta').textContent =
     `Płatność: ${PAYMENT_LABELS[o.paymentStatus] || o.paymentStatus}`
-    + ` · Utworzono ${fmtDate(o.createdAt)}`
-    + (o.paidAt ? ` · Opłacono ${fmtDate(o.paidAt)}` : '')
+    + ` · Utworzono ${fmtDateTime(o.createdAt)}`
+    + (o.paidAt ? ` · Opłacono ${fmtDateTime(o.paidAt)}` : '')
     + (o.stripePaymentIntent ? ` · ${o.stripePaymentIntent}` : '');
 
   renderInpostSection(o);
