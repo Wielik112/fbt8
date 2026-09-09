@@ -5,9 +5,11 @@
    token is also kept as a same-origin fallback.
    ============================================ */
 
-const CATEGORIES = ['Koszulki', 'Bluzy', 'Spodnie', 'Kurtki', 'Obuwie', 'Akcesoria'];
-const CONDITIONS = ['Nowy', 'Używany'];
+const CATEGORIES = ['Buty piłkarskie', 'Buty sportowe', 'Rękawice bramkarskie', 'Piłki', 'Akcesoria'];
+const CONDITIONS = ['Nowy'];
 const GENDERS = ['Męskie', 'Damskie', 'Unisex'];
+const LEVELS = ['Rekreacyjne', 'Treningowe', 'Półprofesjonalne', 'Profesjonalne'];
+const SURFACES = ['Na trawę (lanki)', 'Na sztuczną trawę/orlika (turfy)', 'Na mokrą trawę (wkręty/mixy)', 'Na halę (halówki)'];
 const TOKEN_KEY = 'fbt_admin_token';
 const DEFAULT_GRADIENT = 'linear-gradient(135deg,#2a0409,#1c1c22)';
 
@@ -451,7 +453,7 @@ const PAYMENT_LABELS = {
   failed: 'Nieudane', refunded: 'Zwrócone',
 };
 const fmtPLN = (gr) => (Number(gr || 0) / 100).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
-const fmtDate = (s) => { try { return new Date(s).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' }); } catch { return s; } };
+const fmtDateTime = (s) => { try { return new Date(s).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' }); } catch { return s; } };
 
 const ordersState = { status: '', offset: 0, limit: 25, total: 0, loaded: false };
 let ordersCache = [];
@@ -517,7 +519,7 @@ function renderOrders(list) {
   tbody.innerHTML = list.map((o) => `
     <tr class="clickable" data-id="${esc(o.id)}">
       <td><span class="order-id">${esc(o.id)}</span></td>
-      <td class="hide-sm">${esc(fmtDate(o.createdAt))}</td>
+      <td class="hide-sm">${esc(fmtDateTime(o.createdAt))}</td>
       <td class="hide-sm">${esc(o.customer?.name || '—')}<div class="pmeta">${esc(o.customer?.email || '')}</div></td>
       <td class="price">${fmtPLN(o.total)}</td>
       <td><span class="ostatus ${esc(o.paymentStatus)}">${esc(PAYMENT_LABELS[o.paymentStatus] || o.paymentStatus)}</span></td>
@@ -588,8 +590,8 @@ async function openOrder(id) {
   $('om-notes').value = o.notes || '';
   $('om-meta').textContent =
     `Płatność: ${PAYMENT_LABELS[o.paymentStatus] || o.paymentStatus}`
-    + ` · Utworzono ${fmtDate(o.createdAt)}`
-    + (o.paidAt ? ` · Opłacono ${fmtDate(o.paidAt)}` : '')
+    + ` · Utworzono ${fmtDateTime(o.createdAt)}`
+    + (o.paidAt ? ` · Opłacono ${fmtDateTime(o.paidAt)}` : '')
     + (o.stripePaymentIntent ? ` · ${o.stripePaymentIntent}` : '');
 
   orderModal.classList.remove('hidden');

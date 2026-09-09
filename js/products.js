@@ -6,18 +6,18 @@
    ============================================ */
 
 const FALLBACK_PRODUCTS = [
-  { id: 'p01', name: 'Velocity Pro Tee',   cat: 'Koszulki',  brand: 'Nike',       condition: 'Nowy',    price: 89,  old: 149, tag: '-40%',   tagType: 'sale', stars: 5, sizes: ['S','M','L','XL'], colors: ['Czarny','Czerwony'], gradient: 'linear-gradient(135deg,#2a0409,#1c1c22)' },
-  { id: 'p02', name: 'Apex Track Jacket',  cat: 'Bluzy',     brand: 'Adidas',     condition: 'Nowy',    price: 259, old: 399, tag: 'HIT',    tagType: 'hit',  stars: 5, sizes: ['M','L','XL','XXL'], colors: ['Czarny','Szary'], gradient: 'linear-gradient(135deg,#1c1c22,#320810)' },
-  { id: 'p03', name: 'Redline Joggers',    cat: 'Spodnie',   brand: 'Puma',       condition: 'Używany', price: 179, old: 249, tag: '-28%',   tagType: 'sale', stars: 4, sizes: ['S','M','L'], colors: ['Szary','Czarny'], gradient: 'linear-gradient(135deg,#151519,#2a0409)' },
-  { id: 'p04', name: 'Surge Windbreaker',  cat: 'Kurtki',    brand: 'Nike',       condition: 'Nowy',    price: 329, old: 449, tag: 'NOWOŚĆ', tagType: 'new',  stars: 5, sizes: ['M','L','XL'], colors: ['Czarny','Czerwony'], gradient: 'linear-gradient(135deg,#2a0409,#0f0f12)' },
-  { id: 'p05', name: 'Boost Runner GT',    cat: 'Obuwie',    brand: 'Adidas',     condition: 'Nowy',    price: 419, old: 599, tag: '-30%',   tagType: 'sale', stars: 5, sizes: ['M','L','XL','XXL'], colors: ['Czarny','Biały'], gradient: 'linear-gradient(135deg,#1c1c22,#2a0409)' },
-  { id: 'p06', name: 'Torque Cap',         cat: 'Akcesoria', brand: 'New Balance',condition: 'Nowy',    price: 69,  old: 99,  tag: 'HIT',    tagType: 'hit',  stars: 4, sizes: ['M','L'], colors: ['Czarny','Czerwony'], gradient: 'linear-gradient(135deg,#320810,#151519)' },
-  { id: 'p07', name: 'Nitro Compression',  cat: 'Koszulki',  brand: 'Under Armour',condition:'Nowy',    price: 119, old: 169, tag: '-29%',   tagType: 'sale', stars: 5, sizes: ['XS','S','M','L'], colors: ['Czerwony','Czarny'], gradient: 'linear-gradient(135deg,#0f0f12,#2a0409)' },
-  { id: 'p08', name: 'Drift Cargo Pants',  cat: 'Spodnie',   brand: 'Puma',       condition: 'Używany', price: 219, old: 299, tag: 'NOWOŚĆ', tagType: 'new',  stars: 4, sizes: ['S','M','L','XL'], colors: ['Szary','Czarny'], gradient: 'linear-gradient(135deg,#2a0409,#1c1c22)' },
-  { id: 'p09', name: 'Ignite Hoodie',      cat: 'Bluzy',     brand: 'Nike',       condition: 'Nowy',    price: 199, old: 279, tag: '-28%',   tagType: 'sale', stars: 5, sizes: ['M','L','XL','XXL'], colors: ['Czarny','Czerwony'], gradient: 'linear-gradient(135deg,#1c1c22,#320810)' },
-  { id: 'p10', name: 'Sprint Shorts 2.0',  cat: 'Spodnie',   brand: 'Reebok',     condition: 'Używany', price: 99,  old: 139, tag: 'HIT',    tagType: 'hit',  stars: 4, sizes: ['XS','S','M','L'], colors: ['Czarny','Biały'], gradient: 'linear-gradient(135deg,#151519,#2a0409)' },
-  { id: 'p11', name: 'Carbon Duffel Bag',  cat: 'Akcesoria', brand: 'Adidas',     condition: 'Nowy',    price: 289, old: 399, tag: '-27%',   tagType: 'sale', stars: 5, sizes: ['M','L'], colors: ['Czarny','Szary'], gradient: 'linear-gradient(135deg,#2a0409,#0f0f12)' },
-  { id: 'p12', name: 'Phantom Trail Shoe', cat: 'Obuwie',    brand: 'New Balance',condition: 'Używany', price: 379, old: 529, tag: 'NOWOŚĆ', tagType: 'new',  stars: 5, sizes: ['M','L','XL'], colors: ['Czarny','Biały'], gradient: 'linear-gradient(135deg,#1c1c22,#2a0409)' },
+  { id: 'p01', name: 'Predator Elite FG',       cat: 'Buty piłkarskie',      brand: 'Adidas',      condition: 'Nowy', level: 'Profesjonalne',    surface: 'Na trawę (lanki)',                 price: 649, old: 899, tag: '-28%',   tagType: 'sale', stars: 5, sizes: ['40','41','42','43','44'], colors: [], gradient: 'linear-gradient(135deg,#2a0409,#1c1c22)' },
+  { id: 'p02', name: 'Phantom GX Pro FG',       cat: 'Buty piłkarskie',      brand: 'Nike',        condition: 'Nowy', level: 'Półprofesjonalne', surface: 'Na trawę (lanki)',                 price: 459, old: 649, tag: 'HIT',    tagType: 'hit',  stars: 5, sizes: ['40','41','42','43','44','45'], colors: [], gradient: 'linear-gradient(135deg,#1c1c22,#320810)' },
+  { id: 'p03', name: 'Future Match TF',         cat: 'Buty piłkarskie',      brand: 'Puma',        condition: 'Nowy', level: 'Treningowe',       surface: 'Na sztuczną trawę/orlika (turfy)', price: 259, old: 359, tag: '-28%',   tagType: 'sale', stars: 4, sizes: ['40','41','42','43','44'], colors: [], gradient: 'linear-gradient(135deg,#151519,#2a0409)' },
+  { id: 'p04', name: 'Mercurial Vapor SG',      cat: 'Buty piłkarskie',      brand: 'Nike',        condition: 'Nowy', level: 'Profesjonalne',    surface: 'Na mokrą trawę (wkręty/mixy)',     price: 589, old: 799, tag: 'NOWOŚĆ', tagType: 'new',  stars: 5, sizes: ['41','42','43','44','45'], colors: [], gradient: 'linear-gradient(135deg,#2a0409,#0f0f12)' },
+  { id: 'p05', name: 'Copa Sala IN',            cat: 'Buty piłkarskie',      brand: 'Adidas',      condition: 'Nowy', level: 'Rekreacyjne',      surface: 'Na halę (halówki)',                price: 199, old: 279, tag: '-29%',   tagType: 'sale', stars: 4, sizes: ['39','40','41','42','43','44'], colors: [], gradient: 'linear-gradient(135deg,#1c1c22,#2a0409)' },
+  { id: 'p06', name: 'Tiempo Legend TF',        cat: 'Buty piłkarskie',      brand: 'Nike',        condition: 'Nowy', level: 'Treningowe',       surface: 'Na sztuczną trawę/orlika (turfy)', price: 339, old: 469, tag: 'HIT',    tagType: 'hit',  stars: 5, sizes: ['40','41','42','43','44'], colors: [], gradient: 'linear-gradient(135deg,#320810,#151519)' },
+  { id: 'p07', name: 'Predator GK Pro',         cat: 'Rękawice bramkarskie', brand: 'Adidas',      condition: 'Nowy', level: '',                 surface: '',                                 price: 219, old: 299, tag: '-27%',   tagType: 'sale', stars: 5, sizes: ['8','9','10','11'], colors: [], gradient: 'linear-gradient(135deg,#0f0f12,#2a0409)' },
+  { id: 'p08', name: 'GK Vapor Grip3',          cat: 'Rękawice bramkarskie', brand: 'Nike',        condition: 'Nowy', level: '',                 surface: '',                                 price: 279, old: 379, tag: 'NOWOŚĆ', tagType: 'new',  stars: 4, sizes: ['8','9','10','11'], colors: [], gradient: 'linear-gradient(135deg,#2a0409,#1c1c22)' },
+  { id: 'p09', name: 'Piłka meczowa Pro',       cat: 'Piłki',                brand: 'Adidas',      condition: 'Nowy', level: '',                 surface: '',                                 price: 159, old: 219, tag: '-27%',   tagType: 'sale', stars: 5, sizes: ['4','5'], colors: [], gradient: 'linear-gradient(135deg,#1c1c22,#320810)' },
+  { id: 'p10', name: 'Piłka treningowa Club',   cat: 'Piłki',                brand: 'Nike',        condition: 'Nowy', level: '',                 surface: '',                                 price: 89,  old: 129, tag: 'HIT',    tagType: 'hit',  stars: 4, sizes: ['4','5'], colors: [], gradient: 'linear-gradient(135deg,#151519,#2a0409)' },
+  { id: 'p11', name: 'Buty sportowe RunFlex',   cat: 'Buty sportowe',        brand: 'New Balance', condition: 'Nowy', level: '',                 surface: '',                                 price: 289, old: 399, tag: '-27%',   tagType: 'sale', stars: 5, sizes: ['40','41','42','43','44'], colors: [], gradient: 'linear-gradient(135deg,#2a0409,#0f0f12)' },
+  { id: 'p12', name: 'Ochraniacze Guard Pro',   cat: 'Akcesoria',            brand: 'Puma',        condition: 'Nowy', level: '',                 surface: '',                                 price: 59,  old: 89,  tag: 'NOWOŚĆ', tagType: 'new',  stars: 5, sizes: ['S','M','L'], colors: [], gradient: 'linear-gradient(135deg,#1c1c22,#2a0409)' },
 ];
 
 // Live catalog — replaced by API data once loaded.
@@ -54,7 +54,7 @@ function productCard(p) {
       ${media}
       <div class="product-badges">
         ${p.tag ? `<span class="tag ${p.tagType === 'sale' ? '' : 'grey'}">${p.tag}</span>` : ''}
-        <span class="tag ${condClass}">${p.condition}</span>
+        <span class="tag ${condClass}">${p.condition} · Kat. A</span>
       </div>
     </div>
     <div class="product-info">
@@ -121,7 +121,8 @@ function initShop() {
     brand: 'Wszystkie',     // single active brand chip
     conditions: new Set(),  // empty = all
     sizes: new Set(),       // empty = all
-    colors: new Set(),      // empty = all
+    levels: new Set(),      // zaawansowanie — empty = all
+    surfaces: new Set(),    // przeznaczenie — empty = all
     priceMin: 0,
     priceMax: 2000,
     sort: 'default',
@@ -158,7 +159,8 @@ function initShop() {
       (state.brand === 'Wszystkie' || p.brand === state.brand) &&
       (!state.conditions.size || state.conditions.has(p.condition)) &&
       (!state.sizes.size || p.sizes.some(s => state.sizes.has(s))) &&
-      (!state.colors.size || p.colors.some(c => state.colors.has(c))) &&
+      (!state.levels.size || state.levels.has(p.level)) &&
+      (!state.surfaces.size || state.surfaces.has(p.surface)) &&
       (p.price >= state.priceMin && p.price <= state.priceMax)
     );
     if (state.sort === 'low')  list = [...list].sort((a, b) => a.price - b.price);
@@ -181,6 +183,7 @@ function initShop() {
       state.cat = chip.dataset.cat;
       const radio = document.querySelector(`input[name="cat"][value="${state.cat}"]`);
       if (radio) radio.checked = true;
+      updateFootballFilters();
       draw();
     });
   });
@@ -191,6 +194,7 @@ function initShop() {
       state.cat = r.value;
       document.querySelectorAll('.chip[data-cat]').forEach(c =>
         c.classList.toggle('active', c.dataset.cat === state.cat));
+      updateFootballFilters();
       draw();
     });
   });
@@ -227,14 +231,35 @@ function initShop() {
     });
   });
 
-  // Color chips (multi toggle)
-  document.querySelectorAll('.chip[data-color]').forEach(chip => {
+  // Zaawansowanie (level) chips — multi toggle
+  document.querySelectorAll('.chip[data-level]').forEach(chip => {
     chip.addEventListener('click', () => {
       chip.classList.toggle('active');
-      chip.classList.contains('active') ? state.colors.add(chip.dataset.color) : state.colors.delete(chip.dataset.color);
+      chip.classList.contains('active') ? state.levels.add(chip.dataset.level) : state.levels.delete(chip.dataset.level);
       draw();
     });
   });
+
+  // Przeznaczenie (surface) chips — multi toggle
+  document.querySelectorAll('.chip[data-surface]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('active');
+      chip.classList.contains('active') ? state.surfaces.add(chip.dataset.surface) : state.surfaces.delete(chip.dataset.surface);
+      draw();
+    });
+  });
+
+  // The zaawansowanie/przeznaczenie groups only make sense for football boots.
+  const footballGroups = document.querySelectorAll('[data-football-filter]');
+  function updateFootballFilters() {
+    const show = state.cat === 'Buty piłkarskie';
+    footballGroups.forEach(g => { g.style.display = show ? '' : 'none'; });
+    if (!show) {
+      // Clear any active football-only selections when leaving the category.
+      state.levels.clear(); state.surfaces.clear();
+      document.querySelectorAll('.chip[data-level],.chip[data-surface]').forEach(c => c.classList.remove('active'));
+    }
+  }
 
   // Price: dual-range slider synced with od/do number inputs
   const minInput = document.querySelector('#price-min');
@@ -282,7 +307,7 @@ function initShop() {
   // Reset
   document.querySelector('#filter-reset')?.addEventListener('click', () => {
     state.cat = 'Wszystkie'; state.brand = 'Wszystkie'; state.gender = 'Wszystkie';
-    state.conditions.clear(); state.sizes.clear(); state.colors.clear();
+    state.conditions.clear(); state.sizes.clear(); state.levels.clear(); state.surfaces.clear();
     state.sort = 'default';
 
     document.querySelectorAll('.filters input[type="checkbox"]').forEach(c => c.checked = false);
@@ -294,11 +319,13 @@ function initShop() {
 
     document.querySelectorAll('.chip[data-cat]').forEach(c => c.classList.toggle('active', c.dataset.cat === 'Wszystkie'));
     document.querySelectorAll('.chip[data-brand]').forEach(c => c.classList.toggle('active', c.dataset.brand === 'Wszystkie'));
-    document.querySelectorAll('.chip[data-size],.chip[data-color]').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.chip[data-size],.chip[data-level],.chip[data-surface]').forEach(c => c.classList.remove('active'));
 
+    updateFootballFilters();
     applyPrice(0, SLIDER_MAX);
   });
 
+  updateFootballFilters();
   draw();
 }
 

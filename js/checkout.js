@@ -13,7 +13,6 @@
     inpost_courier: { label: 'Kurier InPost',         sub: 'Dostawa pod wskazany adres', price: 1599, requiresPoint: false },
     courier:        { label: 'Kurier standardowy',    sub: 'Dostawa pod wskazany adres', price: 1999, requiresPoint: false },
   };
-  const FREE_THRESHOLD = 30000; // grosze (300 zł)
   const COUPONS = { FBT15: 15, START10: 10 };
 
   const fmt = (gr) => (gr / 100).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
@@ -58,9 +57,8 @@
   }
 
   function renderShipping() {
-    const sub = subtotalGrosze();
     $('ship-options').innerHTML = Object.entries(SHIPPING).map(([key, m]) => {
-      const cost = sub >= FREE_THRESHOLD ? 0 : m.price;
+      const cost = m.price;
       return `
         <label class="ship-opt${key === method ? ' active' : ''}" data-method="${key}">
           <input type="radio" name="ship" value="${key}" ${key === method ? 'checked' : ''}>
@@ -92,7 +90,7 @@
 
   function renderTotals() {
     const sub = subtotalGrosze();
-    const ship = sub >= FREE_THRESHOLD ? 0 : SHIPPING[method].price;
+    const ship = SHIPPING[method].price;
     const disc = Math.round(sub * discountPercent / 100);
     const total = Math.max(0, sub - disc) + ship;
 

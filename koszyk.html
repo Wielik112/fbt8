@@ -60,7 +60,7 @@
       </div>
       <div class="summary-row"><span>Wartość produktów</span><span id="sum-sub">0 zł</span></div>
       <div class="summary-row"><span>Dostawa</span><span id="sum-ship">—</span></div>
-      <div class="summary-row" style="border:none;padding-top:0"><span style="font-size:12px;color:var(--grey-3)">Metodę i koszt dostawy wybierzesz w następnym kroku. Darmowa dostawa od 300 zł.</span></div>
+      <div class="summary-row" style="border:none;padding-top:0"><span style="font-size:12px;color:var(--grey-3)">Metodę i koszt dostawy wybierzesz w następnym kroku.</span></div>
       <div class="summary-row" id="sum-disc-row" style="display:none;color:var(--red)"><span>Rabat</span><span id="sum-disc">0 zł</span></div>
       <div class="summary-row total"><span>Razem</span><span id="sum-total">0 zł</span></div>
       <a href="#" class="btn btn-primary btn-block" style="margin-top:24px" id="checkout-btn">
@@ -154,12 +154,11 @@ function renderCart() {
   }).join('');
 
   const sub = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  const freeShip = sub >= 300;
   const discAmt = Math.round(sub * discount);
   const total = sub - discAmt; // shipping is chosen and added at checkout
 
   document.getElementById('sum-sub').textContent = sub + ' zł';
-  document.getElementById('sum-ship').textContent = freeShip ? 'Gratis' : 'od 12,99 zł';
+  document.getElementById('sum-ship').textContent = 'od 12,99 zł';
   document.getElementById('sum-total').textContent = total + ' zł';
   const dRow = document.getElementById('sum-disc-row');
   if (discAmt > 0) { dRow.style.display = 'flex'; document.getElementById('sum-disc').textContent = '−' + discAmt + ' zł'; }
