@@ -11,6 +11,19 @@
 <link rel="stylesheet" href="css/pages.css">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/favicon.png">
+<style>
+.pd-note{border:1px solid #6b551a;background:rgba(230,192,127,.08);border-radius:12px;padding:14px 16px;margin:18px 0 4px}
+.pd-note strong{display:block;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#e6c07f;margin-bottom:6px}
+.pd-note p{margin:0;color:var(--grey-1);font-size:14px;line-height:1.6;white-space:pre-wrap}
+.pd-catA{margin-top:22px;border:1px solid var(--line-bright);border-radius:12px;background:var(--surface,#141418);overflow:hidden}
+.pd-catA summary{cursor:pointer;list-style:none;padding:14px 16px;font-family:var(--display,inherit);font-weight:700;letter-spacing:.5px;text-transform:uppercase;font-size:14px;color:#7fe0af;display:flex;align-items:center;justify-content:space-between}
+.pd-catA summary::-webkit-details-marker{display:none}
+.pd-catA summary::after{content:'+';font-size:20px;color:var(--grey-2)}
+.pd-catA[open] summary::after{content:'–'}
+.pd-catA-body{padding:0 16px 16px}
+.pd-catA-body p{margin:0 0 10px;color:var(--grey-1);font-size:13.5px;line-height:1.65}
+.pd-catA-tag{color:#fff!important;font-weight:600}
+</style>
 </head>
 <body>
 
@@ -82,12 +95,18 @@
         </div>
         <div class="pd-perk">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 9-9M3 12l3-3M3 12l3 3"/></svg>
-          <span>Zwrot 30 dni</span>
+          <span>Zwrot 14 dni</span>
         </div>
         <div class="pd-perk">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span>Gwarancja 2 lata</span>
+          <span>100% oryginalne</span>
         </div>
+      </div>
+
+      <!-- Uwagi outletowe / cechy charakterystyczne (np. uszkodzone opakowanie) -->
+      <div class="pd-note" id="pd-note" hidden>
+        <strong>Uwagi do egzemplarza</strong>
+        <p id="pd-note-text"></p>
       </div>
 
       <div class="pd-meta">
@@ -100,6 +119,17 @@
         <div id="pd-surface-row" hidden><strong>Przeznaczenie</strong> <span id="pd-surface"></span></div>
         <div><strong>Dostępność</strong> <span style="color:#4ade80">Na stanie</span></div>
       </div>
+
+      <!-- Wyjaśnienie standardu Kategoria A -->
+      <details class="pd-catA">
+        <summary>Kategoria A — stan bardzo dobry / jak nowy</summary>
+        <div class="pd-catA-body">
+          <p>Produkty kategorii A znajdują się w bardzo dobrym stanie i są pełnowartościowe pod względem użytkowym. Mogą być nowe, nieużywane lub posiadać jedynie minimalne ślady przymierzenia, ekspozycji albo magazynowania.</p>
+          <p>Produkt może posiadać uszkodzone lub zastępcze opakowanie, jednak nie wpływa to na jego funkcjonalność ani jakość użytkowania.</p>
+          <p>Produkt kategorii A nie posiada istotnych wad wpływających na jego użytkowanie. Jeżeli konkretny egzemplarz posiada cechę lub niedoskonałość, która może mieć znaczenie dla decyzji zakupowej, informacja o niej znajduje się w opisie danej oferty.</p>
+          <p class="pd-catA-tag">Kategoria A = bardzo dobry stan, pełna funkcjonalność i świetna okazja outletowa.</p>
+        </div>
+      </details>
     </div>
   </div>
 

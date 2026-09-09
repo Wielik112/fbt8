@@ -311,6 +311,7 @@ function openModal(product) {
   $('f-price').value     = product?.price ?? '';
   $('f-old').value       = product?.old ?? '';
   $('f-description').value = product?.description || '';
+  $('f-note').value      = product?.note || '';
   $('f-tag').value       = product?.tag || '';
   $('f-tagType').value   = product?.tagType || 'sale';
   $('f-sizes').value     = (product?.sizes || []).join(', ');
@@ -400,6 +401,7 @@ $('product-form').addEventListener('submit', async (e) => {
     price: $('f-price').value,
     old: $('f-old').value,
     description: $('f-description').value.trim(),
+    note: $('f-note').value.trim(),
     tag: $('f-tag').value.trim(),
     tagType: $('f-tagType').value,
     sizes: splitList($('f-sizes').value),
