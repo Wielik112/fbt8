@@ -39,7 +39,7 @@
   }
 
   function defaultDesc(p) {
-    return `${p.name} od ${p.brand}. ${p.cat} w outletowej cenie — sprawdzona jakość i sportowy charakter. `
+    return `${p.name} od ${p.brand}. ${p.cat} w outletowej cenie. Sprawdzona jakość i sportowy charakter. `
       + `Idealne uzupełnienie Twojej garderoby treningowej.`;
   }
 

@@ -532,7 +532,7 @@ function renderPager() {
   const canNext = to < ordersState.total;
   pager.innerHTML = `
     <button class="btn btn-ghost btn-sm" ${canPrev ? '' : 'disabled'} id="pg-prev">← Poprzednie</button>
-    <span>${from}–${to} z ${ordersState.total}</span>
+    <span>${from} do ${to} z ${ordersState.total}</span>
     <button class="btn btn-ghost btn-sm" ${canNext ? '' : 'disabled'} id="pg-next">Następne →</button>`;
   if (canPrev) $('pg-prev').addEventListener('click', () => { ordersState.offset = Math.max(0, ordersState.offset - ordersState.limit); loadOrders(); });
   if (canNext) $('pg-next').addEventListener('click', () => { ordersState.offset += ordersState.limit; loadOrders(); });
