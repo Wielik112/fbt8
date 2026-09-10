@@ -202,6 +202,7 @@ function initShop() {
       const radio = document.querySelector(`input[name="cat"][value="${state.cat}"]`);
       if (radio) radio.checked = true;
       updateFootballFilters();
+      updateSizeGroups();
       draw();
     });
   });
@@ -213,6 +214,7 @@ function initShop() {
       document.querySelectorAll('.chip[data-cat]').forEach(c =>
         c.classList.toggle('active', c.dataset.cat === state.cat));
       updateFootballFilters();
+      updateSizeGroups();
       draw();
     });
   });
@@ -279,6 +281,23 @@ function initShop() {
     }
   }
 
+  // Size options depend on product type: shoes 36–48, apparel S/M/L/XL.
+  const shoeSizeGroup    = document.querySelector('[data-size-group="shoe"]');
+  const apparelSizeGroup = document.querySelector('[data-size-group="apparel"]');
+  function toggleSizeGroup(el, show) {
+    if (!el) return;
+    el.style.display = show ? '' : 'none';
+    if (!show) {
+      el.querySelectorAll('.chip[data-size]').forEach(c => { c.classList.remove('active'); state.sizes.delete(c.dataset.size); });
+    }
+  }
+  function updateSizeGroups() {
+    const footwear = state.cat === 'Buty piłkarskie' || state.cat === 'Buty sportowe';
+    const all = state.cat === 'Wszystkie';
+    toggleSizeGroup(shoeSizeGroup, footwear || all);
+    toggleSizeGroup(apparelSizeGroup, !footwear || all);
+  }
+
   // Price: dual-range slider synced with od/do number inputs
   const minInput = document.querySelector('#price-min');
   const maxInput = document.querySelector('#price-max');
@@ -341,10 +360,12 @@ function initShop() {
     document.querySelectorAll('.chip[data-size],.chip[data-level],.chip[data-surface]').forEach(c => c.classList.remove('active'));
 
     updateFootballFilters();
+    updateSizeGroups();
     applyPrice(0, SLIDER_MAX);
   });
 
   updateFootballFilters();
+  updateSizeGroups();
   draw();
 }
 
