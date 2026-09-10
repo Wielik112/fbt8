@@ -144,8 +144,14 @@ document.querySelectorAll('[data-add]').forEach(btn => {
 });
 
 /* ---------- Mobile filter toggle ---------- */
-document.querySelector('.filter-toggle')?.addEventListener('click', () => {
-  document.querySelector('.filters')?.classList.toggle('open');
+document.querySelector('.filter-toggle')?.addEventListener('click', (e) => {
+  const btn = e.currentTarget;
+  const filters = document.querySelector('.filters');
+  if (!filters) return;
+  const open = filters.classList.toggle('open');
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  btn.lastChild.textContent = open ? ' Ukryj filtry' : ' Filtry';
+  if (open) filters.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 /* ---------- Forms (demo submit) ---------- */
