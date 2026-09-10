@@ -368,10 +368,12 @@
   .cats-grid { grid-template-columns: 1fr 1fr; }
   .cat-1 { grid-row: auto; min-height: 240px; }
 }
+.filter-toggle { display: none; align-items: center; gap: 8px; }
 @media (max-width: 768px) {
   .shop-layout { grid-template-columns: 1fr; }
-  .filters { position: static; display: none; }
+  .filters { position: static; display: none; margin-bottom: 28px; }
   .filters.open { display: block; }
+  .filter-toggle { display: inline-flex; }
   .hero-stats { gap: 32px; }
   .newsletter { grid-template-columns: 1fr; gap: 24px; }
   .newsletter-form { flex-direction: column; }
