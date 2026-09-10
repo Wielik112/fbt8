@@ -48,6 +48,33 @@
     const md = document.querySelector('meta[name="description"]');
     if (md) md.setAttribute('content', (p.description || defaultDesc(p)).slice(0, 155));
 
+    // Structured data (Product) for richer Google results.
+    try {
+      const origin = location.origin;
+      const img = p.image ? (p.image.startsWith('http') || p.image.startsWith('data:') ? p.image : origin + '/' + p.image.replace(/^\//, '')) : origin + '/assets/logo.png';
+      const ld = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: p.name,
+        image: [img],
+        description: (p.description || defaultDesc(p)).slice(0, 300),
+        sku: String(p.id).toUpperCase(),
+        brand: { '@type': 'Brand', name: p.brand },
+        category: p.cat,
+        itemCondition: 'https://schema.org/NewCondition',
+        offers: {
+          '@type': 'Offer',
+          price: String(p.price),
+          priceCurrency: 'PLN',
+          availability: 'https://schema.org/InStock',
+          url: origin + '/produkt.html?id=' + encodeURIComponent(p.id)
+        }
+      };
+      let s = document.getElementById('ld-product');
+      if (!s) { s = document.createElement('script'); s.type = 'application/ld+json'; s.id = 'ld-product'; document.head.appendChild(s); }
+      s.textContent = JSON.stringify(ld);
+    } catch { /* non-critical */ }
+
     $('#pd-crumb').textContent = p.name;
     $('#pd-name').textContent = p.name;
     $('#pd-price').textContent = `${p.price} zł`;

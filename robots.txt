@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Strony niebędące treścią do indeksowania
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /api/
+Disallow: /zamowienie
+Disallow: /zamowienie.html
+Disallow: /dziekujemy
+Disallow: /dziekujemy.html
+Disallow: /koszyk
+Disallow: /koszyk.html
+
+# Sitemap (dodać pełny adres po ustawieniu własnej domeny):
+# Sitemap: https://twoja-domena.pl/sitemap.xml
