@@ -164,6 +164,93 @@ document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
 });
 
 /* ============================================
+   SEO — canonical, Open Graph / Twitter, JSON-LD.
+   Built from the current origin so it stays correct
+   on the Vercel domain today and a custom domain later.
+   ============================================ */
+(function initSEO() {
+  const origin = location.origin;
+  const SITE = 'FBT Outlet';
+  const logo = origin + '/assets/logo.png';
+
+  // Canonical: clean URL (no .html / index), keep ?id on product pages.
+  let clean = location.pathname.replace(/index\.html$/, '').replace(/\.html$/, '');
+  if (clean === '') clean = '/';
+  const id = new URLSearchParams(location.search).get('id');
+  const canonical = origin + clean + (clean.replace(/\/$/, '').endsWith('produkt') && id ? '?id=' + encodeURIComponent(id) : '');
+
+  const head = document.head;
+  const descEl = document.querySelector('meta[name="description"]');
+  const description = descEl ? descEl.getAttribute('content') : '';
+  const title = document.title;
+
+  function upsertLink(rel, href) {
+    let el = head.querySelector(`link[rel="${rel}"]`);
+    if (!el) { el = document.createElement('link'); el.setAttribute('rel', rel); head.appendChild(el); }
+    el.setAttribute('href', href);
+  }
+  function meta(attr, key, val, force) {
+    let el = head.querySelector(`meta[${attr}="${key}"]`);
+    if (!el) { el = document.createElement('meta'); el.setAttribute(attr, key); head.appendChild(el); }
+    else if (!force) return; // keep any hand-written value
+    el.setAttribute('content', val);
+  }
+
+  upsertLink('canonical', canonical);
+  meta('name', 'theme-color', '#08080A', true);
+
+  // Open Graph
+  meta('property', 'og:site_name', SITE);
+  meta('property', 'og:locale', 'pl_PL');
+  meta('property', 'og:type', clean === '/' ? 'website' : 'website');
+  meta('property', 'og:title', title);
+  meta('property', 'og:description', description);
+  meta('property', 'og:url', canonical, true);
+  meta('property', 'og:image', logo, true);
+
+  // Twitter
+  meta('name', 'twitter:card', 'summary_large_image');
+  meta('name', 'twitter:title', title);
+  meta('name', 'twitter:description', description);
+  meta('name', 'twitter:image', logo, true);
+
+  // JSON-LD: Organization + WebSite with on-site search action.
+  if (!document.getElementById('ld-org')) {
+    const ld = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Organization',
+          '@id': origin + '/#org',
+          name: SITE,
+          url: origin + '/',
+          logo: logo,
+          description: 'Oryginalne obuwie piłkarskie i sportowe renomowanych oraz premium marek w cenach outletowych.'
+        },
+        {
+          '@type': 'WebSite',
+          '@id': origin + '/#website',
+          url: origin + '/',
+          name: SITE,
+          inLanguage: 'pl-PL',
+          publisher: { '@id': origin + '/#org' },
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: origin + '/sklep.html?q={search_term_string}',
+            'query-input': 'required name=search_term_string'
+          }
+        }
+      ]
+    };
+    const s = document.createElement('script');
+    s.type = 'application/ld+json';
+    s.id = 'ld-org';
+    s.textContent = JSON.stringify(ld);
+    head.appendChild(s);
+  }
+})();
+
+/* ============================================
    Inline nav search — bar next to the magnifier,
    animated placeholder + live suggestions dropdown
    ============================================ */

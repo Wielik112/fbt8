@@ -289,3 +289,12 @@ h1, h2, h3, h4 { font-family: var(--display); font-weight: 800; line-height: 0.9
 .search-empty{padding:22px 18px;text-align:center;color:var(--grey-2);font-size:14px}
 @media (max-width:1080px){.nav-search-input{width:120px}}
 @media (max-width:560px){.nav-search{padding-left:10px}.nav-search-input{width:110px}.nav-search-results{width:290px}}
+
+/* Search bar on very small phones — keep the nav from overflowing */
+.nav-search{min-width:0}
+@media (max-width:480px){
+  .nav-actions{gap:8px}
+  .nav-search{padding-left:8px}
+  .nav-search-input{width:84px}
+  .nav-search-results{width:88vw;right:-46px}
+}

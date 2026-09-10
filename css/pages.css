@@ -419,3 +419,29 @@
   .review-form-wrap { position: static; }
   .reviews-grid { grid-template-columns: 1fr; }
 }
+
+/* ============================================
+   Large screens / 4K — use the extra width
+   ============================================ */
+@media (min-width: 1700px) {
+  :root { --shell: 1500px; }
+  .product-grid { grid-template-columns: repeat(5, 1fr); }
+  .shop-product-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 2200px) {
+  :root { --shell: 1760px; }
+  body { font-size: 17px; }
+}
+@media (min-width: 3000px) {
+  :root { --shell: 2100px; }
+  body { font-size: 18px; }
+}
+
+/* ============================================
+   Extra-small phones — keep everything readable
+   ============================================ */
+@media (max-width: 420px) {
+  .product-grid, .shop-product-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cart-item { grid-template-columns: 72px 1fr; gap: 14px; }
+  .cart-item .cart-item-price { grid-column: 2; }
+}
