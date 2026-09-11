@@ -52,6 +52,7 @@
         <label class="filter-opt"><input type="radio" name="cat" value="Wszystkie" checked> Wszystkie</label>
         <label class="filter-opt"><input type="radio" name="cat" value="Buty piłkarskie"> Buty piłkarskie</label>
         <label class="filter-opt"><input type="radio" name="cat" value="Buty sportowe"> Buty sportowe</label>
+        <label class="filter-opt"><input type="radio" name="cat" value="Odzież"> Odzież</label>
         <label class="filter-opt"><input type="radio" name="cat" value="Rękawice bramkarskie"> Rękawice bramkarskie</label>
         <label class="filter-opt"><input type="radio" name="cat" value="Piłki"> Piłki</label>
         <label class="filter-opt"><input type="radio" name="cat" value="Akcesoria"> Akcesoria</label>
@@ -81,13 +82,19 @@
       <details class="filter-group filter-collapse" data-size-group="shoe">
         <summary><h4>Rozmiar (buty)</h4></summary>
         <div class="chip-row">
-          <span class="chip" data-size="36">36</span><span class="chip" data-size="36 2/3">36 2/3</span><span class="chip" data-size="37 1/3">37 1/3</span>
-          <span class="chip" data-size="38">38</span><span class="chip" data-size="38 2/3">38 2/3</span><span class="chip" data-size="39 1/3">39 1/3</span>
-          <span class="chip" data-size="40">40</span><span class="chip" data-size="40 2/3">40 2/3</span><span class="chip" data-size="41 1/3">41 1/3</span>
-          <span class="chip" data-size="42">42</span><span class="chip" data-size="42 2/3">42 2/3</span><span class="chip" data-size="43 1/3">43 1/3</span>
-          <span class="chip" data-size="44">44</span><span class="chip" data-size="44 2/3">44 2/3</span><span class="chip" data-size="45 1/3">45 1/3</span>
-          <span class="chip" data-size="46">46</span><span class="chip" data-size="46 2/3">46 2/3</span><span class="chip" data-size="47 1/3">47 1/3</span>
-          <span class="chip" data-size="48">48</span><span class="chip" data-size="48 2/3">48 2/3</span>
+          <span class="chip" data-size="36">36</span><span class="chip" data-size="36,5">36,5</span><span class="chip" data-size="36 2/3">36 2/3</span>
+          <span class="chip" data-size="37">37</span><span class="chip" data-size="37 1/3">37 1/3</span><span class="chip" data-size="37,5">37,5</span>
+          <span class="chip" data-size="38">38</span><span class="chip" data-size="38,5">38,5</span><span class="chip" data-size="38 2/3">38 2/3</span>
+          <span class="chip" data-size="39">39</span><span class="chip" data-size="39 1/3">39 1/3</span><span class="chip" data-size="39,5">39,5</span>
+          <span class="chip" data-size="40">40</span><span class="chip" data-size="40,5">40,5</span><span class="chip" data-size="40 2/3">40 2/3</span>
+          <span class="chip" data-size="41">41</span><span class="chip" data-size="41 1/3">41 1/3</span><span class="chip" data-size="41,5">41,5</span>
+          <span class="chip" data-size="42">42</span><span class="chip" data-size="42,5">42,5</span><span class="chip" data-size="42 2/3">42 2/3</span>
+          <span class="chip" data-size="43">43</span><span class="chip" data-size="43 1/3">43 1/3</span><span class="chip" data-size="43,5">43,5</span>
+          <span class="chip" data-size="44">44</span><span class="chip" data-size="44,5">44,5</span><span class="chip" data-size="44 2/3">44 2/3</span>
+          <span class="chip" data-size="45">45</span><span class="chip" data-size="45 1/3">45 1/3</span><span class="chip" data-size="45,5">45,5</span>
+          <span class="chip" data-size="46">46</span><span class="chip" data-size="46,5">46,5</span><span class="chip" data-size="46 2/3">46 2/3</span>
+          <span class="chip" data-size="47">47</span><span class="chip" data-size="47 1/3">47 1/3</span><span class="chip" data-size="47,5">47,5</span>
+          <span class="chip" data-size="48">48</span><span class="chip" data-size="48,5">48,5</span><span class="chip" data-size="48 2/3">48 2/3</span>
         </div>
       </details>
       <details class="filter-group filter-collapse" data-size-group="apparel">
@@ -96,6 +103,16 @@
           <span class="chip" data-size="S">S</span><span class="chip" data-size="M">M</span><span class="chip" data-size="L">L</span><span class="chip" data-size="XL">XL</span>
         </div>
       </details>
+      <div class="filter-group" data-apparel-filter>
+        <h4>Rodzaj odzieży</h4>
+        <div class="chip-row" style="flex-direction:column;align-items:flex-start">
+          <span class="chip" data-garment="Kurtki">Kurtki</span>
+          <span class="chip" data-garment="Bluzy">Bluzy</span>
+          <span class="chip" data-garment="Spodnie">Spodnie</span>
+          <span class="chip" data-garment="Dresy sportowe">Dresy sportowe</span>
+          <span class="chip" data-garment="Czapki">Czapki</span>
+        </div>
+      </div>
       <div class="filter-group" data-football-filter>
         <h4>Zaawansowanie</h4>
         <div class="chip-row">
@@ -153,6 +170,7 @@
         <span class="chip active" data-cat="Wszystkie">Wszystkie</span>
         <span class="chip" data-cat="Buty piłkarskie">Buty piłkarskie</span>
         <span class="chip" data-cat="Buty sportowe">Buty sportowe</span>
+        <span class="chip" data-cat="Odzież">Odzież</span>
         <span class="chip" data-cat="Rękawice bramkarskie">Rękawice bramkarskie</span>
         <span class="chip" data-cat="Piłki">Piłki</span>
         <span class="chip" data-cat="Akcesoria">Akcesoria</span>

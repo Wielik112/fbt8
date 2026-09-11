@@ -126,6 +126,7 @@ function initShop() {
     sizes: new Set(),       // empty = all
     levels: new Set(),      // zaawansowanie — empty = all
     surfaces: new Set(),    // przeznaczenie — empty = all
+    garments: new Set(),    // rodzaj odzieży — empty = all
     q: '',                  // free-text search (from ?q= or search overlay)
     priceMin: 0,
     priceMax: 2000,
@@ -160,7 +161,7 @@ function initShop() {
 
   function matchQuery(p) {
     if (!state.q) return true;
-    return `${p.name || ''} ${p.brand || ''} ${p.cat || ''} ${p.level || ''} ${p.surface || ''}`
+    return `${p.name || ''} ${p.brand || ''} ${p.cat || ''} ${p.level || ''} ${p.surface || ''} ${p.garment || ''}`
       .toLowerCase().includes(state.q);
   }
 
@@ -180,6 +181,7 @@ function initShop() {
       (!state.sizes.size || p.sizes.some(s => state.sizes.has(s))) &&
       (!state.levels.size || state.levels.has(p.level)) &&
       (!state.surfaces.size || state.surfaces.has(p.surface)) &&
+      (!state.garments.size || state.garments.has(p.garment)) &&
       matchQuery(p) &&
       (p.price >= state.priceMin && p.price <= state.priceMax)
     );
@@ -205,6 +207,7 @@ function initShop() {
       if (radio) radio.checked = true;
       updateFootballFilters();
       updateSizeGroups();
+      updateApparelFilter();
       draw();
     });
   });
@@ -217,6 +220,7 @@ function initShop() {
         c.classList.toggle('active', c.dataset.cat === state.cat));
       updateFootballFilters();
       updateSizeGroups();
+      updateApparelFilter();
       draw();
     });
   });
@@ -270,6 +274,26 @@ function initShop() {
       draw();
     });
   });
+
+  // Rodzaj odzieży (garment) chips — multi toggle
+  document.querySelectorAll('.chip[data-garment]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('active');
+      chip.classList.contains('active') ? state.garments.add(chip.dataset.garment) : state.garments.delete(chip.dataset.garment);
+      draw();
+    });
+  });
+
+  // The "Rodzaj odzieży" group only makes sense for the Odzież category.
+  const apparelGroups = document.querySelectorAll('[data-apparel-filter]');
+  function updateApparelFilter() {
+    const show = state.cat === 'Odzież';
+    apparelGroups.forEach(g => { g.style.display = show ? '' : 'none'; });
+    if (!show) {
+      state.garments.clear();
+      document.querySelectorAll('.chip[data-garment]').forEach(c => c.classList.remove('active'));
+    }
+  }
 
   // The zaawansowanie/przeznaczenie groups only make sense for football boots.
   const footballGroups = document.querySelectorAll('[data-football-filter]');
@@ -346,7 +370,7 @@ function initShop() {
   // Reset
   document.querySelector('#filter-reset')?.addEventListener('click', () => {
     state.cat = 'Wszystkie'; state.brand = 'Wszystkie'; state.gender = 'Wszystkie';
-    state.conditions.clear(); state.sizes.clear(); state.levels.clear(); state.surfaces.clear();
+    state.conditions.clear(); state.sizes.clear(); state.levels.clear(); state.surfaces.clear(); state.garments.clear();
     state.q = ''; document.querySelector('.search-tag')?.remove();
     state.sort = 'default';
 
@@ -359,15 +383,17 @@ function initShop() {
 
     document.querySelectorAll('.chip[data-cat]').forEach(c => c.classList.toggle('active', c.dataset.cat === 'Wszystkie'));
     document.querySelectorAll('.chip[data-brand]').forEach(c => c.classList.toggle('active', c.dataset.brand === 'Wszystkie'));
-    document.querySelectorAll('.chip[data-size],.chip[data-level],.chip[data-surface]').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.chip[data-size],.chip[data-level],.chip[data-surface],.chip[data-garment]').forEach(c => c.classList.remove('active'));
 
     updateFootballFilters();
     updateSizeGroups();
+    updateApparelFilter();
     applyPrice(0, SLIDER_MAX);
   });
 
   updateFootballFilters();
   updateSizeGroups();
+  updateApparelFilter();
   draw();
 }
 

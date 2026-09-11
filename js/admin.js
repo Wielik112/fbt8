@@ -5,11 +5,12 @@
    token is also kept as a same-origin fallback.
    ============================================ */
 
-const CATEGORIES = ['Buty piłkarskie', 'Buty sportowe', 'Rękawice bramkarskie', 'Piłki', 'Akcesoria'];
+const CATEGORIES = ['Buty piłkarskie', 'Buty sportowe', 'Odzież', 'Rękawice bramkarskie', 'Piłki', 'Akcesoria'];
 const CONDITIONS = ['Nowy'];
 const GENDERS = ['Męskie', 'Damskie', 'Unisex'];
 const LEVELS = ['Rekreacyjne', 'Treningowe', 'Półprofesjonalne', 'Profesjonalne'];
 const SURFACES = ['Na trawę (lanki)', 'Na sztuczną trawę/orlika (turfy)', 'Na mokrą trawę (wkręty/mixy)', 'Na halę (halówki)'];
+const GARMENTS = ['Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'];
 const TOKEN_KEY = 'fbt_admin_token';
 const DEFAULT_GRADIENT = 'linear-gradient(135deg,#2a0409,#1c1c22)';
 
@@ -136,14 +137,50 @@ function esc(s) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+let productFilter = 'Wszystkie';
+let productSearch = '';
+
+function filteredProducts() {
+  const q = productSearch.trim().toLowerCase();
+  return products.filter((p) => {
+    if (productFilter !== 'Wszystkie' && p.cat !== productFilter) return false;
+    if (!q) return true;
+    return `${p.name || ''} ${p.brand || ''} ${p.id || ''}`.toLowerCase().includes(q);
+  });
+}
+
+// Category filter chips (built once) — mirrors the shop categories.
+function renderProductFilters() {
+  const box = $('prod-filters');
+  if (!box || box.dataset.built) return;
+  box.dataset.built = '1';
+  const cats = ['Wszystkie', ...CATEGORIES];
+  box.innerHTML = cats.map((c) =>
+    `<button type="button" class="pchip${c === productFilter ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+  box.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pchip');
+    if (!btn) return;
+    productFilter = btn.dataset.cat;
+    box.querySelectorAll('.pchip').forEach((b) => b.classList.toggle('active', b === btn));
+    renderRows();
+  });
+  const search = $('prod-search');
+  if (search) search.addEventListener('input', () => { productSearch = search.value; renderRows(); });
+}
+
 function renderRows() {
   const tbody = $('rows');
-  $('count').textContent = products.length;
+  const list = filteredProducts();
+  $('count').textContent = list.length === products.length ? products.length : `${list.length} / ${products.length}`;
   if (!products.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty">Brak produktów. Kliknij „Dodaj produkt”.</td></tr>';
     return;
   }
-  tbody.innerHTML = products.map((p) => {
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Brak produktów dla wybranego filtra.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map((p) => {
     const condClass = p.condition === 'Nowy' ? 'new' : 'used';
     const old = p.old ? `<span class="old">${esc(p.old)} zł</span>` : '';
     const media = p.image
@@ -192,6 +229,7 @@ async function enterPanel() {
   $('tab-reviews').hidden = true;
   ordersState.loaded = false;
   reviewsLoaded = false;
+  renderProductFilters();
   await loadProducts();
 }
 
@@ -307,6 +345,7 @@ function openModal(product) {
   fillSelect($('f-gender'), GENDERS, product?.gender || 'Unisex');
   fillSelect($('f-level'), ['', ...LEVELS], product?.level || '');
   fillSelect($('f-surface'), ['', ...SURFACES], product?.surface || '');
+  fillSelect($('f-garment'), ['', ...GARMENTS], product?.garment || '');
 
   $('f-id').value        = product?.id || '';
   $('f-name').value      = product?.name || '';
@@ -402,6 +441,7 @@ $('product-form').addEventListener('submit', async (e) => {
     gender: $('f-gender').value,
     level: $('f-level').value,
     surface: $('f-surface').value,
+    garment: $('f-garment').value,
     price: $('f-price').value,
     old: $('f-old').value,
     description: $('f-description').value.trim(),
