@@ -19,8 +19,8 @@ export function paymentMethodTypes() {
 // marks methods that need a parcel-locker point (InPost Paczkomat).
 export const SHIPPING_METHODS = {
   inpost_locker:  { label: 'InPost Paczkomat 24/7', price: 1299, requiresPoint: true,  carrier: 'inpost' },
+  orlen_paczka:   { label: 'Orlen Paczka',          price: 999,  requiresPoint: true,  carrier: 'orlen'  },
   inpost_courier: { label: 'Kurier InPost',         price: 1599, requiresPoint: false, carrier: 'inpost' },
-  courier:        { label: 'Kurier standardowy',    price: 1999, requiresPoint: false, carrier: 'courier' },
 };
 
 // Free shipping is disabled — shipping is always charged per method.
