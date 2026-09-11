@@ -112,6 +112,16 @@ h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:.5px;text-transform:
 .row-actions{display:flex;gap:8px;justify-content:flex-end}
 .empty{padding:50px 20px;text-align:center;color:var(--grey-2)}
 .loading{padding:50px 20px;text-align:center;color:var(--grey-2)}
+/* Product filters toolbar */
+.prod-toolbar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-bottom:16px}
+.pchips{display:flex;flex-wrap:wrap;gap:8px}
+.pchip{padding:8px 14px;border-radius:999px;border:1px solid var(--line-bright);background:var(--surface-2);
+  color:var(--grey-1);font-size:13px;font-weight:600;cursor:pointer;transition:.15s;white-space:nowrap}
+.pchip:hover{border-color:var(--grey-2);color:#fff}
+.pchip.active{background:var(--red);border-color:var(--red);color:#fff}
+.prod-search{flex:1;min-width:200px;max-width:320px;padding:10px 14px;background:var(--black-2);
+  border:1px solid var(--line-bright);border-radius:10px;color:#fff;font-size:14px}
+.prod-search:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px var(--red-glow)}
 
 /* ---- Tabs ---- */
 .tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:24px}
@@ -247,6 +257,11 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
     </div>
 
     <div id="panel-notice"></div>
+
+    <div class="prod-toolbar">
+      <div class="pchips" id="prod-filters"></div>
+      <input type="search" id="prod-search" class="prod-search" placeholder="Szukaj produktu (nazwa, marka, ID)…" autocomplete="off">
+    </div>
 
     <div class="table-wrap">
       <table class="tbl">
