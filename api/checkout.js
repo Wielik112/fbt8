@@ -77,7 +77,8 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Uzupełnij adres dostawy (ulica, miasto, kod pocztowy).' });
       }
     }
-    const shippingCost = shippingCostFor(methodKey, subtotal);
+    const totalQty = items.reduce((s, i) => s + i.qty, 0);
+    const shippingCost = shippingCostFor(methodKey, totalQty);
 
     // --- Coupon (server-validated) ---
     const couponCode = body?.coupon ? String(body.coupon).trim().toUpperCase() : '';

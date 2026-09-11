@@ -9,10 +9,21 @@
 
   // Display-only mirror of api/_lib/commerce.js (server is authoritative).
   const SHIPPING = {
-    inpost_locker:  { label: 'InPost Paczkomat 24/7', sub: 'Odbiór 24/7 w paczkomacie', price: 1299, requiresPoint: true },
-    orlen_paczka:   { label: 'Orlen Paczka',          sub: 'Odbiór w punkcie Orlen / Ruch', price: 999, requiresPoint: true },
-    inpost_courier: { label: 'Kurier InPost',         sub: 'Dostawa pod wskazany adres', price: 1599, requiresPoint: false },
+    inpost_locker:  { label: 'InPost Paczkomat 24/7', sub: 'Odbiór 24/7 w paczkomacie', requiresPoint: true,
+                      tiers: [{ maxQty: 1, price: 1659 }, { maxQty: Infinity, price: 1942 }] },
+    orlen_paczka:   { label: 'Orlen Paczka',          sub: 'Odbiór w punkcie Orlen / Ruch', requiresPoint: true,
+                      tiers: [{ maxQty: Infinity, price: 999 }] },
+    inpost_courier: { label: 'Kurier InPost',         sub: 'Dostawa pod wskazany adres', requiresPoint: false,
+                      tiers: [{ maxQty: 4, price: 1831 }, { maxQty: Infinity, price: 2028 }] },
   };
+  // Liczba sztuk w koszyku decyduje o progu ceny dostawy.
+  function cartQty() { return cart().reduce((s, i) => s + i.qty, 0) || 1; }
+  function shipPrice(key) {
+    const m = SHIPPING[key]; if (!m) return 0;
+    const q = cartQty();
+    const tier = m.tiers.find((t) => q <= t.maxQty) || m.tiers[m.tiers.length - 1];
+    return tier.price;
+  }
   const COUPONS = { FBT15: 15, START10: 10 };
 
   const fmt = (gr) => (gr / 100).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
@@ -58,7 +69,7 @@
 
   function renderShipping() {
     $('ship-options').innerHTML = Object.entries(SHIPPING).map(([key, m]) => {
-      const cost = m.price;
+      const cost = shipPrice(key);
       return `
         <label class="ship-opt${key === method ? ' active' : ''}" data-method="${key}">
           <input type="radio" name="ship" value="${key}" ${key === method ? 'checked' : ''}>
@@ -98,7 +109,7 @@
 
   function renderTotals() {
     const sub = subtotalGrosze();
-    const ship = SHIPPING[method].price;
+    const ship = shipPrice(method);
     const disc = Math.round(sub * discountPercent / 100);
     const total = Math.max(0, sub - disc) + ship;
 

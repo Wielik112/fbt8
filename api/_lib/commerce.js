@@ -17,10 +17,14 @@ export function paymentMethodTypes() {
 
 // Shipping methods. `price` is the base cost in grosze; `requiresPoint`
 // marks methods that need a parcel-locker point (InPost Paczkomat).
+// Ceny w groszach. `tiers` = progi wg liczby sztuk (qty <= maxQty -> price).
 export const SHIPPING_METHODS = {
-  inpost_locker:  { label: 'InPost Paczkomat 24/7', price: 1299, requiresPoint: true,  carrier: 'inpost' },
-  orlen_paczka:   { label: 'Orlen Paczka',          price: 999,  requiresPoint: true,  carrier: 'orlen'  },
-  inpost_courier: { label: 'Kurier InPost',         price: 1599, requiresPoint: false, carrier: 'inpost' },
+  inpost_locker:  { label: 'InPost Paczkomat 24/7', requiresPoint: true,  carrier: 'inpost',
+                    tiers: [{ maxQty: 1, price: 1659 }, { maxQty: Infinity, price: 1942 }] },
+  orlen_paczka:   { label: 'Orlen Paczka',          requiresPoint: true,  carrier: 'orlen',
+                    tiers: [{ maxQty: Infinity, price: 999 }] },
+  inpost_courier: { label: 'Kurier InPost',         requiresPoint: false, carrier: 'inpost',
+                    tiers: [{ maxQty: 4, price: 1831 }, { maxQty: Infinity, price: 2028 }] },
 };
 
 // Free shipping is disabled — shipping is always charged per method.
@@ -48,10 +52,15 @@ export const COUPONS = { FBT15: 15, START10: 10 };
 
 // Resolved shipping cost for a method given the goods subtotal (grosze).
 // Returns null for an unknown method.
-export function shippingCostFor(methodKey, subtotalGrosze) {
+export function shippingCostFor(methodKey, qty = 1) {
   const m = SHIPPING_METHODS[methodKey];
   if (!m) return null;
-  return m.price;
+  if (Array.isArray(m.tiers)) {
+    const q = Math.max(1, Math.round(Number(qty) || 1));
+    const tier = m.tiers.find((t) => q <= t.maxQty) || m.tiers[m.tiers.length - 1];
+    return tier.price;
+  }
+  return m.price ?? null;
 }
 
 export function couponPercent(code) {
