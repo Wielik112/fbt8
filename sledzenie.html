@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Śledzenie zamówienia | FBT Outlet</title>
+<meta name="description" content="Śledź swoją przesyłkę z FBT Outlet. Numer do śledzenia wysyłamy e-mailem po nadaniu paczki — sprawdź status w InPost lub Orlen Paczka.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/favicon.png">
+<style>
+.track-wrap{max-width:760px;margin:0 auto;padding:10px 0 100px}
+.track-steps{counter-reset:step;display:grid;gap:14px;margin:0 0 40px;padding:0;list-style:none}
+.track-steps li{position:relative;padding:18px 20px 18px 62px;background:var(--surface);border:1px solid var(--line);border-radius:14px;color:var(--grey-1);font-size:15px;line-height:1.6}
+.track-steps li::before{counter-increment:step;content:counter(step);position:absolute;left:18px;top:16px;width:30px;height:30px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:700}
+.track-steps li strong{color:#fff}
+.track-carriers{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:34px}
+.track-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px;display:flex;flex-direction:column;gap:8px}
+.track-card h3{font-family:var(--display);text-transform:uppercase;font-size:20px;margin:0}
+.track-card p{color:var(--grey-2);font-size:14px;margin:0 0 14px}
+.track-card .btn{align-self:flex-start;margin-top:auto}
+.track-help{background:var(--black-2);border:1px solid var(--line);border-radius:16px;padding:26px;text-align:center}
+.track-help p{color:var(--grey-1);margin:0 0 16px}
+@media(max-width:560px){.track-carriers{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="shell">
+    <a href="index.html" class="nav-logo"><img src="assets/logo.png" alt="FBT Outlet"></a>
+    <div class="nav-links">
+      <a href="index.html">Start</a><a href="sklep.html">Sklep</a><a href="o-nas.html">O nas</a><a href="kontakt.html">Kontakt</a><a href="opinie.html">Opinie</a>
+    </div>
+    <div class="nav-actions">
+      <a href="sklep.html" class="icon-btn" aria-label="Szukaj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></a>
+      <a href="koszyk.html" class="icon-btn" aria-label="Koszyk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6L5 3H2"/></svg><span class="cart-count">0</span></a>
+      <a href="sklep.html" class="btn btn-primary">Kup teraz</a>
+      <button class="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-menu">
+  <a href="index.html">Start</a><a href="sklep.html">Sklep</a><a href="o-nas.html">O nas</a><a href="kontakt.html">Kontakt</a><a href="opinie.html">Opinie</a><a href="koszyk.html">Koszyk</a>
+</div>
+
+<header class="page-hero">
+  <div class="shell">
+    <span class="eyebrow">Pomoc</span>
+    <h1>Śledzenie<br>zamówienia</h1>
+    <p>Numer do śledzenia przesyłki wysyłamy e-mailem zaraz po nadaniu paczki. Sprawdź status u przewoźnika lub napisz do nas.</p>
+  </div>
+</header>
+
+<section class="section" style="padding-top:40px">
+  <div class="shell">
+    <div class="track-wrap">
+      <ol class="track-steps">
+        <li>Po złożeniu i opłaceniu zamówienia otrzymasz e-mail z <strong>potwierdzeniem</strong>.</li>
+        <li>Gdy skompletujemy paczkę (zwykle w 24h), nadajemy ją i wysyłamy Ci <strong>numer przesyłki</strong> na e-mail.</li>
+        <li>Wpisz numer przesyłki u przewoźnika poniżej, aby zobaczyć <strong>aktualny status</strong>.</li>
+      </ol>
+
+      <div class="track-carriers">
+        <div class="track-card">
+          <h3>InPost</h3>
+          <p>Paczkomat 24/7 oraz Kurier InPost.</p>
+          <a href="https://inpost.pl/sledzenie-przesylek" target="_blank" rel="noopener" class="btn btn-primary">Śledź w InPost
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+        <div class="track-card">
+          <h3>Orlen Paczka</h3>
+          <p>Odbiór w punkcie Orlen / Ruch.</p>
+          <a href="https://www.orlenpaczka.pl/sledzenie-przesylki/" target="_blank" rel="noopener" class="btn btn-primary">Śledź w Orlen Paczka
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="track-help">
+        <p>Nie masz numeru przesyłki albo coś się nie zgadza? Napisz do nas, podając numer zamówienia — pomożemy sprawdzić status.</p>
+        <a href="kontakt.html" class="btn btn-ghost">Skontaktuj się z nami</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="shell">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <img src="assets/logo.png" alt="FBT Outlet">
+        <p>Oryginalne obuwie piłkarskie i sportowe w cenach outletowych.</p>
+      </div>
+      <div><h4>Sklep</h4><div class="footer-links"><a href="sklep.html">Wszystkie produkty</a><a href="sklep.html?cat=Buty%20pi%C5%82karskie">Buty piłkarskie</a><a href="sklep.html?cat=Odzie%C5%BC">Odzież</a><a href="sklep.html">Wyprzedaż</a></div></div>
+      <div><h4>Firma</h4><div class="footer-links"><a href="o-nas.html">O nas</a><a href="kontakt.html">Kontakt</a><a href="regulamin.html">Regulamin</a><a href="regulamin.html">Dostawa i zwroty</a></div></div>
+      <div><h4>Pomoc</h4><div class="footer-links"><a href="kontakt.html">Centrum pomocy</a><a href="sledzenie.html">Śledzenie zamówienia</a><a href="kontakt.html#faq">FAQ</a></div></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 FBT Outlet. Wszelkie prawa zastrzeżone.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
