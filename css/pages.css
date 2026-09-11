@@ -447,3 +447,11 @@
   .cart-item { grid-template-columns: 72px 1fr; gap: 14px; }
   .cart-item .cart-item-price { grid-column: 2; }
 }
+
+/* Collapsible filter groups (rozmiary) */
+.filter-collapse summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.filter-collapse summary::-webkit-details-marker { display: none; }
+.filter-collapse summary h4 { margin: 0; }
+.filter-collapse summary::after { content: '+'; font-family: var(--display); font-size: 20px; line-height: 1; color: var(--grey-2); }
+.filter-collapse[open] summary::after { content: '\2013'; }
+.filter-collapse .chip-row { margin-top: 16px; }
