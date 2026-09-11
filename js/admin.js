@@ -151,12 +151,13 @@ function renderRows() {
       : `<div class="swatch" style="background:${esc(p.gradient || DEFAULT_GRADIENT)}"></div>`;
     const extra = [p.level, p.surface].filter(Boolean).map(esc).join(' · ');
     const noteFlag = (p.note && p.note.trim()) ? ' · 📝 uwagi' : '';
+    const featFlag = p.featured ? ' · ⭐ Bestseller' : '';
     return `
     <tr data-id="${esc(p.id)}">
       <td>${media}</td>
       <td>
         <div class="pname">${esc(p.name)}</div>
-        <div class="pmeta">${esc(p.brand)} · ${esc(p.gender || 'Unisex')} · ${esc(p.id)}${extra ? ' · ' + extra : ''}${noteFlag}</div>
+        <div class="pmeta">${esc(p.brand)} · ${esc(p.gender || 'Unisex')} · ${esc(p.id)}${extra ? ' · ' + extra : ''}${noteFlag}${featFlag}</div>
       </td>
       <td class="hide-sm">${esc(p.cat)}</td>
       <td class="hide-sm"><span class="pill ${condClass}">${esc(p.condition)} · Kat. A</span></td>
@@ -314,6 +315,7 @@ function openModal(product) {
   $('f-old').value       = product?.old ?? '';
   $('f-description').value = product?.description || '';
   $('f-note').value      = product?.note || '';
+  $('f-featured').checked = product?.featured === true;
   $('f-tag').value       = product?.tag || '';
   $('f-tagType').value   = product?.tagType || 'sale';
   $('f-sizes').value     = (product?.sizes || []).join(', ');
@@ -404,6 +406,7 @@ $('product-form').addEventListener('submit', async (e) => {
     old: $('f-old').value,
     description: $('f-description').value.trim(),
     note: $('f-note').value.trim(),
+    featured: $('f-featured').checked,
     tag: $('f-tag').value.trim(),
     tagType: $('f-tagType').value,
     sizes: splitList($('f-sizes').value),

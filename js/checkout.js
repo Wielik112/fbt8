@@ -90,9 +90,9 @@
       const isInpost = method === 'inpost_locker';
       const lbl = $('point-label');
       if (lbl) lbl.textContent = isInpost ? 'Kod paczkomatu (np. KRA010)' : 'Kod punktu Orlen Paczka';
-      $('c-point').placeholder = isInpost ? 'Wpisz kod lub wybierz na mapie' : 'Wpisz kod punktu Orlen';
+      $('c-point').placeholder = isInpost ? 'Wpisz kod lub wybierz na mapie' : 'Wpisz kod lub znajdź punkt na mapie';
       const pickBtn = $('pick-point-btn');
-      if (pickBtn) pickBtn.style.display = isInpost ? '' : 'none';
+      if (pickBtn) pickBtn.textContent = isInpost ? 'Wybierz na mapie' : 'Znajdź punkt na mapie';
     }
   }
 
@@ -134,7 +134,13 @@
     $('point-code').textContent = v;
   });
 
-  $('pick-point-btn').addEventListener('click', openGeowidget);
+  $('pick-point-btn').addEventListener('click', () => {
+    if (method === 'inpost_locker') { openGeowidget(); return; }
+    // Orlen Paczka: brak osadzonego widgetu — otwieramy oficjalną mapę punktów.
+    window.open('https://www.orlenpaczka.pl/znajdz-punkt/', '_blank', 'noopener');
+    showToast('Wybierz punkt na mapie Orlen i wpisz jego kod.');
+    $('c-point').focus();
+  });
   $('gw-close').addEventListener('click', closeGeowidget);
 
   let gwAssetsLoaded = false;
