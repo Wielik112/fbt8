@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
 
-export const CATEGORIES  = ['Buty piłkarskie', 'Buty sportowe', 'Rękawice bramkarskie', 'Piłki', 'Akcesoria'];
+export const CATEGORIES  = ['Buty piłkarskie', 'Buty sportowe', 'Odzież', 'Rękawice bramkarskie', 'Piłki', 'Akcesoria'];
+// Rodzaj odzieży — używany, gdy kategoria to „Odzież".
+export const GARMENTS    = ['Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'];
 export const CONDITIONS  = ['Nowy']; // sklep sprzedaje wyłącznie nowe produkty (Kategoria A)
 export const GENDERS     = ['Męskie', 'Damskie', 'Unisex'];
 export const TAG_TYPES   = ['sale', 'hit', 'new'];
@@ -68,6 +70,9 @@ export function normalizeProduct(body) {
   let surface = String(body.surface ?? '').trim();
   if (!SURFACES.includes(surface)) surface = '';
 
+  let garment = String(body.garment ?? '').trim();
+  if (!GARMENTS.includes(garment)) garment = '';
+
   let gender = String(body.gender ?? '').trim();
   if (!GENDERS.includes(gender)) gender = 'Unisex';
 
@@ -90,7 +95,7 @@ export function normalizeProduct(body) {
   const value = {
     id: String(body.id ?? '').trim() || null,
     name, brand, cat, condition, gender, price, old, description, note, tag, tagType,
-    level, surface, featured,
+    level, surface, garment, featured,
     sizes:  toStringArray(body.sizes),
     colors: toStringArray(body.colors),
     image, images,

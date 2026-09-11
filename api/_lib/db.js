@@ -83,6 +83,7 @@ export async function ensureSchema() {
       gender      TEXT NOT NULL DEFAULT 'Unisex',
       level       TEXT,
       surface     TEXT,
+      garment     TEXT,
       price       INTEGER NOT NULL,
       old_price   INTEGER,
       description TEXT,
@@ -107,6 +108,7 @@ export async function ensureSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS gender TEXT NOT NULL DEFAULT 'Unisex'`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS level TEXT`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS surface TEXT`;
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS garment TEXT`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS note TEXT`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT false`;
   // Customer reviews (simple, public).
@@ -148,6 +150,7 @@ export function mapRow(r) {
     gender: r.gender || 'Unisex',
     level: r.level || '',
     surface: r.surface || '',
+    garment: r.garment || '',
     price: r.price,
     old: r.old_price,
     description: r.description || '',
@@ -177,9 +180,9 @@ export async function insertProduct(p, sortOrder = null) {
   const order = sortOrder == null ? await nextSortOrder() : sortOrder;
   const { rows } = await sql`
     INSERT INTO products
-      (id, name, cat, brand, condition, gender, level, surface, price, old_price, description, note, featured, tag, tag_type, sizes, colors, image, images, gradient, sort_order)
+      (id, name, cat, brand, condition, gender, level, surface, garment, price, old_price, description, note, featured, tag, tag_type, sizes, colors, image, images, gradient, sort_order)
     VALUES
-      (${p.id}, ${p.name}, ${p.cat}, ${p.brand}, ${p.condition}, ${p.gender || 'Unisex'}, ${p.level || null}, ${p.surface || null}, ${p.price}, ${p.old}, ${p.description || null}, ${p.note || null}, ${p.featured === true},
+      (${p.id}, ${p.name}, ${p.cat}, ${p.brand}, ${p.condition}, ${p.gender || 'Unisex'}, ${p.level || null}, ${p.surface || null}, ${p.garment || null}, ${p.price}, ${p.old}, ${p.description || null}, ${p.note || null}, ${p.featured === true},
        ${p.tag}, ${p.tagType},
        ${JSON.stringify(p.sizes || [])}::jsonb, ${JSON.stringify(p.colors || [])}::jsonb,
        ${p.image || null}, ${JSON.stringify(p.images || [])}::jsonb,
@@ -192,7 +195,7 @@ export async function updateProduct(id, p) {
   const { rows } = await sql`
     UPDATE products SET
       name = ${p.name}, cat = ${p.cat}, brand = ${p.brand}, condition = ${p.condition},
-      gender = ${p.gender || 'Unisex'}, level = ${p.level || null}, surface = ${p.surface || null},
+      gender = ${p.gender || 'Unisex'}, level = ${p.level || null}, surface = ${p.surface || null}, garment = ${p.garment || null},
       price = ${p.price}, old_price = ${p.old}, description = ${p.description || null}, note = ${p.note || null}, featured = ${p.featured === true},
       tag = ${p.tag}, tag_type = ${p.tagType},
       sizes = ${JSON.stringify(p.sizes || [])}::jsonb,

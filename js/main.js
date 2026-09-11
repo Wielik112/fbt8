@@ -322,7 +322,7 @@ document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
       const q = input.value.trim().toLowerCase();
       if (!q) { results.innerHTML = ''; hide(); return; }
       const list = (await getProducts()).filter((p) => {
-        const hay = `${p.name || ''} ${p.brand || ''} ${p.cat || ''} ${p.level || ''} ${p.surface || ''}`.toLowerCase();
+        const hay = `${p.name || ''} ${p.brand || ''} ${p.cat || ''} ${p.level || ''} ${p.surface || ''} ${p.garment || ''}`.toLowerCase();
         return hay.includes(q);
       }).slice(0, 7);
 

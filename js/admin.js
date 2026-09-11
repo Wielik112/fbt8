@@ -5,11 +5,12 @@
    token is also kept as a same-origin fallback.
    ============================================ */
 
-const CATEGORIES = ['Buty piłkarskie', 'Buty sportowe', 'Rękawice bramkarskie', 'Piłki', 'Akcesoria'];
+const CATEGORIES = ['Buty piłkarskie', 'Buty sportowe', 'Odzież', 'Rękawice bramkarskie', 'Piłki', 'Akcesoria'];
 const CONDITIONS = ['Nowy'];
 const GENDERS = ['Męskie', 'Damskie', 'Unisex'];
 const LEVELS = ['Rekreacyjne', 'Treningowe', 'Półprofesjonalne', 'Profesjonalne'];
 const SURFACES = ['Na trawę (lanki)', 'Na sztuczną trawę/orlika (turfy)', 'Na mokrą trawę (wkręty/mixy)', 'Na halę (halówki)'];
+const GARMENTS = ['Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'];
 const TOKEN_KEY = 'fbt_admin_token';
 const DEFAULT_GRADIENT = 'linear-gradient(135deg,#2a0409,#1c1c22)';
 
@@ -307,6 +308,7 @@ function openModal(product) {
   fillSelect($('f-gender'), GENDERS, product?.gender || 'Unisex');
   fillSelect($('f-level'), ['', ...LEVELS], product?.level || '');
   fillSelect($('f-surface'), ['', ...SURFACES], product?.surface || '');
+  fillSelect($('f-garment'), ['', ...GARMENTS], product?.garment || '');
 
   $('f-id').value        = product?.id || '';
   $('f-name').value      = product?.name || '';
@@ -402,6 +404,7 @@ $('product-form').addEventListener('submit', async (e) => {
     gender: $('f-gender').value,
     level: $('f-level').value,
     surface: $('f-surface').value,
+    garment: $('f-garment').value,
     price: $('f-price').value,
     old: $('f-old').value,
     description: $('f-description').value.trim(),

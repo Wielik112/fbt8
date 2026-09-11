@@ -126,6 +126,7 @@
     $('#pd-cond').textContent = `${p.condition} · Kat. A`;
     if (p.level) { $('#pd-level').textContent = p.level; $('#pd-level-row').hidden = false; }
     if (p.surface) { $('#pd-surface').textContent = p.surface; $('#pd-surface-row').hidden = false; }
+    if (p.garment) { $('#pd-garment').textContent = p.garment; $('#pd-garment-row').hidden = false; }
     if (p.note && p.note.trim()) { $('#pd-note-text').textContent = p.note.trim(); $('#pd-note').hidden = false; }
 
     // Add-to-cart: main.js already bound the click handler to this button;
