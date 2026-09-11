@@ -82,13 +82,15 @@ export function normalizeProduct(body) {
   const description = String(body.description ?? '').trim().slice(0, 2000) || null;
   // Uwagi outletowe / cechy charakterystyczne egzemplarza (np. uszkodzone opakowanie).
   const note = String(body.note ?? '').trim().slice(0, 1000) || null;
+  // Wyróżnienie na stronie głównej (sekcja Bestsellery).
+  const featured = body.featured === true || body.featured === 'true' || body.featured === 'on' || body.featured === 1;
   const image  = cleanImage(body.image);
   const images = toImageArray(body.images);
 
   const value = {
     id: String(body.id ?? '').trim() || null,
     name, brand, cat, condition, gender, price, old, description, note, tag, tagType,
-    level, surface,
+    level, surface, featured,
     sizes:  toStringArray(body.sizes),
     colors: toStringArray(body.colors),
     image, images,

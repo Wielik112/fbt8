@@ -82,7 +82,9 @@ function renderProducts(selector, list) {
 /* ---------- Page renderers ---------- */
 
 function renderFeatured() {
-  renderProducts('#featured-products', PRODUCTS.slice(0, 8));
+  // Admin-picked bestsellers first; if none are flagged, fall back to the first 8.
+  const picked = PRODUCTS.filter((p) => p.featured);
+  renderProducts('#featured-products', (picked.length ? picked : PRODUCTS).slice(0, 8));
 }
 
 // Polish plural for "produkt": 1 produkt, 2–4 produkty, else produktów.
