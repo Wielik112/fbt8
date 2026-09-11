@@ -28,6 +28,16 @@
 .usp-intro p{color:var(--grey-1,#cfcfd6);font-size:15px;line-height:1.7;margin:0 0 10px}
 @media(max-width:860px){.usp-grid{grid-template-columns:repeat(2,1fr)}.usp:nth-child(3){border-left:none}}
 @media(max-width:520px){.usp-grid{grid-template-columns:1fr}.usp{border-left:none;border-top:1px solid var(--line,#22222a)}.usp:first-child{border-top:none}}
+/* Brand strip */
+.brand-strip{padding:34px 0 40px;border-top:1px solid var(--line,#22222a);border-bottom:1px solid var(--line,#22222a);background:var(--black-2,#0d0d10);overflow:hidden}
+.brand-strip .bs-head{text-align:center;margin-bottom:22px}
+.brand-marquee{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+.brand-track{display:flex;width:max-content;gap:64px;align-items:center;animation:scroll-x 32s linear infinite}
+.brand-strip:hover .brand-track{animation-play-state:paused}
+.brand-item{font-family:var(--display,inherit);font-weight:800;font-style:italic;text-transform:uppercase;font-size:30px;letter-spacing:1px;color:var(--grey-2,#8b8b96);opacity:.85;white-space:nowrap;transition:color .2s,opacity .2s}
+.brand-item:hover{color:#fff;opacity:1}
+@media(prefers-reduced-motion:reduce){.brand-track{animation:none;flex-wrap:wrap;justify-content:center;width:auto;gap:28px 44px}}
+@media(max-width:560px){.brand-item{font-size:22px}.brand-track{gap:44px}}
 </style>
 </head>
 <body>
@@ -154,6 +164,29 @@
         <div class="cat-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg></div>
         <div class="cat-body"><h3>Akcesoria</h3><span class="cat-count" data-cat="Akcesoria"></span></div>
       </a>
+    </div>
+  </div>
+</section>
+
+<!-- BRAND STRIP (scrolling marquee of stocked brands) -->
+<section class="brand-strip" aria-label="Marki dostępne w sklepie">
+  <div class="shell bs-head">
+    <span class="eyebrow">Marki w ofercie</span>
+  </div>
+  <div class="brand-marquee">
+    <div class="brand-track" aria-hidden="true">
+      <span class="brand-item">Nike</span>
+      <span class="brand-item">Adidas</span>
+      <span class="brand-item">Puma</span>
+      <span class="brand-item">Reebok</span>
+      <span class="brand-item">New Balance</span>
+      <span class="brand-item">Under Armour</span>
+      <span class="brand-item">Nike</span>
+      <span class="brand-item">Adidas</span>
+      <span class="brand-item">Puma</span>
+      <span class="brand-item">Reebok</span>
+      <span class="brand-item">New Balance</span>
+      <span class="brand-item">Under Armour</span>
     </div>
   </div>
 </section>
