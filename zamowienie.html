@@ -117,13 +117,13 @@
         <h2><span class="co-step">2</span>Dostawa</h2>
         <div id="ship-options"></div>
 
-        <!-- InPost point picker (shown for Paczkomat) -->
+        <!-- Point picker (InPost Paczkomat / Orlen Paczka) -->
         <div class="inpost-box" id="inpost-box" hidden>
           <div class="point-picked" id="point-picked">
-            Wybrany paczkomat: <strong id="point-code"></strong> <span id="point-name" style="color:var(--grey-2)"></span>
+            Wybrany punkt: <strong id="point-code"></strong> <span id="point-name" style="color:var(--grey-2)"></span>
           </div>
           <div class="co-field" style="margin-bottom:12px">
-            <label for="c-point">Kod paczkomatu (np. KRA010)</label>
+            <label for="c-point" id="point-label">Kod paczkomatu (np. KRA010)</label>
             <input type="text" id="c-point" placeholder="Wpisz kod lub wybierz na mapie">
           </div>
           <button type="button" class="btn btn-ghost" id="pick-point-btn">Wybierz na mapie</button>

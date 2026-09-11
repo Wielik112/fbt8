@@ -10,8 +10,8 @@
   // Display-only mirror of api/_lib/commerce.js (server is authoritative).
   const SHIPPING = {
     inpost_locker:  { label: 'InPost Paczkomat 24/7', sub: 'Odbiór 24/7 w paczkomacie', price: 1299, requiresPoint: true },
+    orlen_paczka:   { label: 'Orlen Paczka',          sub: 'Odbiór w punkcie Orlen / Ruch', price: 999, requiresPoint: true },
     inpost_courier: { label: 'Kurier InPost',         sub: 'Dostawa pod wskazany adres', price: 1599, requiresPoint: false },
-    courier:        { label: 'Kurier standardowy',    sub: 'Dostawa pod wskazany adres', price: 1999, requiresPoint: false },
   };
   const COUPONS = { FBT15: 15, START10: 10 };
 
@@ -86,6 +86,14 @@
     const needsPoint = SHIPPING[method].requiresPoint;
     $('inpost-box').hidden = !needsPoint;
     $('address-box').hidden = needsPoint;
+    if (needsPoint) {
+      const isInpost = method === 'inpost_locker';
+      const lbl = $('point-label');
+      if (lbl) lbl.textContent = isInpost ? 'Kod paczkomatu (np. KRA010)' : 'Kod punktu Orlen Paczka';
+      $('c-point').placeholder = isInpost ? 'Wpisz kod lub wybierz na mapie' : 'Wpisz kod punktu Orlen';
+      const pickBtn = $('pick-point-btn');
+      if (pickBtn) pickBtn.style.display = isInpost ? '' : 'none';
+    }
   }
 
   function renderTotals() {
@@ -187,7 +195,7 @@
     const shipping = { method };
     if (SHIPPING[method].requiresPoint) {
       const point = $('c-point').value.trim();
-      if (!point) { showError('Wybierz lub wpisz kod paczkomatu InPost.'); return; }
+      if (!point) { showError(method === 'inpost_locker' ? 'Wybierz lub wpisz kod paczkomatu InPost.' : 'Wpisz kod punktu Orlen Paczka.'); return; }
       shipping.point = point;
     } else {
       const street = $('c-street').value.trim();
