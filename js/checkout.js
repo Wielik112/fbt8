@@ -147,10 +147,7 @@
 
   $('pick-point-btn').addEventListener('click', () => {
     if (method === 'inpost_locker') { openGeowidget(); return; }
-    // Orlen Paczka: brak osadzonego widgetu — otwieramy oficjalną mapę punktów.
-    window.open('https://www.orlenpaczka.pl/znajdz-punkt/', '_blank', 'noopener');
-    showToast('Wybierz punkt na mapie Orlen i wpisz jego kod.');
-    $('c-point').focus();
+    if (method === 'orlen_paczka') { openOrlenWidget(); return; }
   });
   $('gw-close').addEventListener('click', closeGeowidget);
 
@@ -196,6 +193,65 @@
     }).catch(() => { showToast('Nie udało się załadować mapy. Wpisz kod ręcznie.'); $('c-point').focus(); });
   }
   function closeGeowidget() { $('geowidget-modal').style.display = 'none'; $('geowidget-mount').innerHTML = ''; }
+
+  // ---- Orlen Paczka point selection (Bliska Paczka / Alsendo widget) ----
+  // Falls back to the official Orlen point map when the embedded widget is
+  // not configured (no Google Maps key) or fails to load.
+  function orlenPointFallback() {
+    window.open('https://www.orlenpaczka.pl/znajdz-punkt/', '_blank', 'noopener');
+    showToast('Wybierz punkt na mapie Orlen i wpisz jego kod.');
+    $('c-point').focus();
+  }
+
+  let orlenAssetsLoaded = false;
+  function loadOrlenAssets() {
+    if (orlenAssetsLoaded) return Promise.resolve();
+    const cfg = window.FBT_CONFIG || {};
+    if (!cfg.orlenWidgetJs) return Promise.reject(new Error('orlen widget not configured'));
+    return new Promise((resolve, reject) => {
+      if (cfg.orlenWidgetCss) {
+        const css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = cfg.orlenWidgetCss;
+        document.head.appendChild(css);
+      }
+      const js = document.createElement('script');
+      js.src = cfg.orlenWidgetJs;
+      js.defer = true;
+      js.onload = () => { orlenAssetsLoaded = true; resolve(); };
+      js.onerror = () => reject(new Error('orlen widget load failed'));
+      document.head.appendChild(js);
+    });
+  }
+
+  function openOrlenWidget() {
+    const cfg = window.FBT_CONFIG || {};
+    // The Bliska Paczka widget needs a Google Maps key to render the map.
+    if (!cfg.googleMapsApiKey || !cfg.orlenWidgetJs) { orlenPointFallback(); return; }
+    loadOrlenAssets().then(() => {
+      const BPWidget = window.BPWidget;
+      if (!BPWidget || typeof BPWidget.init !== 'function') {
+        orlenPointFallback();
+        return;
+      }
+      const mount = $('geowidget-mount');
+      mount.innerHTML = '';
+      BPWidget.init(mount, {
+        googleMapApiKey: cfg.googleMapsApiKey,
+        apiKey: cfg.orlenWidgetToken || undefined,
+        posType: 'DELIVERY',
+        operators: [{ code: 'RUCH' }], // RUCH = Orlen Paczka
+        callback: (point) => {
+          if (!point) return;
+          const code = point.code || point.id || '';
+          const name = point.name || point.description || point.address || '';
+          if (code) setPoint(code, name);
+          closeGeowidget();
+        },
+      });
+      $('geowidget-modal').style.display = 'grid';
+    }).catch(() => orlenPointFallback());
+  }
 
   // ---- Submit ----
   $('co-form').addEventListener('submit', async (e) => {

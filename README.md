@@ -148,6 +148,18 @@ id from the InPost manager (API / ShipX section). For the checkout **map**
 picker, also set the public `inpostGeowidgetToken` in `js/config.js`; with no
 token, checkout falls back to manual Paczkomat code entry.
 
+### Orlen Paczka map picker
+
+The checkout also embeds an **Orlen Paczka** point map via the official Bliska
+Paczka / Alsendo widget (`BPWidget`, scoped to operator `RUCH`). It needs two
+public keys in `js/config.js`: `googleMapsApiKey` (required by the widget to
+render the map — enable *Maps JavaScript API* in Google Cloud) and
+`orlenWidgetToken` (map key from `integracje@orlenpaczka.pl`; send your
+PartnerID + shop URL). The exact widget asset URLs are configurable via
+`orlenWidgetJs` / `orlenWidgetCss`. With `googleMapsApiKey` empty, or if the
+widget fails to load, checkout falls back to opening the official Orlen point
+map in a new tab + manual code entry — so it is always safe to ship unset.
+
 Endpoints: `POST /api/orders/:id/shipment` (create), `GET
 /api/orders/:id/shipment` (refresh status), `GET /api/orders/:id/label?type=A6|normal`
 (label PDF) — all admin-only.
