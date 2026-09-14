@@ -20,11 +20,9 @@ export function paymentMethodTypes() {
 // Ceny w groszach. `tiers` = progi wg liczby sztuk (qty <= maxQty -> price).
 export const SHIPPING_METHODS = {
   inpost_locker:  { label: 'InPost Paczkomat 24/7', requiresPoint: true,  carrier: 'inpost',
-                    tiers: [{ maxQty: 1, price: 1659 }, { maxQty: Infinity, price: 1942 }] },
-  orlen_paczka:   { label: 'Orlen Paczka',          requiresPoint: true,  carrier: 'orlen',
-                    tiers: [{ maxQty: Infinity, price: 999 }] },
+                    tiers: [{ maxQty: 1, price: 1849 }, { maxQty: Infinity, price: 2049 }] },
   inpost_courier: { label: 'Kurier InPost',         requiresPoint: false, carrier: 'inpost',
-                    tiers: [{ maxQty: 4, price: 1831 }, { maxQty: Infinity, price: 2028 }] },
+                    tiers: [{ maxQty: 1, price: 2049 }, { maxQty: Infinity, price: 2549 }] },
 };
 
 // Free shipping is disabled — shipping is always charged per method.
