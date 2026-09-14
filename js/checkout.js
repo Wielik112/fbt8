@@ -145,6 +145,11 @@
   $('pick-point-btn').addEventListener('click', openGeowidget);
   $('gw-close').addEventListener('click', closeGeowidget);
 
+  // ---- Invoice (optional) ----
+  $('c-invoice').addEventListener('change', () => {
+    $('invoice-box').hidden = !$('c-invoice').checked;
+  });
+
   let gwAssetsLoaded = false;
   function loadGeowidgetAssets() {
     if (gwAssetsLoaded) return Promise.resolve();
@@ -213,10 +218,24 @@
       shipping.address = { street, postcode, city, country: 'PL' };
     }
 
+    let invoice;
+    if ($('c-invoice').checked) {
+      const company = $('inv-company').value.trim();
+      const nip = $('inv-nip').value.replace(/[\s-]/g, '');
+      const street = $('inv-street').value.trim();
+      const postcode = $('inv-postcode').value.trim();
+      const city = $('inv-city').value.trim();
+      if (!company || !nip) { showError('Do faktury podaj nazwę firmy i NIP.'); return; }
+      if (!/^\d{10}$/.test(nip)) { showError('NIP powinien składać się z 10 cyfr.'); return; }
+      if (!street || !postcode || !city) { showError('Uzupełnij adres do faktury (ulica, kod pocztowy, miasto).'); return; }
+      invoice = { company, nip, street, postcode, city, country: 'PL' };
+    }
+
     const payload = {
       items: cart().map((i) => ({ id: i.id, qty: i.qty, size: i.size || null })),
       customer: { email, name, phone },
       shipping,
+      invoice,
       coupon: discountCode || undefined,
     };
 

@@ -615,10 +615,18 @@ async function openOrder(id) {
   currentOrder = o;
 
   $('om-title').textContent = 'Zamówienie ' + o.id;
+  const inv = o.invoice;
+  const invHtml = inv ? `
+    <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
+      <div><b>Faktura:</b> ${esc(inv.company || '')}</div>
+      <div><b>NIP:</b> ${esc(inv.nip || '')}</div>
+      <div>${esc(inv.street || '')}</div>
+      <div>${esc(inv.postcode || '')} ${esc(inv.city || '')}</div>
+    </div>` : '';
   $('om-customer').innerHTML = `
     <div><b>Imię:</b> ${esc(o.customer?.name || '—')}</div>
     <div><b>E-mail:</b> ${esc(o.customer?.email || '—')}</div>
-    <div><b>Telefon:</b> ${esc(o.customer?.phone || '—')}</div>`;
+    <div><b>Telefon:</b> ${esc(o.customer?.phone || '—')}</div>${invHtml}`;
 
   const addr = o.shippingAddress;
   const shipDetail = o.inpostPoint
