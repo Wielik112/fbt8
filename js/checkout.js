@@ -238,6 +238,7 @@
       customer: { email, name, phone },
       shipping,
       invoice,
+      terms: true,
       coupon: discountCode || undefined,
     };
 
