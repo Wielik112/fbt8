@@ -298,3 +298,42 @@ h1, h2, h3, h4 { font-family: var(--display); font-weight: 800; line-height: 0.9
   .nav-search-input{width:84px}
   .nav-search-results{width:88vw;right:-46px}
 }
+
+/* ============================================
+   Category navigation (dropdowns + mobile accordion)
+   ============================================ */
+/* Desktop dropdown */
+.cat-nav { position: relative; display: inline-flex; }
+.cat-nav-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: none; cursor: pointer;
+  color: var(--grey-1); font-family: var(--body); font-size: 15px; font-weight: 500;
+  padding: 0; transition: color .15s;
+}
+.cat-nav-btn:hover, .cat-nav.open .cat-nav-btn { color: #fff; }
+.cn-caret { width: 15px; height: 15px; transition: transform .2s var(--ease); }
+.cat-nav.open .cn-caret { transform: rotate(180deg); }
+.cat-nav-menu {
+  position: absolute; top: calc(100% + 14px); left: 50%; transform: translateX(-50%) translateY(-6px);
+  min-width: 230px; background: var(--surface); border: 1px solid var(--line-bright);
+  border-radius: 14px; padding: 8px; display: none; flex-direction: column; gap: 2px;
+  box-shadow: 0 24px 60px -20px #000; z-index: 60;
+}
+.cat-nav.open .cat-nav-menu { display: flex; transform: translateX(-50%) translateY(0); }
+.cat-nav-menu a { padding: 10px 14px; border-radius: 9px; font-size: 14px; color: var(--grey-1); white-space: nowrap; transition: .12s; }
+.cat-nav-menu a:hover { background: var(--surface-2); color: #fff; }
+.cat-nav-menu .cn-all { color: var(--red); font-weight: 600; border-bottom: 1px solid var(--line); border-radius: 9px 9px 0 0; margin-bottom: 4px; }
+.cat-nav-menu .cn-all:hover { color: #fff; background: var(--red-deep); }
+
+/* Mobile accordion (inside .mobile-menu) */
+.m-cat { width: 100%; }
+.m-cat-btn {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  background: none; border: none; cursor: pointer; color: inherit;
+  font: inherit; padding: 0; /* inherit the look of .mobile-menu a */
+}
+.m-cat-caret { font-size: 1.4em; line-height: 1; color: var(--red); width: 24px; text-align: center; }
+.m-cat-list { display: none; flex-direction: column; }
+.m-cat.open .m-cat-list { display: flex; }
+.m-cat-list a { font-size: 0.82em !important; opacity: .85; padding-left: 18px !important; }
+.m-cat-list a.cn-all, .m-cat-list a:first-child { color: var(--red); opacity: 1; }
