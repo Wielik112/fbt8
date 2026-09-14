@@ -200,6 +200,8 @@
 
     if (!cart().length) { showError('Twój koszyk jest pusty.'); return; }
 
+    if (!$('c-terms').checked) { showError('Zaakceptuj regulamin sklepu, aby złożyć zamówienie.'); return; }
+
     const email = $('c-email').value.trim();
     const name = $('c-name').value.trim();
     const phone = $('c-phone').value.trim();
@@ -225,8 +227,8 @@
       const street = $('inv-street').value.trim();
       const postcode = $('inv-postcode').value.trim();
       const city = $('inv-city').value.trim();
-      if (!company || !nip) { showError('Do faktury podaj nazwę firmy i NIP.'); return; }
-      if (!/^\d{10}$/.test(nip)) { showError('NIP powinien składać się z 10 cyfr.'); return; }
+      if (!company) { showError('Do faktury podaj nazwę firmy lub imię i nazwisko.'); return; }
+      if (nip && !/^\d{10}$/.test(nip)) { showError('NIP powinien mieć 10 cyfr (lub zostaw puste).'); return; }
       if (!street || !postcode || !city) { showError('Uzupełnij adres do faktury (ulica, kod pocztowy, miasto).'); return; }
       invoice = { company, nip, street, postcode, city, country: 'PL' };
     }

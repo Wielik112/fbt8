@@ -7,7 +7,7 @@
    ============================================ */
 window.CATEGORY_TREE = [
   { name: 'Obuwie',      subs: ['Buty', 'Buty sportowe', 'Trampki'] },
-  { name: 'Odzież',      subs: ['Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'] },
+  { name: 'Odzież',      subs: ['Koszulki', 'Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'] },
   { name: 'Piłka nożna', subs: ['Buty piłkarskie', 'Rękawice bramkarskie', 'Akcesoria piłkarskie'] },
 ];
 
