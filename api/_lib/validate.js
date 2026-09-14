@@ -1,7 +1,15 @@
 import crypto from 'node:crypto';
 
-export const CATEGORIES  = ['Buty piłkarskie', 'Buty sportowe', 'Odzież', 'Rękawice bramkarskie', 'Piłki', 'Akcesoria'];
-// Rodzaj odzieży — używany, gdy kategoria to „Odzież".
+// Kategorie = „liście" drzewa (patrz js/categories.js). `cat` produktu to podkategoria.
+// Drzewo (grupowanie w UI): Obuwie {Buty, Buty sportowe, Trampki},
+// Odzież {Kurtki, Bluzy, Spodnie, Dresy sportowe, Czapki},
+// Piłka nożna {Buty piłkarskie, Rękawice bramkarskie, Akcesoria piłkarskie}.
+export const CATEGORIES  = [
+  'Buty', 'Buty sportowe', 'Trampki',
+  'Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki',
+  'Buty piłkarskie', 'Rękawice bramkarskie', 'Akcesoria piłkarskie',
+];
+// Legacy — rodzaj odzieży (dawne pole; teraz podkategoria = cat). Zachowane dla zgodności.
 export const GARMENTS    = ['Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'];
 export const CONDITIONS  = ['Nowy']; // sklep sprzedaje wyłącznie nowe produkty (Kategoria A)
 export const GENDERS     = ['Męskie', 'Damskie', 'Unisex'];

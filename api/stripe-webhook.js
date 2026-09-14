@@ -1,5 +1,6 @@
 import { ensureOrdersSchema, markPaid, markPaymentStatus, getOrderBySession } from './_lib/orders.js';
 import { getStripe } from './_lib/stripe.js';
+import { onOrderPaid } from './_lib/fulfil.js';
 
 // Stripe requires the raw, unmodified request body to verify the signature.
 // Disable Vercel's automatic body parsing for this route.
@@ -51,7 +52,10 @@ export default async function handler(req, res) {
         const orderId = orderIdFromSession(session);
         if (!orderId) break;
         if (session.payment_status === 'paid') {
-          await markPaid(orderId, { paymentIntent: session.payment_intent, total: session.amount_total });
+          // markPaid returns the order only on the first transition to paid,
+          // so auto-fulfilment (InPost label + e-mail) runs exactly once.
+          const paid = await markPaid(orderId, { paymentIntent: session.payment_intent, total: session.amount_total });
+          if (paid) await onOrderPaid(paid);
         } else {
           // Async method (e.g. P24) still pending — awaiting async_payment_succeeded.
           await markPaymentStatus(orderId, 'processing');
@@ -61,7 +65,10 @@ export default async function handler(req, res) {
       case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object;
         const orderId = orderIdFromSession(session);
-        if (orderId) await markPaid(orderId, { paymentIntent: session.payment_intent, total: session.amount_total });
+        if (orderId) {
+          const paid = await markPaid(orderId, { paymentIntent: session.payment_intent, total: session.amount_total });
+          if (paid) await onOrderPaid(paid);
+        }
         break;
       }
       case 'checkout.session.async_payment_failed': {

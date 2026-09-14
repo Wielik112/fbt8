@@ -111,6 +111,10 @@ export async function ensureSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS garment TEXT`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS note TEXT`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT false`;
+  // Migracja kategorii do nowego drzewa (Obuwie / Odzież / Piłka nożna).
+  // Idempotentne — po pierwszym przebiegu żadne wiersze nie pasują.
+  await sql`UPDATE products SET cat = garment WHERE cat = 'Odzież' AND garment IS NOT NULL AND garment <> ''`;
+  await sql`UPDATE products SET cat = 'Akcesoria piłkarskie' WHERE cat IN ('Piłki', 'Akcesoria', 'Odzież')`;
   // Customer reviews (simple, public).
   await sql`
     CREATE TABLE IF NOT EXISTS reviews (

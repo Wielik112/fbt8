@@ -80,6 +80,24 @@ export default async function handler(req, res) {
     const totalQty = items.reduce((s, i) => s + i.qty, 0);
     const shippingCost = shippingCostFor(methodKey, totalQty);
 
+    // --- Invoice (optional) ---
+    let invoice = null;
+    if (body?.invoice && typeof body.invoice === 'object') {
+      const company = String(body.invoice.company ?? '').trim();
+      const nip = String(body.invoice.nip ?? '').replace(/[\s-]/g, '');
+      if (company && nip) {
+        if (!/^\d{10}$/.test(nip)) return res.status(400).json({ error: 'NIP powinien składać się z 10 cyfr.' });
+        invoice = {
+          company: company.slice(0, 200),
+          nip,
+          street: String(body.invoice.street ?? '').trim().slice(0, 200),
+          postcode: String(body.invoice.postcode ?? '').trim().slice(0, 20),
+          city: String(body.invoice.city ?? '').trim().slice(0, 100),
+          country: String(body.invoice.country ?? 'PL').trim().slice(0, 2) || 'PL',
+        };
+      }
+    }
+
     // --- Coupon (server-validated) ---
     const couponCode = body?.coupon ? String(body.coupon).trim().toUpperCase() : '';
     const percent = couponPercent(couponCode);
@@ -103,6 +121,7 @@ export default async function handler(req, res) {
       customer: { email, name, phone },
       shippingAddress,
       inpostPoint,
+      invoice,
     });
 
     // --- Stripe Checkout session ---

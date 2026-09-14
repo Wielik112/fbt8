@@ -363,3 +363,85 @@ document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
     startType();
   }
 })();
+
+/* ============================================
+   Category navigation — dropdowns (desktop) + accordion (mobile),
+   built from window.CATEGORY_TREE (js/categories.js). Add a
+   subcategory there and it shows up here automatically.
+   ============================================ */
+(function buildCategoryNav() {
+  const TREE = window.CATEGORY_TREE || [];
+  if (!TREE.length) return;
+  const enc = encodeURIComponent;
+  const caret = '<svg class="cn-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>';
+
+  // ---- Desktop dropdowns (inside .nav-links) ----
+  const navLinks = document.querySelector('.nav-links');
+  if (navLinks) {
+    const sklep = navLinks.querySelector('a[href="sklep.html"]');
+    const ref = sklep ? sklep.nextSibling : null;
+    TREE.forEach((group) => {
+      const wrap = document.createElement('span');
+      wrap.className = 'cat-nav';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cat-nav-btn';
+      btn.setAttribute('aria-expanded', 'false');
+      btn.innerHTML = group.name + caret;
+      const menu = document.createElement('div');
+      menu.className = 'cat-nav-menu';
+      menu.innerHTML =
+        `<a class="cn-all" href="sklep.html?main=${enc(group.name)}">Wszystko z: ${group.name}</a>` +
+        group.subs.map((s) => `<a href="sklep.html?cat=${enc(s)}">${s}</a>`).join('');
+      wrap.appendChild(btn);
+      wrap.appendChild(menu);
+      navLinks.insertBefore(wrap, ref);
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = !wrap.classList.contains('open');
+        document.querySelectorAll('.cat-nav.open').forEach((o) => {
+          o.classList.remove('open');
+          o.querySelector('.cat-nav-btn')?.setAttribute('aria-expanded', 'false');
+        });
+        wrap.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    });
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.cat-nav.open').forEach((o) => {
+        o.classList.remove('open');
+        o.querySelector('.cat-nav-btn')?.setAttribute('aria-expanded', 'false');
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') document.querySelectorAll('.cat-nav.open').forEach((o) => o.classList.remove('open'));
+    });
+  }
+
+  // ---- Mobile accordion (inside .mobile-menu) ----
+  const mob = document.querySelector('.mobile-menu');
+  if (mob) {
+    const sklep = mob.querySelector('a[href="sklep.html"]');
+    const ref = sklep ? sklep.nextSibling : null;
+    TREE.forEach((group) => {
+      const box = document.createElement('div');
+      box.className = 'm-cat';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'm-cat-btn';
+      btn.innerHTML = `<span>${group.name}</span><span class="m-cat-caret">+</span>`;
+      const list = document.createElement('div');
+      list.className = 'm-cat-list';
+      list.innerHTML =
+        `<a href="sklep.html?main=${enc(group.name)}">Wszystko z: ${group.name}</a>` +
+        group.subs.map((s) => `<a href="sklep.html?cat=${enc(s)}">${s}</a>`).join('');
+      box.appendChild(btn);
+      box.appendChild(list);
+      mob.insertBefore(box, ref);
+      btn.addEventListener('click', () => {
+        const open = box.classList.toggle('open');
+        box.querySelector('.m-cat-caret').textContent = open ? '–' : '+';
+      });
+    });
+  }
+})();
