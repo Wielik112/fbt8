@@ -40,6 +40,8 @@ export async function ensureOrdersSchema() {
   await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS inpost_status TEXT`;
   // Optional invoice details (nazwa firmy, NIP, adres) — added after launch.
   await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice JSONB`;
+  // Regulamin (terms) acceptance recorded at checkout.
+  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ`;
   ordersSchemaReady = true;
 }
 
@@ -68,6 +70,7 @@ export function mapOrder(r) {
     customer: { email: r.customer_email, name: r.customer_name, phone: r.customer_phone },
     shippingAddress: r.shipping_address || null,
     invoice: r.invoice || null,
+    termsAcceptedAt: r.terms_accepted_at || null,
     inpostPoint: r.inpost_point,
     inpostShipmentId: r.inpost_shipment_id,
     inpostStatus: r.inpost_status,
@@ -86,14 +89,14 @@ export async function createOrder(o) {
     INSERT INTO orders (
       id, status, payment_status, currency, items, subtotal, discount, discount_code,
       shipping_method, shipping_label, shipping_cost, total,
-      customer_email, customer_name, customer_phone, shipping_address, inpost_point, invoice
+      customer_email, customer_name, customer_phone, shipping_address, inpost_point, invoice, terms_accepted_at
     ) VALUES (
       ${o.id}, ${o.status || 'pending'}, ${o.paymentStatus || 'unpaid'}, ${o.currency || 'pln'},
       ${JSON.stringify(o.items || [])}::jsonb, ${o.subtotal || 0}, ${o.discount || 0}, ${o.discountCode || null},
       ${o.shippingMethod || null}, ${o.shippingLabel || null}, ${o.shippingCost || 0}, ${o.total || 0},
       ${o.customer?.email || null}, ${o.customer?.name || null}, ${o.customer?.phone || null},
       ${o.shippingAddress ? JSON.stringify(o.shippingAddress) : null}::jsonb, ${o.inpostPoint || null},
-      ${o.invoice ? JSON.stringify(o.invoice) : null}::jsonb
+      ${o.invoice ? JSON.stringify(o.invoice) : null}::jsonb, ${o.termsAccepted ? new Date().toISOString() : null}
     ) RETURNING *`;
   return mapOrder(rows[0]);
 }

@@ -653,6 +653,7 @@ async function openOrder(id) {
     `Płatność: ${PAYMENT_LABELS[o.paymentStatus] || o.paymentStatus}`
     + ` · Utworzono ${fmtDateTime(o.createdAt)}`
     + (o.paidAt ? ` · Opłacono ${fmtDateTime(o.paidAt)}` : '')
+    + (o.termsAcceptedAt ? ` · ✓ Regulamin zaakceptowany ${fmtDateTime(o.termsAcceptedAt)}` : '')
     + (o.stripePaymentIntent ? ` · ${o.stripePaymentIntent}` : '');
 
   renderInpostSection(o);

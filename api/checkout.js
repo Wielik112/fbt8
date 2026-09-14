@@ -29,6 +29,7 @@ export default async function handler(req, res) {
     const phone = String(body?.customer?.phone ?? '').trim();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'Podaj prawidłowy adres e-mail.' });
     if (!name) return res.status(400).json({ error: 'Podaj imię i nazwisko.' });
+    if (body?.terms !== true) return res.status(400).json({ error: 'Zaakceptuj regulamin sklepu.' });
 
     // --- Items (re-priced from DB) ---
     const rawItems = Array.isArray(body?.items) ? body.items : [];
@@ -122,6 +123,7 @@ export default async function handler(req, res) {
       shippingAddress,
       inpostPoint,
       invoice,
+      termsAccepted: true,
     });
 
     // --- Stripe Checkout session ---
