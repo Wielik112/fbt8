@@ -6,7 +6,7 @@ import crypto from 'node:crypto';
 // Piłka nożna {Buty piłkarskie, Rękawice bramkarskie, Akcesoria piłkarskie}.
 export const CATEGORIES  = [
   'Buty', 'Buty sportowe', 'Trampki',
-  'Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki',
+  'Koszulki', 'Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki',
   'Buty piłkarskie', 'Rękawice bramkarskie', 'Akcesoria piłkarskie',
 ];
 // Legacy — rodzaj odzieży (dawne pole; teraz podkategoria = cat). Zachowane dla zgodności.

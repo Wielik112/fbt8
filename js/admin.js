@@ -7,7 +7,7 @@
 
 const CATEGORY_TREE = window.CATEGORY_TREE || [
   { name: 'Obuwie', subs: ['Buty', 'Buty sportowe', 'Trampki'] },
-  { name: 'Odzież', subs: ['Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'] },
+  { name: 'Odzież', subs: ['Koszulki', 'Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'] },
   { name: 'Piłka nożna', subs: ['Buty piłkarskie', 'Rękawice bramkarskie', 'Akcesoria piłkarskie'] },
 ];
 const CATEGORIES = window.CATEGORY_LEAVES || CATEGORY_TREE.flatMap((g) => g.subs);
@@ -619,7 +619,7 @@ async function openOrder(id) {
   const invHtml = inv ? `
     <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
       <div><b>Faktura:</b> ${esc(inv.company || '')}</div>
-      <div><b>NIP:</b> ${esc(inv.nip || '')}</div>
+      ${inv.nip ? `<div><b>NIP:</b> ${esc(inv.nip)}</div>` : ''}
       <div>${esc(inv.street || '')}</div>
       <div>${esc(inv.postcode || '')} ${esc(inv.city || '')}</div>
     </div>` : '';
