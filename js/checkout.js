@@ -10,11 +10,9 @@
   // Display-only mirror of api/_lib/commerce.js (server is authoritative).
   const SHIPPING = {
     inpost_locker:  { label: 'InPost Paczkomat 24/7', sub: 'Odbiór 24/7 w paczkomacie', requiresPoint: true,
-                      tiers: [{ maxQty: 1, price: 1659 }, { maxQty: Infinity, price: 1942 }] },
-    orlen_paczka:   { label: 'Orlen Paczka',          sub: 'Odbiór w punkcie Orlen / Ruch', requiresPoint: true,
-                      tiers: [{ maxQty: Infinity, price: 999 }] },
+                      tiers: [{ maxQty: 1, price: 1849 }, { maxQty: Infinity, price: 2049 }] },
     inpost_courier: { label: 'Kurier InPost',         sub: 'Dostawa pod wskazany adres', requiresPoint: false,
-                      tiers: [{ maxQty: 4, price: 1831 }, { maxQty: Infinity, price: 2028 }] },
+                      tiers: [{ maxQty: 1, price: 2049 }, { maxQty: Infinity, price: 2549 }] },
   };
   // Liczba sztuk w koszyku decyduje o progu ceny dostawy.
   function cartQty() { return cart().reduce((s, i) => s + i.qty, 0) || 1; }
@@ -98,12 +96,11 @@
     $('inpost-box').hidden = !needsPoint;
     $('address-box').hidden = needsPoint;
     if (needsPoint) {
-      const isInpost = method === 'inpost_locker';
       const lbl = $('point-label');
-      if (lbl) lbl.textContent = isInpost ? 'Kod paczkomatu (np. KRA010)' : 'Kod punktu Orlen Paczka';
-      $('c-point').placeholder = isInpost ? 'Wpisz kod lub wybierz na mapie' : 'Wpisz kod lub znajdź punkt na mapie';
+      if (lbl) lbl.textContent = 'Kod paczkomatu (np. KRA010)';
+      $('c-point').placeholder = 'Wpisz kod lub wybierz na mapie';
       const pickBtn = $('pick-point-btn');
-      if (pickBtn) pickBtn.textContent = isInpost ? 'Wybierz na mapie' : 'Znajdź punkt na mapie';
+      if (pickBtn) pickBtn.textContent = 'Wybierz na mapie';
     }
   }
 
@@ -145,13 +142,7 @@
     $('point-code').textContent = v;
   });
 
-  $('pick-point-btn').addEventListener('click', () => {
-    if (method === 'inpost_locker') { openGeowidget(); return; }
-    // Orlen Paczka: brak osadzonego widgetu — otwieramy oficjalną mapę punktów.
-    window.open('https://www.orlenpaczka.pl/znajdz-punkt/', '_blank', 'noopener');
-    showToast('Wybierz punkt na mapie Orlen i wpisz jego kod.');
-    $('c-point').focus();
-  });
+  $('pick-point-btn').addEventListener('click', openGeowidget);
   $('gw-close').addEventListener('click', closeGeowidget);
 
   let gwAssetsLoaded = false;
@@ -212,7 +203,7 @@
     const shipping = { method };
     if (SHIPPING[method].requiresPoint) {
       const point = $('c-point').value.trim();
-      if (!point) { showError(method === 'inpost_locker' ? 'Wybierz lub wpisz kod paczkomatu InPost.' : 'Wpisz kod punktu Orlen Paczka.'); return; }
+      if (!point) { showError('Wybierz lub wpisz kod paczkomatu InPost.'); return; }
       shipping.point = point;
     } else {
       const street = $('c-street').value.trim();
