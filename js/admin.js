@@ -197,15 +197,15 @@ function renderRows() {
     const featFlag = p.featured ? ' · ⭐ Bestseller' : '';
     return `
     <tr data-id="${esc(p.id)}">
-      <td>${media}</td>
-      <td>
+      <td class="cell-media">${media}</td>
+      <td class="cell-title">
         <div class="pname">${esc(p.name)}</div>
         <div class="pmeta">${esc(p.brand)} · ${esc(p.gender || 'Unisex')} · ${esc(p.id)}${extra ? ' · ' + extra : ''}${noteFlag}${featFlag}</div>
       </td>
-      <td class="hide-sm">${esc(p.cat)}</td>
-      <td class="hide-sm"><span class="pill ${condClass}">${esc(p.condition)} · Kat. A</span></td>
-      <td><span class="price">${esc(p.price)} zł ${old}</span></td>
-      <td>
+      <td class="hide-sm" data-label="Kategoria">${esc(p.cat)}</td>
+      <td class="hide-sm" data-label="Stan"><span class="pill ${condClass}">${esc(p.condition)} · Kat. A</span></td>
+      <td data-label="Cena"><span class="price">${esc(p.price)} zł ${old}</span></td>
+      <td class="cell-actions">
         <div class="row-actions">
           <button class="btn btn-ghost btn-sm" data-act="edit">Edytuj</button>
           <button class="btn btn-danger btn-sm" data-act="del">Usuń</button>
@@ -295,11 +295,11 @@ function renderReviews() {
   }
   tbody.innerHTML = reviews.map((r) => `
     <tr data-id="${esc(r.id)}">
-      <td><span class="rev-stars">${starStr(r.rating)}</span></td>
-      <td><div class="rev-body">${esc(r.body)}</div></td>
-      <td class="hide-sm">${esc(r.orderNo)}</td>
-      <td class="hide-sm">${esc(fmtDate(r.createdAt))}</td>
-      <td><div class="row-actions"><button class="btn btn-danger btn-sm" data-act="del-rev">Usuń</button></div></td>
+      <td data-label="Ocena"><span class="rev-stars">${starStr(r.rating)}</span></td>
+      <td class="cell-title"><div class="rev-body">${esc(r.body)}</div></td>
+      <td class="hide-sm" data-label="Nr zam.">${esc(r.orderNo)}</td>
+      <td class="hide-sm" data-label="Data">${esc(fmtDate(r.createdAt))}</td>
+      <td class="cell-actions"><div class="row-actions"><button class="btn btn-danger btn-sm" data-act="del-rev">Usuń</button></div></td>
     </tr>`).join('');
 }
 
@@ -571,12 +571,12 @@ function renderOrders(list) {
   if (!list.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Brak zamówień.</td></tr>'; return; }
   tbody.innerHTML = list.map((o) => `
     <tr class="clickable" data-id="${esc(o.id)}">
-      <td><span class="order-id">${esc(o.id)}</span></td>
-      <td class="hide-sm">${esc(fmtDateTime(o.createdAt))}</td>
-      <td class="hide-sm">${esc(o.customer?.name || '—')}<div class="pmeta">${esc(o.customer?.email || '')}</div></td>
-      <td class="price">${fmtPLN(o.total)}</td>
-      <td><span class="ostatus ${esc(o.paymentStatus)}">${esc(PAYMENT_LABELS[o.paymentStatus] || o.paymentStatus)}</span></td>
-      <td><span class="ostatus ${esc(o.status)}">${esc(ORDER_STATUS_LABELS[o.status] || o.status)}</span></td>
+      <td class="cell-title"><span class="order-id">${esc(o.id)}</span></td>
+      <td class="hide-sm" data-label="Data">${esc(fmtDateTime(o.createdAt))}</td>
+      <td class="hide-sm cell-sub">${esc(o.customer?.name || '—')}<div class="pmeta">${esc(o.customer?.email || '')}</div></td>
+      <td class="price" data-label="Kwota">${fmtPLN(o.total)}</td>
+      <td data-label="Płatność"><span class="ostatus ${esc(o.paymentStatus)}">${esc(PAYMENT_LABELS[o.paymentStatus] || o.paymentStatus)}</span></td>
+      <td data-label="Status"><span class="ostatus ${esc(o.status)}">${esc(ORDER_STATUS_LABELS[o.status] || o.status)}</span></td>
     </tr>`).join('');
 }
 

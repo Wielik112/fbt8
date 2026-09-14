@@ -197,11 +197,89 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
   font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;text-align:center;padding:2px 0}
 .thumb-img{width:40px;height:40px;border-radius:9px;border:1px solid var(--line-bright);object-fit:cover;display:block}
 
+/* Responsive helpers */
+.narrow-only{display:none}
+
 @media(max-width:720px){
   .grid2{grid-template-columns:1fr}
   .page-head h1{font-size:28px}
   .hide-sm{display:none}
   .wrap{padding:20px 14px 60px}
+}
+
+/* ---- Phone layout ---- */
+@media(max-width:640px){
+  .wide-only{display:none}
+  .narrow-only{display:inline}
+
+  /* Top bar compact */
+  .topbar{padding:11px 14px;gap:10px}
+  .brand img{height:26px}
+  .brand-txt{font-size:17px}
+  .brand-sub{display:none}
+  .top-actions{gap:8px}
+  .btn-sm{padding:7px 11px;font-size:12.5px}
+
+  .wrap{padding:18px 12px 60px}
+  .page-head{gap:12px}
+  .page-head h1{font-size:25px}
+
+  /* Tabs scroll instead of squashing */
+  .tabs{gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:11px 14px;font-size:14px;white-space:nowrap}
+
+  /* Product toolbar: full-width search under chips */
+  .prod-toolbar{gap:10px}
+  .prod-search{max-width:none;width:100%;order:2}
+  .pchips{order:1;width:100%}
+  .orders-toolbar{flex-wrap:wrap}
+  .orders-toolbar select{flex:1;min-width:0}
+
+  /* Order stats: compact, left-aligned, wrap */
+  .stat-row{gap:14px 20px}
+  .stat-box{text-align:left}
+  .stat-box .n{font-size:21px}
+
+  /* ---- Tables become cards ---- */
+  .table-wrap{background:none;border:none;border-radius:0;overflow:visible}
+  .tbl,.tbl tbody{display:block}
+  .tbl thead{display:none}
+  .tbl tr{display:block;position:relative;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;margin-bottom:12px;padding:14px 16px}
+  .tbl tr:last-child{margin-bottom:0}
+  .tbl tr:hover td{background:none}
+  .tbl td{display:block;border:none;padding:5px 0;font-size:14px}
+  /* Label : value rows */
+  .tbl td[data-label]{display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .tbl td[data-label]::before{content:attr(data-label);color:var(--grey-2);font-weight:600;
+    font-size:11px;letter-spacing:.6px;text-transform:uppercase;flex:0 0 auto}
+  .tbl td[data-label] .pmeta{text-align:right}
+  /* data-label cells already override the desktop hide-sm; block cells re-show here */
+  .tbl td.cell-sub{display:block}
+  /* Title cell (product name / order id / review body) spans full width */
+  .cell-title{padding-bottom:4px}
+  .cell-title .order-id{font-size:16px}
+  /* Product thumbnail floats top-right of the card */
+  #rows tr{padding-right:74px;min-height:64px}
+  #rows tr:has(td.empty),#rows tr:has(td.loading){padding-right:16px;min-height:0}
+  #rows .cell-media{position:absolute;top:14px;right:14px;padding:0}
+  #rows .thumb-img,#rows .swatch{width:52px;height:52px}
+  /* Action buttons: full row */
+  .cell-actions{padding-top:10px;margin-top:6px;border-top:1px solid var(--line)}
+  .cell-actions .row-actions{justify-content:flex-start;gap:10px}
+  .cell-actions .btn{flex:1;justify-content:center}
+  #rev-rows .cell-actions .btn{flex:0 0 auto}
+  /* Loading / empty single-cell rows */
+  .tbl td.empty,.tbl td.loading{text-align:center;padding:30px 10px}
+
+  /* Modals fill more of the screen */
+  .modal-back{padding:14px 8px}
+  .modal-head{padding:16px 16px}
+  .modal-head h2{font-size:20px}
+  .modal-body{padding:16px 16px}
+  .modal-foot{padding:14px 16px}
+  .od-tot.grand{font-size:18px}
 }
 </style>
 </head>
@@ -216,7 +294,7 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
     </div>
   </div>
   <div class="top-actions">
-    <a class="btn btn-ghost btn-sm" href="index.html" target="_blank" rel="noopener">Podgląd sklepu ↗</a>
+    <a class="btn btn-ghost btn-sm" href="index.html" target="_blank" rel="noopener"><span class="wide-only">Podgląd sklepu </span><span class="narrow-only">Sklep </span>↗</a>
     <button id="logout-btn" class="btn btn-ghost btn-sm hidden">Wyloguj</button>
   </div>
 </div>
