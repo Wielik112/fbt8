@@ -5,7 +5,13 @@
    token is also kept as a same-origin fallback.
    ============================================ */
 
-const CATEGORIES = ['Buty piłkarskie', 'Buty sportowe', 'Odzież', 'Rękawice bramkarskie', 'Piłki', 'Akcesoria'];
+const CATEGORY_TREE = window.CATEGORY_TREE || [
+  { name: 'Obuwie', subs: ['Buty', 'Buty sportowe', 'Trampki'] },
+  { name: 'Odzież', subs: ['Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'] },
+  { name: 'Piłka nożna', subs: ['Buty piłkarskie', 'Rękawice bramkarskie', 'Akcesoria piłkarskie'] },
+];
+const CATEGORIES = window.CATEGORY_LEAVES || CATEGORY_TREE.flatMap((g) => g.subs);
+const mainCategoryOf = window.mainCategoryOf || ((leaf) => (CATEGORY_TREE.find((g) => g.subs.includes(leaf)) || {}).name || '');
 const CONDITIONS = ['Nowy'];
 const GENDERS = ['Męskie', 'Damskie', 'Unisex'];
 const LEVELS = ['Rekreacyjne', 'Treningowe', 'Półprofesjonalne', 'Profesjonalne'];
@@ -143,7 +149,7 @@ let productSearch = '';
 function filteredProducts() {
   const q = productSearch.trim().toLowerCase();
   return products.filter((p) => {
-    if (productFilter !== 'Wszystkie' && p.cat !== productFilter) return false;
+    if (productFilter !== 'Wszystkie' && mainCategoryOf(p.cat) !== productFilter && p.cat !== productFilter) return false;
     if (!q) return true;
     return `${p.name || ''} ${p.brand || ''} ${p.id || ''}`.toLowerCase().includes(q);
   });
@@ -154,7 +160,7 @@ function renderProductFilters() {
   const box = $('prod-filters');
   if (!box || box.dataset.built) return;
   box.dataset.built = '1';
-  const cats = ['Wszystkie', ...CATEGORIES];
+  const cats = ['Wszystkie', ...CATEGORY_TREE.map((g) => g.name)];
   box.innerHTML = cats.map((c) =>
     `<button type="button" class="pchip${c === productFilter ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
   box.addEventListener('click', (e) => {
@@ -334,18 +340,24 @@ const modal = $('modal');
 function fillSelect(sel, options, current) {
   sel.innerHTML = options.map((o) => `<option value="${esc(o)}"${o === current ? ' selected' : ''}>${esc(o) || '—'}</option>`).join('');
 }
+// Category select grouped by main category (Obuwie / Odzież / Piłka nożna).
+function fillCatSelect(sel, current) {
+  sel.innerHTML = CATEGORY_TREE.map((g) =>
+    `<optgroup label="${esc(g.name)}">` +
+    g.subs.map((s) => `<option value="${esc(s)}"${s === current ? ' selected' : ''}>${esc(s)}</option>`).join('') +
+    `</optgroup>`).join('');
+}
 
 function openModal(product) {
   const editing = !!product;
   $('modal-title').textContent = editing ? 'Edytuj produkt' : 'Nowy produkt';
   notice($('form-error'), '', 'err');
 
-  fillSelect($('f-cat'), CATEGORIES, product?.cat || CATEGORIES[0]);
+  fillCatSelect($('f-cat'), product?.cat || CATEGORIES[0]);
   fillSelect($('f-condition'), CONDITIONS, product?.condition || CONDITIONS[0]);
   fillSelect($('f-gender'), GENDERS, product?.gender || 'Unisex');
   fillSelect($('f-level'), ['', ...LEVELS], product?.level || '');
   fillSelect($('f-surface'), ['', ...SURFACES], product?.surface || '');
-  fillSelect($('f-garment'), ['', ...GARMENTS], product?.garment || '');
 
   $('f-id').value        = product?.id || '';
   $('f-name').value      = product?.name || '';
@@ -441,7 +453,6 @@ $('product-form').addEventListener('submit', async (e) => {
     gender: $('f-gender').value,
     level: $('f-level').value,
     surface: $('f-surface').value,
-    garment: $('f-garment').value,
     price: $('f-price').value,
     old: $('f-old').value,
     description: $('f-description').value.trim(),

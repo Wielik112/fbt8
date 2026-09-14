@@ -455,3 +455,23 @@
 .filter-collapse summary::after { content: '+'; font-family: var(--display); font-size: 20px; line-height: 1; color: var(--grey-2); }
 .filter-collapse[open] summary::after { content: '\2013'; }
 .filter-collapse .chip-row { margin-top: 16px; }
+
+/* Category accordion in shop sidebar */
+.cat-acc { display: flex; flex-direction: column; gap: 2px; }
+.cat-acc button { width: 100%; text-align: left; background: none; border: none; cursor: pointer; color: var(--grey-1); font-family: var(--body); font-size: 14px; padding: 9px 10px; border-radius: 8px; transition: .12s; }
+.cat-acc .cacc-all { font-weight: 600; }
+.cat-acc .cacc-all:hover, .cat-acc .cacc-sub:hover { background: var(--surface-2); color: #fff; }
+.cat-acc .cacc-all.active, .cat-acc .cacc-sub.active { background: var(--surface-2); color: #fff; }
+.cacc-head { display: flex; align-items: center; justify-content: space-between; font-weight: 600; color: #fff; }
+.cacc-caret::before { content: '+'; color: var(--grey-2); font-size: 17px; line-height: 1; }
+.cacc-group.open .cacc-caret::before { content: '\2013'; }
+.cacc-list { display: none; flex-direction: column; gap: 1px; padding: 2px 0 8px 8px; }
+.cacc-group.open .cacc-list { display: flex; }
+.cacc-sub { font-size: 13.5px !important; color: var(--grey-2); }
+.cacc-mainall { color: var(--red) !important; }
+.cacc-mainall.active { color: #fff !important; }
+
+/* Homepage category tiles — 3 main categories */
+.cats-grid-3 { grid-template-columns: repeat(3, 1fr); grid-template-rows: auto; }
+.cats-grid-3 .cat { min-height: 240px; }
+@media (max-width: 760px) { .cats-grid-3 { grid-template-columns: 1fr; } }
