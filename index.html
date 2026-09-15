@@ -32,16 +32,18 @@
 .brand-strip{padding:34px 0 40px;border-top:1px solid var(--line,#22222a);border-bottom:1px solid var(--line,#22222a);background:var(--black-2,#0d0d10);overflow:hidden}
 .brand-strip .bs-head{text-align:center;margin-bottom:22px}
 .brand-marquee{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
-.brand-track{display:flex;width:max-content;gap:64px;align-items:center;animation:scroll-x 32s linear infinite}
+.brand-track{display:flex;width:max-content;align-items:center;animation:scroll-x 32s linear infinite}
 .brand-strip:hover .brand-track{animation-play-state:paused}
-.brand-item{display:inline-flex;align-items:center;font-family:var(--display,inherit);font-weight:800;font-style:italic;text-transform:uppercase;font-size:30px;letter-spacing:1px;color:var(--grey-2,#8b8b96);opacity:.85;white-space:nowrap;transition:color .2s,opacity .2s}
+/* Odstęp jako margines na elemencie (nie flex-gap), aby -50% = dokładnie jedna
+   kopia listy — dzięki temu pętla jest bezszwowa (bez skoku na końcu). */
+.brand-item{display:inline-flex;align-items:center;margin-right:64px;font-family:var(--display,inherit);font-weight:800;font-style:italic;text-transform:uppercase;font-size:30px;letter-spacing:1px;color:var(--grey-2,#8b8b96);opacity:.85;white-space:nowrap;transition:color .2s,opacity .2s}
 .brand-item:hover{color:#fff;opacity:1}
 .brand-item img{height:40px;width:auto;display:block;filter:invert(1);opacity:.8;transition:opacity .2s}
 .brand-item:hover img{opacity:1}
 .bi-txt{display:none}
 @media(max-width:560px){.brand-item img{height:28px}}
-@media(prefers-reduced-motion:reduce){.brand-track{animation:none;flex-wrap:wrap;justify-content:center;width:auto;gap:28px 44px}}
-@media(max-width:560px){.brand-item{font-size:22px}.brand-track{gap:44px}}
+@media(prefers-reduced-motion:reduce){.brand-track{animation:none;flex-wrap:wrap;justify-content:center;width:auto;gap:28px 44px}.brand-item{margin-right:0}}
+@media(max-width:560px){.brand-item{font-size:22px;margin-right:44px}}
 </style>
 </head>
 <body>
