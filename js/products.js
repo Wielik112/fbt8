@@ -46,13 +46,17 @@ function productCard(p) {
   const hasImg = !!p.image;
   const bg = (!hasImg && p.gradient) ? ` style="background:${p.gradient}"` : '';
   const media = hasImg ? `<img src="${p.image}" alt="${p.name}" loading="lazy">` : '';
+  // Wyprzedane = wszystkie rozmiary mają określony stan i wynosi on 0.
+  const pSizes = Array.isArray(p.sizes) ? p.sizes : [];
+  const pStock = (p.stock && typeof p.stock === 'object') ? p.stock : {};
+  const soldOut = pSizes.length > 0 && pSizes.every((s) => Object.prototype.hasOwnProperty.call(pStock, s) && (Number(pStock[s]) || 0) <= 0);
   return `
-  <article class="product-card reveal" data-product="${p.id}" data-name="${p.name}" data-price="${p.price}">
+  <article class="product-card reveal${soldOut ? ' is-soldout' : ''}" data-product="${p.id}" data-name="${p.name}" data-price="${p.price}">
     <a class="card-link" href="${href}" aria-label="${p.name}"></a>
     <div class="product-media"${bg}>
       ${media}
       <div class="product-badges">
-        ${p.tag ? `<span class="tag ${p.tagType === 'sale' ? '' : 'grey'}">${p.tag}</span>` : ''}
+        ${soldOut ? '<span class="tag sold">Wyprzedane</span>' : (p.tag ? `<span class="tag ${p.tagType === 'sale' ? '' : 'grey'}">${p.tag}</span>` : '')}
         <span class="tag ${condClass}">${p.condition} · Kat. A</span>
       </div>
     </div>

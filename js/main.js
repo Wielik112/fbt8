@@ -87,7 +87,10 @@ updateCartCount();
 document.querySelectorAll('.qty').forEach(qty => {
   const input = qty.querySelector('input');
   qty.querySelector('.q-minus')?.addEventListener('click', () => { input.value = Math.max(1, +input.value - 1); });
-  qty.querySelector('.q-plus')?.addEventListener('click', () => { input.value = +input.value + 1; });
+  qty.querySelector('.q-plus')?.addEventListener('click', () => {
+    const max = input.dataset.max ? +input.dataset.max : Infinity;
+    input.value = Math.min(max, +input.value + 1);
+  });
 });
 
 /* ---------- Size / chip selectors ---------- */
@@ -128,15 +131,19 @@ document.querySelectorAll('[data-add]').forEach(btn => {
       };
     } else {
       // product detail page
-      const size = document.querySelector('.pd-size.active')?.textContent || 'M';
+      const activeSize = document.querySelector('.pd-size.active');
+      if (activeSize && activeSize.classList.contains('out')) { showToast('Ten rozmiar jest niedostępny'); return; }
+      const size = activeSize?.dataset.size || activeSize?.querySelector('.ps-label')?.textContent || activeSize?.textContent?.trim() || 'M';
       const qtyEl = document.querySelector('.pd-qty-row .qty input');
+      const max = qtyEl && qtyEl.dataset.max ? +qtyEl.dataset.max : Infinity;
+      const qty = qtyEl ? Math.min(max, Math.max(1, +qtyEl.value || 1)) : 1;
       product = {
         id: btn.dataset.add,
         name: btn.dataset.name,
         price: +btn.dataset.price,
         image: btn.dataset.image || '',
         size,
-        qty: qtyEl ? +qtyEl.value : 1
+        qty
       };
     }
     addToCart(product);

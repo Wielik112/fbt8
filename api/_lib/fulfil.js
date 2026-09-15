@@ -1,4 +1,5 @@
 import { setInpostShipment } from './orders.js';
+import { decrementStock } from './db.js';
 import { createShipment, inpostConfigured } from './inpost.js';
 import { inpostServiceFor } from './commerce.js';
 import { sendOrderPreparingEmail } from './mailer.js';
@@ -9,6 +10,15 @@ import { sendOrderPreparingEmail } from './mailer.js';
 export async function onOrderPaid(order) {
   if (!order) return order;
   let current = order;
+
+  // 0) Zdejmij ze stanu magazynowego sprzedane rozmiary (best-effort).
+  try {
+    for (const it of order.items || []) {
+      if (it?.size) await decrementStock(it.id, it.size, it.qty || 1);
+    }
+  } catch (err) {
+    console.error('[fulfil] stock decrement failed for', order.id, err?.message || err);
+  }
 
   // 1) Auto-generate the InPost shipment (Paczkomat / Kurier InPost only).
   if (inpostConfigured() && inpostServiceFor(order.shippingMethod) && !order.inpostShipmentId) {

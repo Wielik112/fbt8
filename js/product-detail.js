@@ -45,6 +45,15 @@
 
   function render(p, all) {
     document.title = `${p.name} | FBT Outlet`;
+
+    // Dostępność: produkt jest „w magazynie", jeśli którykolwiek rozmiar nie
+    // jest wyprzedany (rozmiary bez określonej ilości traktujemy jako dostępne).
+    const anyInStock = (() => {
+      const ss = Array.isArray(p.sizes) ? p.sizes : [];
+      const st = (p.stock && typeof p.stock === 'object') ? p.stock : {};
+      if (!ss.length) return true;
+      return ss.some((s) => !(Object.prototype.hasOwnProperty.call(st, s) && (Number(st[s]) || 0) <= 0));
+    })();
     const md = document.querySelector('meta[name="description"]');
     if (md) md.setAttribute('content', (p.description || defaultDesc(p)).slice(0, 155));
 
@@ -66,7 +75,7 @@
           '@type': 'Offer',
           price: String(p.price),
           priceCurrency: 'PLN',
-          availability: 'https://schema.org/InStock',
+          availability: anyInStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
           url: origin + '/produkt.html?id=' + encodeURIComponent(p.id)
         }
       };
@@ -104,15 +113,51 @@
 
     $('#pd-desc').textContent = (p.description && p.description.trim()) ? p.description : defaultDesc(p);
 
-    // Sizes
+    // Sizes + stan magazynowy (per rozmiar)
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const sizes = Array.isArray(p.sizes) ? p.sizes : [];
+    const stock = (p.stock && typeof p.stock === 'object') ? p.stock : {};
+    const managed = (s) => Object.prototype.hasOwnProperty.call(stock, s);
+    const soldOut = (s) => managed(s) && (Number(stock[s]) || 0) <= 0;
+    const qtyInput = document.querySelector('.pd-qty-row .qty input');
+    const pdAddBtn = $('#pd-add');
+
+    function applyStock() {
+      const active = $('#pd-sizes .pd-size.active');
+      if (qtyInput) {
+        const st = active?.dataset.stock;
+        if (st !== undefined) {
+          const max = Math.max(1, parseInt(st, 10) || 0);
+          qtyInput.dataset.max = String(max);
+          if ((+qtyInput.value || 1) > max) qtyInput.value = max;
+        } else {
+          delete qtyInput.dataset.max;
+        }
+      }
+      // Wyłącz „Dodaj do koszyka", gdy nie ma dostępnego rozmiaru.
+      const anyAvail = sizes.some((s) => !soldOut(s));
+      if (pdAddBtn) {
+        pdAddBtn.disabled = !anyAvail || !active || active.classList.contains('out');
+        pdAddBtn.classList.toggle('is-out', pdAddBtn.disabled);
+      }
+    }
+
     if (sizes.length) {
       const box = $('#pd-sizes');
-      box.innerHTML = sizes.map((s, i) => `<span class="pd-size${i === 0 ? ' active' : ''}">${s}</span>`).join('');
+      const firstAvail = sizes.find((s) => !soldOut(s));
+      box.innerHTML = sizes.map((s) => {
+        const out = soldOut(s);
+        const badge = managed(s) ? (out ? 'brak' : `${Number(stock[s])} szt.`) : '';
+        return `<span class="pd-size${s === firstAvail ? ' active' : ''}${out ? ' out' : ''}" data-size="${esc(s)}"${managed(s) ? ` data-stock="${Number(stock[s]) || 0}"` : ''}>
+          <span class="ps-label">${esc(s)}</span>${badge ? `<span class="ps-stock">${badge}</span>` : ''}</span>`;
+      }).join('');
       box.querySelectorAll('.pd-size').forEach((el) => el.addEventListener('click', () => {
+        if (el.classList.contains('out')) return; // rozmiar niedostępny
         box.querySelectorAll('.pd-size').forEach((x) => x.classList.remove('active'));
         el.classList.add('active');
+        applyStock();
       }));
+      applyStock();
     } else {
       $('#pd-size-wrap').hidden = true;
     }
