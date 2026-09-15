@@ -54,6 +54,22 @@ function toInt(v) {
   return Number.isFinite(n) ? n : NaN;
 }
 
+// Stan magazynowy per rozmiar: mapa { rozmiar: liczba_sztuk }.
+// Zachowujemy tylko klucze będące w liście rozmiarów produktu; wartość to
+// nieujemna liczba całkowita. Brak wpisu dla rozmiaru = ilość nieokreślona
+// (bez limitu — zachowanie zgodne wstecz z produktami sprzed tej funkcji).
+function toStockMap(v, sizes) {
+  const out = {};
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return out;
+  for (const key of Object.keys(v)) {
+    const size = String(key).trim();
+    if (!size || !sizes.includes(size)) continue;
+    const n = Math.round(Number(v[key]));
+    if (Number.isFinite(n) && n >= 0) out[size] = Math.min(n, 100000);
+  }
+  return out;
+}
+
 // Validates + coerces an incoming product payload into the canonical shape.
 // Returns { value } on success or { error } with a human-readable message.
 export function normalizeProduct(body) {
@@ -100,11 +116,13 @@ export function normalizeProduct(body) {
   const image  = cleanImage(body.image);
   const images = toImageArray(body.images);
 
+  const sizes = toStringArray(body.sizes);
   const value = {
     id: String(body.id ?? '').trim() || null,
     name, brand, cat, condition, gender, price, old, description, note, tag, tagType,
     level, surface, garment, featured,
-    sizes:  toStringArray(body.sizes),
+    sizes,
+    stock:  toStockMap(body.stock, sizes),
     colors: toStringArray(body.colors),
     image, images,
     gradient,

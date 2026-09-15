@@ -111,6 +111,8 @@ export async function ensureSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS garment TEXT`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS note TEXT`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT false`;
+  // Stan magazynowy per rozmiar: { rozmiar: liczba_sztuk }.
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS stock JSONB NOT NULL DEFAULT '{}'::jsonb`;
   // Migracja kategorii do nowego drzewa (Obuwie / Odzież / Piłka nożna).
   // Idempotentne — po pierwszym przebiegu żadne wiersze nie pasują.
   await sql`UPDATE products SET cat = garment WHERE cat = 'Odzież' AND garment IS NOT NULL AND garment <> ''`;
@@ -163,6 +165,7 @@ export function mapRow(r) {
     tag: r.tag,
     tagType: r.tag_type,
     sizes: r.sizes || [],
+    stock: r.stock || {},
     colors: r.colors || [],
     image: r.image || '',
     images: r.images || [],
@@ -184,11 +187,11 @@ export async function insertProduct(p, sortOrder = null) {
   const order = sortOrder == null ? await nextSortOrder() : sortOrder;
   const { rows } = await sql`
     INSERT INTO products
-      (id, name, cat, brand, condition, gender, level, surface, garment, price, old_price, description, note, featured, tag, tag_type, sizes, colors, image, images, gradient, sort_order)
+      (id, name, cat, brand, condition, gender, level, surface, garment, price, old_price, description, note, featured, tag, tag_type, sizes, stock, colors, image, images, gradient, sort_order)
     VALUES
       (${p.id}, ${p.name}, ${p.cat}, ${p.brand}, ${p.condition}, ${p.gender || 'Unisex'}, ${p.level || null}, ${p.surface || null}, ${p.garment || null}, ${p.price}, ${p.old}, ${p.description || null}, ${p.note || null}, ${p.featured === true},
        ${p.tag}, ${p.tagType},
-       ${JSON.stringify(p.sizes || [])}::jsonb, ${JSON.stringify(p.colors || [])}::jsonb,
+       ${JSON.stringify(p.sizes || [])}::jsonb, ${JSON.stringify(p.stock || {})}::jsonb, ${JSON.stringify(p.colors || [])}::jsonb,
        ${p.image || null}, ${JSON.stringify(p.images || [])}::jsonb,
        ${p.gradient}, ${order})
     RETURNING *`;
@@ -203,6 +206,7 @@ export async function updateProduct(id, p) {
       price = ${p.price}, old_price = ${p.old}, description = ${p.description || null}, note = ${p.note || null}, featured = ${p.featured === true},
       tag = ${p.tag}, tag_type = ${p.tagType},
       sizes = ${JSON.stringify(p.sizes || [])}::jsonb,
+      stock = ${JSON.stringify(p.stock || {})}::jsonb,
       colors = ${JSON.stringify(p.colors || [])}::jsonb,
       image = ${p.image || null}, images = ${JSON.stringify(p.images || [])}::jsonb,
       gradient = ${p.gradient}, updated_at = now()
@@ -214,6 +218,21 @@ export async function updateProduct(id, p) {
 export async function deleteProduct(id) {
   const { rowCount } = await sql`DELETE FROM products WHERE id = ${id}`;
   return rowCount > 0;
+}
+
+// Zmniejsza stan magazynowy danego rozmiaru po opłaceniu zamówienia.
+// Działa tylko gdy rozmiar jest „zarządzany" (istnieje klucz w stock);
+// nigdy nie schodzi poniżej 0. Rozmiary bez wpisu (nielimitowane) pomija.
+export async function decrementStock(productId, size, qty) {
+  const s = String(size ?? '').trim();
+  const q = Math.round(Number(qty));
+  if (!productId || !s || !Number.isFinite(q) || q <= 0) return;
+  await sql`
+    UPDATE products SET
+      stock = jsonb_set(stock, ARRAY[${s}],
+        to_jsonb(GREATEST(0, COALESCE((stock->>${s})::int, 0) - ${q})), false),
+      updated_at = now()
+    WHERE id = ${productId} AND jsonb_exists(stock, ${s})`;
 }
 
 // ---- Reviews ----

@@ -37,6 +37,7 @@ export default async function handler(req, res) {
 
     const items = [];
     const unavailable = [];
+    const stockIssues = [];
     let subtotal = 0;
     for (const raw of rawItems) {
       const id = String(raw?.id ?? '').trim();
@@ -47,12 +48,22 @@ export default async function handler(req, res) {
       const product = await getProduct(id);
       if (!product) { unavailable.push(id); continue; }
       const size = raw?.size ? String(raw.size).trim().slice(0, 20) : null;
+      // Kontrola stanu magazynowego (tylko dla rozmiarów z określoną ilością).
+      const stock = product.stock && typeof product.stock === 'object' ? product.stock : {};
+      if (size && Object.prototype.hasOwnProperty.call(stock, size)) {
+        const avail = Math.max(0, Math.round(Number(stock[size])) || 0);
+        if (avail <= 0) { stockIssues.push(`${product.name} (rozm. ${size}): brak w magazynie`); continue; }
+        if (qty > avail) { stockIssues.push(`${product.name} (rozm. ${size}): dostępne ${avail} szt.`); continue; }
+      }
       const unit = toGrosze(product.price); // authoritative price
       subtotal += unit * qty;
       items.push({ id: product.id, name: product.name, price: unit, qty, size, gradient: product.gradient });
     }
     if (unavailable.length) {
       return res.status(409).json({ error: 'Niektóre produkty są niedostępne i zostały usunięte z oferty.', unavailable });
+    }
+    if (stockIssues.length) {
+      return res.status(409).json({ error: 'Przekroczono dostępny stan magazynowy: ' + stockIssues.join('; ') + '.', stockIssues });
     }
     if (!items.length) return res.status(400).json({ error: 'Koszyk jest pusty.' });
 

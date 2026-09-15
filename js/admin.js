@@ -195,12 +195,15 @@ function renderRows() {
     const extra = [p.level, p.surface].filter(Boolean).map(esc).join(' · ');
     const noteFlag = (p.note && p.note.trim()) ? ' · 📝 uwagi' : '';
     const featFlag = p.featured ? ' · ⭐ Bestseller' : '';
+    const stockVals = (p.stock && typeof p.stock === 'object') ? Object.values(p.stock) : [];
+    const stockTotal = stockVals.reduce((a, b) => a + (Number(b) || 0), 0);
+    const stockFlag = stockVals.length ? ` · 📦 ${stockTotal} szt.` : '';
     return `
     <tr data-id="${esc(p.id)}">
       <td class="cell-media">${media}</td>
       <td class="cell-title">
         <div class="pname">${esc(p.name)}</div>
-        <div class="pmeta">${esc(p.brand)} · ${esc(p.gender || 'Unisex')} · ${esc(p.id)}${extra ? ' · ' + extra : ''}${noteFlag}${featFlag}</div>
+        <div class="pmeta">${esc(p.brand)} · ${esc(p.gender || 'Unisex')} · ${esc(p.id)}${extra ? ' · ' + extra : ''}${stockFlag}${noteFlag}${featFlag}</div>
       </td>
       <td class="hide-sm" data-label="Kategoria">${esc(p.cat)}</td>
       <td class="hide-sm" data-label="Stan"><span class="pill ${condClass}">${esc(p.condition)} · Kat. A</span></td>
@@ -348,6 +351,66 @@ function fillCatSelect(sel, current) {
     `</optgroup>`).join('');
 }
 
+/* ---------- Stock editor (rozmiary + ilości magazynowe) ---------- */
+function stockRowHtml(size, qty) {
+  const qv = (qty === '' || qty == null) ? '' : esc(String(qty));
+  return `<div class="stock-row">
+    <input class="stk-size" type="text" value="${esc(size)}" placeholder="Rozmiar (np. 43)">
+    <div class="stk-qty-wrap"><input class="stk-qty" type="number" min="0" step="1" value="${qv}" placeholder="∞"></div>
+    <button type="button" class="stk-rm" aria-label="Usuń rozmiar">×</button>
+  </div>`;
+}
+function stockEmptyHtml() { return '<div class="stock-empty">Brak rozmiarów. Dodaj je poniżej.</div>'; }
+
+function renderStockRows(sizes, stock) {
+  const box = $('f-stock-rows');
+  const rows = (sizes || []).map((s) => {
+    const has = stock && Object.prototype.hasOwnProperty.call(stock, s);
+    return stockRowHtml(s, has ? stock[s] : '');
+  });
+  box.innerHTML = rows.join('') || stockEmptyHtml();
+}
+
+function addStockRows(sizesStr) {
+  const box = $('f-stock-rows');
+  const existing = new Set([...box.querySelectorAll('.stk-size')].map((i) => i.value.trim()).filter(Boolean));
+  const toAdd = splitList(sizesStr).filter((s) => !existing.has(s));
+  if (!toAdd.length) return;
+  const emptyMsg = box.querySelector('.stock-empty');
+  if (emptyMsg) emptyMsg.remove();
+  box.insertAdjacentHTML('beforeend', toAdd.map((s) => stockRowHtml(s, 1)).join(''));
+}
+
+// Zbiera listę rozmiarów (kolejność) + mapę stanów { rozmiar: sztuki }.
+// Puste pole ilości = rozmiar bez limitu (pomijany w mapie stock).
+function readStockEditor() {
+  const sizes = []; const stock = {};
+  $('f-stock-rows').querySelectorAll('.stock-row').forEach((row) => {
+    const size = row.querySelector('.stk-size').value.trim();
+    if (!size || sizes.includes(size)) return;
+    sizes.push(size);
+    const qv = row.querySelector('.stk-qty').value.trim();
+    if (qv !== '') stock[size] = Math.max(0, Math.round(Number(qv)) || 0);
+  });
+  return { sizes, stock };
+}
+
+$('f-stock-add').addEventListener('click', () => {
+  const inp = $('f-stock-bulk');
+  addStockRows(inp.value);
+  inp.value = '';
+});
+$('f-stock-bulk').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); $('f-stock-add').click(); }
+});
+$('f-stock-rows').addEventListener('click', (e) => {
+  const rm = e.target.closest('.stk-rm');
+  if (!rm) return;
+  rm.closest('.stock-row').remove();
+  const box = $('f-stock-rows');
+  if (!box.querySelector('.stock-row')) box.innerHTML = stockEmptyHtml();
+});
+
 function openModal(product) {
   const editing = !!product;
   $('modal-title').textContent = editing ? 'Edytuj produkt' : 'Nowy produkt';
@@ -369,7 +432,8 @@ function openModal(product) {
   $('f-featured').checked = product?.featured === true;
   $('f-tag').value       = product?.tag || '';
   $('f-tagType').value   = product?.tagType || 'sale';
-  $('f-sizes').value     = (product?.sizes || []).join(', ');
+  $('f-stock-bulk').value = '';
+  renderStockRows(product?.sizes || [], product?.stock || {});
 
   mainImage = product?.image || '';
   galleryImages = Array.isArray(product?.images) ? [...product.images] : [];
@@ -445,6 +509,7 @@ $('product-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   notice($('form-error'), '', 'err');
   const id = $('f-id').value.trim();
+  const { sizes, stock } = readStockEditor();
   const payload = {
     name: $('f-name').value.trim(),
     brand: $('f-brand').value.trim(),
@@ -460,7 +525,8 @@ $('product-form').addEventListener('submit', async (e) => {
     featured: $('f-featured').checked,
     tag: $('f-tag').value.trim(),
     tagType: $('f-tagType').value,
-    sizes: splitList($('f-sizes').value),
+    sizes,
+    stock,
     image: mainImage,
     images: galleryImages,
   };

@@ -197,6 +197,22 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
   font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;text-align:center;padding:2px 0}
 .thumb-img{width:40px;height:40px;border-radius:9px;border:1px solid var(--line-bright);object-fit:cover;display:block}
 
+/* ---- Stock editor (rozmiary + ilości) ---- */
+.stock-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.stock-rows:empty{margin-bottom:0}
+.stock-row{display:grid;grid-template-columns:1fr 118px 40px;gap:8px;align-items:center}
+.stock-row input{width:100%;padding:10px 12px;background:var(--black-2);border:1px solid var(--line-bright);border-radius:9px;color:#fff;font-size:14px}
+.stock-row input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px var(--red-glow)}
+.stock-row .stk-qty-wrap{position:relative}
+.stock-row .stk-qty-wrap::after{content:'szt.';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--grey-3);font-size:12px;pointer-events:none}
+.stock-row .stk-qty{padding-right:38px}
+.stk-rm{width:40px;height:40px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line-bright);color:var(--grey-1);font-size:18px;line-height:1;display:grid;place-items:center}
+.stk-rm:hover{background:var(--red-deep);border-color:var(--red-deep);color:#fff}
+.stock-add{display:flex;gap:8px;align-items:center}
+.stock-add input{flex:1;min-width:0;padding:10px 12px;background:var(--black-2);border:1px solid var(--line-bright);border-radius:9px;color:#fff;font-size:14px}
+.stock-add input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px var(--red-glow)}
+.stock-empty{color:var(--grey-3);font-size:13px;padding:4px 0}
+
 /* Responsive helpers */
 .narrow-only{display:none}
 
@@ -522,9 +538,13 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
         <div class="hint">Zaznacz, aby ten produkt pojawił się wśród wyróżnionych na stronie głównej.</div>
       </div>
       <div class="field">
-        <label for="f-sizes">Rozmiary (po przecinku)</label>
-        <input type="text" id="f-sizes" placeholder="Buty: 42, 42 2/3, 43 1/3 · Odzież: S, M, L, XL">
-        <div class="hint">Buty: pełne (36–48), połówkowe Nike (np. 44,5) i Adidasa (np. 42 2/3, 43 1/3). Odzież: S, M, L, XL. Rękawice: 8–11. Piłki: 4, 5. Wpisuj dokładnie tak, jak w filtrach.</div>
+        <label>Rozmiary i stany magazynowe</label>
+        <div id="f-stock-rows" class="stock-rows"></div>
+        <div class="stock-add">
+          <input type="text" id="f-stock-bulk" placeholder="Dodaj rozmiary: 42, 43, 44">
+          <button type="button" class="btn btn-ghost btn-sm" id="f-stock-add">+ Dodaj rozmiary</button>
+        </div>
+        <div class="hint">Dla każdego rozmiaru podaj liczbę sztuk w magazynie — klient zobaczy dostępność (np. „2 szt.”) i nie kupi więcej niż jest na stanie. Rozmiar z ilością 0 = chwilowo niedostępny. Pole ilości puste = bez limitu (rozmiar zawsze dostępny). Buty: pełne (36–48), połówkowe (44,5 / 42 2/3). Odzież: S, M, L, XL. Rękawice: 8–11.</div>
       </div>
       <div class="grid2">
         <div class="field">

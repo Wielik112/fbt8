@@ -242,6 +242,8 @@ h1, h2, h3, h4 { font-family: var(--display); font-weight: 800; line-height: 0.9
 .tag.grey { background: var(--surface-2); color: var(--grey-1); }
 .tag.cond-new { background: #123d1f; color: #4ade80; }
 .tag.cond-used { background: #3a2c0a; color: #fbbf24; }
+.tag.sold { background: #2a2a30; color: #cfcfd6; }
+.product-card.is-soldout .product-media img { opacity: .5; filter: grayscale(.5); }
 .no-results { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--grey-1); font-size: 16px; }
 
 /* ---------- Responsive ---------- */
