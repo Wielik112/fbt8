@@ -356,16 +356,28 @@ const SIZE_SETS = window.SIZE_SETS || {};
 const sizeSetFor = window.sizeSetFor || (() => 'apparel');
 
 function getBasePrice() { const v = $('f-price').value.trim(); return v === '' ? '' : v; }
+let lastBasePrice = '';
+// Cena rozmiaru podpowiada się z ceny bazowej produktu; admin zmienia tylko te,
+// które mają być inne. Przy zapisie zapisujemy WYŁĄCZNIE realne różnice.
 function stockRowHtml(size, qty, price) {
   const qv = (qty === '' || qty == null) ? '' : esc(String(qty));
-  const pv = (price === '' || price == null) ? '' : esc(String(price));
   const base = getBasePrice();
+  const pv = (price === '' || price == null) ? esc(String(base)) : esc(String(price));
   return `<div class="stock-row" data-size="${esc(size)}">
     <span class="stk-size-label">${esc(size)}</span>
     <div class="stk-qty-wrap"><input class="stk-qty" type="number" min="0" step="1" value="${qv}" placeholder="∞"></div>
     <div class="stk-price-wrap"><input class="stk-price" type="number" min="0" step="1" value="${pv}" placeholder="${base !== '' ? esc(String(base)) : 'baza'}"></div>
     <button type="button" class="stk-rm" aria-label="Usuń rozmiar">×</button>
   </div>`;
+}
+// Gdy zmieni się cena bazowa, zaktualizuj rozmiary, których ceny nie ruszono.
+function syncStockPricesToBase() {
+  const nb = getBasePrice();
+  document.querySelectorAll('#f-stock-rows .stk-price').forEach((inp) => {
+    const cur = inp.value.trim();
+    if (cur === '' || cur === lastBasePrice) inp.value = nb;
+  });
+  lastBasePrice = nb;
 }
 function stockEmptyHtml() { return '<div class="stock-empty">Nie wybrano rozmiarów — kliknij je powyżej.</div>'; }
 
@@ -424,6 +436,7 @@ function renderStockRows(sizes, stock, prices) {
 // Puste pole ilości = bez limitu; puste pole ceny = cena bazowa produktu.
 function readStockEditor() {
   const sizes = []; const stock = {}; const prices = {};
+  const base = Number(getBasePrice());
   $('f-stock-rows').querySelectorAll('.stock-row').forEach((row) => {
     const size = row.dataset.size;
     if (!size || sizes.includes(size)) return;
@@ -431,7 +444,11 @@ function readStockEditor() {
     const qv = row.querySelector('.stk-qty').value.trim();
     if (qv !== '') stock[size] = Math.max(0, Math.round(Number(qv)) || 0);
     const pv = row.querySelector('.stk-price').value.trim();
-    if (pv !== '') prices[size] = Math.max(0, Math.round(Number(pv)) || 0);
+    if (pv !== '') {
+      const n = Math.max(0, Math.round(Number(pv)) || 0);
+      // Zapisz jako nadpisanie tylko jeśli różni się od ceny bazowej.
+      if (!Number.isFinite(base) || n !== base) prices[size] = n;
+    }
   });
   return { sizes, stock, prices };
 }
@@ -467,6 +484,8 @@ $('f-stock-bulk').addEventListener('keydown', (e) => {
 });
 // Zmiana kategorii → inne rozmiary do wyboru (wybrane pozostają).
 $('f-cat').addEventListener('change', () => renderSizePicker($('f-cat').value));
+// Zmiana ceny bazowej → podpowiedz ją przy nieruszanych rozmiarach.
+$('f-price').addEventListener('input', syncStockPricesToBase);
 
 /* ---------- Specs editor (cechy produktu) ---------- */
 function specRowHtml(k, v) {
@@ -528,6 +547,7 @@ function openModal(product) {
   $('f-tag').value       = product?.tag || '';
   $('f-tagType').value   = product?.tagType || 'sale';
   $('f-code').value      = product?.code || '';
+  lastBasePrice = getBasePrice();
   renderSpecs(product?.specs || []);
   $('f-stock-bulk').value = '';
   renderStockRows(product?.sizes || [], product?.stock || {}, product?.prices || {});
