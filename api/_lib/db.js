@@ -117,6 +117,8 @@ export async function ensureSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS prices JSONB NOT NULL DEFAULT '{}'::jsonb`;
   // Kod produktu z metki/pudełka (EAN / kod producenta).
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS code TEXT`;
+  // Specyfikacja produktu: lista { k, v } (np. Podeszwa → Guma).
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS specs JSONB NOT NULL DEFAULT '[]'::jsonb`;
   // Migracja kategorii do nowego drzewa (Obuwie / Odzież / Piłka nożna).
   // Idempotentne — po pierwszym przebiegu żadne wiersze nie pasują.
   await sql`UPDATE products SET cat = garment WHERE cat = 'Odzież' AND garment IS NOT NULL AND garment <> ''`;
@@ -171,6 +173,7 @@ export function mapRow(r) {
     sizes: r.sizes || [],
     stock: r.stock || {},
     prices: r.prices || {},
+    specs: r.specs || [],
     code: r.code || '',
     colors: r.colors || [],
     image: r.image || '',
@@ -193,11 +196,11 @@ export async function insertProduct(p, sortOrder = null) {
   const order = sortOrder == null ? await nextSortOrder() : sortOrder;
   const { rows } = await sql`
     INSERT INTO products
-      (id, name, cat, brand, condition, gender, level, surface, garment, price, old_price, description, note, featured, tag, tag_type, code, sizes, stock, prices, colors, image, images, gradient, sort_order)
+      (id, name, cat, brand, condition, gender, level, surface, garment, price, old_price, description, note, featured, tag, tag_type, code, sizes, stock, prices, specs, colors, image, images, gradient, sort_order)
     VALUES
       (${p.id}, ${p.name}, ${p.cat}, ${p.brand}, ${p.condition}, ${p.gender || 'Unisex'}, ${p.level || null}, ${p.surface || null}, ${p.garment || null}, ${p.price}, ${p.old}, ${p.description || null}, ${p.note || null}, ${p.featured === true},
        ${p.tag}, ${p.tagType}, ${p.code || null},
-       ${JSON.stringify(p.sizes || [])}::jsonb, ${JSON.stringify(p.stock || {})}::jsonb, ${JSON.stringify(p.prices || {})}::jsonb, ${JSON.stringify(p.colors || [])}::jsonb,
+       ${JSON.stringify(p.sizes || [])}::jsonb, ${JSON.stringify(p.stock || {})}::jsonb, ${JSON.stringify(p.prices || {})}::jsonb, ${JSON.stringify(p.specs || [])}::jsonb, ${JSON.stringify(p.colors || [])}::jsonb,
        ${p.image || null}, ${JSON.stringify(p.images || [])}::jsonb,
        ${p.gradient}, ${order})
     RETURNING *`;
@@ -214,6 +217,7 @@ export async function updateProduct(id, p) {
       sizes = ${JSON.stringify(p.sizes || [])}::jsonb,
       stock = ${JSON.stringify(p.stock || {})}::jsonb,
       prices = ${JSON.stringify(p.prices || {})}::jsonb,
+      specs = ${JSON.stringify(p.specs || [])}::jsonb,
       colors = ${JSON.stringify(p.colors || [])}::jsonb,
       image = ${p.image || null}, images = ${JSON.stringify(p.images || [])}::jsonb,
       gradient = ${p.gradient}, updated_at = now()
