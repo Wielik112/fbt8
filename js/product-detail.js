@@ -86,13 +86,32 @@
 
     $('#pd-crumb').textContent = p.name;
     $('#pd-name').textContent = p.name;
-    $('#pd-price').textContent = `${p.price} zł`;
     $('#pd-tag').textContent = [p.tag, p.condition].filter(Boolean).join(' · ');
 
-    if (p.old && p.old > p.price) {
-      const was = $('#pd-old'); was.textContent = `${p.old} zł`; was.hidden = false;
-      const save = $('#pd-save'); save.textContent = `Oszczędzasz ${p.old - p.price} zł`; save.hidden = false;
+    // Ceny per rozmiar: wybrany rozmiar może mieć inną cenę niż bazowa.
+    const prices = (p.prices && typeof p.prices === 'object') ? p.prices : {};
+    function effectivePrice(size) {
+      if (size && Object.prototype.hasOwnProperty.call(prices, size)) {
+        const v = Number(prices[size]);
+        if (Number.isFinite(v) && v >= 0) return v;
+      }
+      return p.price;
     }
+    function updatePrice(size) {
+      const pr = effectivePrice(size);
+      $('#pd-price').textContent = `${pr} zł`;
+      const addB = $('#pd-add');
+      if (addB) addB.dataset.price = pr;
+      const was = $('#pd-old'); const save = $('#pd-save');
+      if (p.old && p.old > pr) {
+        if (was) { was.textContent = `${p.old} zł`; was.hidden = false; }
+        if (save) { save.textContent = `Oszczędzasz ${p.old - pr} zł`; save.hidden = false; }
+      } else {
+        if (was) was.hidden = true;
+        if (save) save.hidden = true;
+      }
+    }
+    updatePrice(null); // stan początkowy (nadpisany po wyborze rozmiaru)
 
     // Photo gallery: main photo first, then any extra gallery photos.
     const gallery = [p.image, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean);
@@ -134,6 +153,8 @@
           delete qtyInput.dataset.max;
         }
       }
+      // Zaktualizuj cenę pod wybrany rozmiar.
+      updatePrice(active ? active.dataset.size : null);
       // Wyłącz „Dodaj do koszyka", gdy nie ma dostępnego rozmiaru.
       const anyAvail = sizes.some((s) => !soldOut(s));
       if (pdAddBtn) {
@@ -164,6 +185,7 @@
 
     // Meta
     $('#pd-code').textContent = 'FBT-' + String(p.id).toUpperCase();
+    if (p.code && p.code.trim()) { $('#pd-mcode').textContent = p.code.trim(); $('#pd-mcode-row').hidden = false; }
     $('#pd-brand').textContent = p.brand;
     $('#pd-cat').textContent = p.cat;
     const genderEl = $('#pd-gender');

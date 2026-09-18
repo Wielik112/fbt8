@@ -222,7 +222,7 @@
 .pd-price .now { font-family: var(--display); font-weight: 900; font-size: 46px; }
 .pd-price .was { font-size: 22px; color: var(--grey-3); text-decoration: line-through; }
 .pd-price .save { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--red); background: rgba(224,16,32,0.12); padding: 5px 12px; }
-.pd-desc { color: var(--grey-1); margin-bottom: 32px; line-height: 1.7; }
+.pd-desc { color: var(--grey-1); margin-bottom: 32px; line-height: 1.7; white-space: pre-line; }
 .pd-opt-label { font-family: var(--display); font-weight: 700; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; color: var(--grey-1); }
 .pd-sizes { display: flex; gap: 10px; margin-bottom: 28px; flex-wrap: wrap; }
 .pd-size { min-width: 54px; padding: 8px 10px; min-height: 54px; border: 1px solid var(--line-bright); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-family: var(--display); font-weight: 700; cursor: pointer; transition: 0.2s; }

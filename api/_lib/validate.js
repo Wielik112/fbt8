@@ -70,6 +70,20 @@ function toStockMap(v, sizes) {
   return out;
 }
 
+// Ceny per rozmiar: mapa { rozmiar: cena_zł }. Nadpisuje cenę bazową tylko
+// dla wybranych rozmiarów. Brak wpisu = rozmiar w cenie bazowej produktu.
+function toPriceMap(v, sizes) {
+  const out = {};
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return out;
+  for (const key of Object.keys(v)) {
+    const size = String(key).trim();
+    if (!size || !sizes.includes(size)) continue;
+    const n = Math.round(Number(v[key]));
+    if (Number.isFinite(n) && n >= 0) out[size] = Math.min(n, 1000000);
+  }
+  return out;
+}
+
 // Validates + coerces an incoming product payload into the canonical shape.
 // Returns { value } on success or { error } with a human-readable message.
 export function normalizeProduct(body) {
@@ -107,6 +121,8 @@ export function normalizeProduct(body) {
   if (old != null && (!Number.isFinite(old) || old < 0)) old = null;
 
   const tag      = String(body.tag ?? '').trim() || null;
+  // Kod produktu z metki/pudełka (EAN / kod producenta) — do weryfikacji oryginalności.
+  const code     = String(body.code ?? '').trim().slice(0, 80) || null;
   const gradient = String(body.gradient ?? '').trim() || DEFAULT_GRADIENT;
   const description = String(body.description ?? '').trim().slice(0, 2000) || null;
   // Uwagi outletowe / cechy charakterystyczne egzemplarza (np. uszkodzone opakowanie).
@@ -119,10 +135,11 @@ export function normalizeProduct(body) {
   const sizes = toStringArray(body.sizes);
   const value = {
     id: String(body.id ?? '').trim() || null,
-    name, brand, cat, condition, gender, price, old, description, note, tag, tagType,
+    name, brand, cat, condition, gender, price, old, description, note, tag, tagType, code,
     level, surface, garment, featured,
     sizes,
     stock:  toStockMap(body.stock, sizes),
+    prices: toPriceMap(body.prices, sizes),
     colors: toStringArray(body.colors),
     image, images,
     gradient,

@@ -55,7 +55,10 @@ export default async function handler(req, res) {
         if (avail <= 0) { stockIssues.push(`${product.name} (rozm. ${size}): brak w magazynie`); continue; }
         if (qty > avail) { stockIssues.push(`${product.name} (rozm. ${size}): dostępne ${avail} szt.`); continue; }
       }
-      const unit = toGrosze(product.price); // authoritative price
+      // Cena autorytatywna: nadpisanie per rozmiar, jeśli ustawione, inaczej bazowa.
+      const prices = product.prices && typeof product.prices === 'object' ? product.prices : {};
+      const sizePrice = size && Object.prototype.hasOwnProperty.call(prices, size) ? Number(prices[size]) : null;
+      const unit = toGrosze(Number.isFinite(sizePrice) && sizePrice >= 0 ? sizePrice : product.price);
       subtotal += unit * qty;
       items.push({ id: product.id, name: product.name, price: unit, qty, size, gradient: product.gradient });
     }

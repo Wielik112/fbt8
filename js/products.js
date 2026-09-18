@@ -50,6 +50,11 @@ function productCard(p) {
   const pSizes = Array.isArray(p.sizes) ? p.sizes : [];
   const pStock = (p.stock && typeof p.stock === 'object') ? p.stock : {};
   const soldOut = pSizes.length > 0 && pSizes.every((s) => Object.prototype.hasOwnProperty.call(pStock, s) && (Number(pStock[s]) || 0) <= 0);
+  // Ceny per rozmiar: jeśli któryś rozmiar jest tańszy niż cena bazowa, pokaż „od …".
+  const priceVals = (p.prices && typeof p.prices === 'object')
+    ? Object.values(p.prices).map(Number).filter((n) => Number.isFinite(n) && n >= 0) : [];
+  const minPrice = priceVals.length ? Math.min(p.price, ...priceVals) : p.price;
+  const fromPrefix = minPrice < p.price ? 'od ' : '';
   return `
   <article class="product-card reveal${soldOut ? ' is-soldout' : ''}" data-product="${p.id}" data-name="${p.name}" data-price="${p.price}">
     <a class="card-link" href="${href}" aria-label="${p.name}"></a>
@@ -64,7 +69,7 @@ function productCard(p) {
       <div class="product-cat">${p.brand} · ${p.cat}</div>
       <h3 class="product-name">${p.name}</h3>
       <div class="product-foot">
-        <div class="product-price">${p.price} zł${oldPrice}</div>
+        <div class="product-price">${fromPrefix}${minPrice} zł${oldPrice}</div>
       </div>
     </div>
   </article>`;
