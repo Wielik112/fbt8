@@ -113,6 +113,10 @@ export async function ensureSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT false`;
   // Stan magazynowy per rozmiar: { rozmiar: liczba_sztuk }.
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS stock JSONB NOT NULL DEFAULT '{}'::jsonb`;
+  // Ceny per rozmiar (nadpisania ceny bazowej): { rozmiar: cena }.
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS prices JSONB NOT NULL DEFAULT '{}'::jsonb`;
+  // Kod produktu z metki/pudełka (EAN / kod producenta).
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS code TEXT`;
   // Migracja kategorii do nowego drzewa (Obuwie / Odzież / Piłka nożna).
   // Idempotentne — po pierwszym przebiegu żadne wiersze nie pasują.
   await sql`UPDATE products SET cat = garment WHERE cat = 'Odzież' AND garment IS NOT NULL AND garment <> ''`;
@@ -166,6 +170,8 @@ export function mapRow(r) {
     tagType: r.tag_type,
     sizes: r.sizes || [],
     stock: r.stock || {},
+    prices: r.prices || {},
+    code: r.code || '',
     colors: r.colors || [],
     image: r.image || '',
     images: r.images || [],
@@ -187,11 +193,11 @@ export async function insertProduct(p, sortOrder = null) {
   const order = sortOrder == null ? await nextSortOrder() : sortOrder;
   const { rows } = await sql`
     INSERT INTO products
-      (id, name, cat, brand, condition, gender, level, surface, garment, price, old_price, description, note, featured, tag, tag_type, sizes, stock, colors, image, images, gradient, sort_order)
+      (id, name, cat, brand, condition, gender, level, surface, garment, price, old_price, description, note, featured, tag, tag_type, code, sizes, stock, prices, colors, image, images, gradient, sort_order)
     VALUES
       (${p.id}, ${p.name}, ${p.cat}, ${p.brand}, ${p.condition}, ${p.gender || 'Unisex'}, ${p.level || null}, ${p.surface || null}, ${p.garment || null}, ${p.price}, ${p.old}, ${p.description || null}, ${p.note || null}, ${p.featured === true},
-       ${p.tag}, ${p.tagType},
-       ${JSON.stringify(p.sizes || [])}::jsonb, ${JSON.stringify(p.stock || {})}::jsonb, ${JSON.stringify(p.colors || [])}::jsonb,
+       ${p.tag}, ${p.tagType}, ${p.code || null},
+       ${JSON.stringify(p.sizes || [])}::jsonb, ${JSON.stringify(p.stock || {})}::jsonb, ${JSON.stringify(p.prices || {})}::jsonb, ${JSON.stringify(p.colors || [])}::jsonb,
        ${p.image || null}, ${JSON.stringify(p.images || [])}::jsonb,
        ${p.gradient}, ${order})
     RETURNING *`;
@@ -204,9 +210,10 @@ export async function updateProduct(id, p) {
       name = ${p.name}, cat = ${p.cat}, brand = ${p.brand}, condition = ${p.condition},
       gender = ${p.gender || 'Unisex'}, level = ${p.level || null}, surface = ${p.surface || null}, garment = ${p.garment || null},
       price = ${p.price}, old_price = ${p.old}, description = ${p.description || null}, note = ${p.note || null}, featured = ${p.featured === true},
-      tag = ${p.tag}, tag_type = ${p.tagType},
+      tag = ${p.tag}, tag_type = ${p.tagType}, code = ${p.code || null},
       sizes = ${JSON.stringify(p.sizes || [])}::jsonb,
       stock = ${JSON.stringify(p.stock || {})}::jsonb,
+      prices = ${JSON.stringify(p.prices || {})}::jsonb,
       colors = ${JSON.stringify(p.colors || [])}::jsonb,
       image = ${p.image || null}, images = ${JSON.stringify(p.images || [])}::jsonb,
       gradient = ${p.gradient}, updated_at = now()

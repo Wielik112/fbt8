@@ -176,6 +176,40 @@ document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
   if (a.getAttribute('href') === path) a.classList.add('active');
 });
 
+/* ---------- Brand marquee: seamless infinite fill ----------
+   Powiela zestaw logo tyle razy, by zawsze wypełniał ekran (także 4K),
+   a przesunięcie o -50% odpowiada dokładnie połowie ścieżki — dzięki temu
+   loga lecą w kółko bez przerwy i bez pustego miejsca. */
+(function () {
+  const track = document.querySelector('.brand-track');
+  if (!track) return;
+  const marquee = track.closest('.brand-marquee') || track.parentElement;
+  const baseHTML = track.innerHTML; // jeden komplet logo
+  const SPEED = 70; // px na sekundę (stała prędkość niezależnie od liczby kopii)
+
+  function build() {
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    track.style.animation = 'none';
+    track.innerHTML = baseHTML;               // zmierz szerokość jednego kompletu
+    // eslint-disable-next-line no-unused-expressions
+    track.offsetWidth;                        // wymuś reflow
+    const oneSet = track.scrollWidth;
+    if (reduce || !oneSet) return;            // reduced-motion: zostaw jeden komplet, bez animacji
+    const container = marquee.clientWidth || window.innerWidth || 1200;
+    // Każda „połowa" ścieżki musi zakryć ekran → zapas +1 komplet.
+    const halfSets = Math.ceil(container / oneSet) + 1;
+    const copies = halfSets * 2;              // parzyście, by -50% trafiało w granicę kompletu
+    track.innerHTML = baseHTML.repeat(copies);
+    const halfWidth = oneSet * halfSets;
+    const dur = Math.max(18, Math.round(halfWidth / SPEED));
+    track.style.animation = `scroll-x ${dur}s linear infinite`;
+  }
+
+  build();
+  window.addEventListener('load', build);
+  let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(build, 200); });
+})();
+
 /* ============================================
    SEO — canonical, Open Graph / Twitter, JSON-LD.
    Built from the current origin so it stays correct

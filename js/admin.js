@@ -355,11 +355,15 @@ function fillCatSelect(sel, current) {
 const SIZE_SETS = window.SIZE_SETS || {};
 const sizeSetFor = window.sizeSetFor || (() => 'apparel');
 
-function stockRowHtml(size, qty) {
+function getBasePrice() { const v = $('f-price').value.trim(); return v === '' ? '' : v; }
+function stockRowHtml(size, qty, price) {
   const qv = (qty === '' || qty == null) ? '' : esc(String(qty));
+  const pv = (price === '' || price == null) ? '' : esc(String(price));
+  const base = getBasePrice();
   return `<div class="stock-row" data-size="${esc(size)}">
     <span class="stk-size-label">${esc(size)}</span>
     <div class="stk-qty-wrap"><input class="stk-qty" type="number" min="0" step="1" value="${qv}" placeholder="∞"></div>
+    <div class="stk-price-wrap"><input class="stk-price" type="number" min="0" step="1" value="${pv}" placeholder="${base !== '' ? esc(String(base)) : 'baza'}"></div>
     <button type="button" class="stk-rm" aria-label="Usuń rozmiar">×</button>
   </div>`;
 }
@@ -378,15 +382,17 @@ function ensureStockEmptyState() {
   const empty = box.querySelector('.stock-empty');
   if (hasRows && empty) empty.remove();
   if (!hasRows && !empty) box.innerHTML = stockEmptyHtml();
+  const head = $('f-stock-head');
+  if (head) head.hidden = !hasRows;
 }
-function addStockRow(size, qty) {
+function addStockRow(size, qty, price) {
   const s = String(size).trim();
   if (!s) return;
   const box = $('f-stock-rows');
   if ([...box.querySelectorAll('.stock-row')].some((r) => r.dataset.size === s)) return; // już jest
   const empty = box.querySelector('.stock-empty');
   if (empty) empty.remove();
-  box.insertAdjacentHTML('beforeend', stockRowHtml(s, qty == null ? 1 : qty));
+  box.insertAdjacentHTML('beforeend', stockRowHtml(s, qty == null ? 1 : qty, price == null ? '' : price));
 }
 function removeStockRow(size) {
   const row = [...$('f-stock-rows').querySelectorAll('.stock-row')].find((r) => r.dataset.size === size);
@@ -401,28 +407,33 @@ function renderSizePicker(cat) {
   syncPickerActive();
 }
 
-// Odtwarza wybrane rozmiary (z ilościami) przy otwieraniu produktu.
-function renderStockRows(sizes, stock) {
+// Odtwarza wybrane rozmiary (z ilościami i cenami) przy otwieraniu produktu.
+function renderStockRows(sizes, stock, prices) {
   const box = $('f-stock-rows');
   const rows = (sizes || []).map((s) => {
-    const has = stock && Object.prototype.hasOwnProperty.call(stock, s);
-    return stockRowHtml(s, has ? stock[s] : '');
+    const hasQ = stock && Object.prototype.hasOwnProperty.call(stock, s);
+    const hasP = prices && Object.prototype.hasOwnProperty.call(prices, s);
+    return stockRowHtml(s, hasQ ? stock[s] : '', hasP ? prices[s] : '');
   });
   box.innerHTML = rows.join('') || stockEmptyHtml();
+  const head = $('f-stock-head');
+  if (head) head.hidden = !(sizes && sizes.length);
 }
 
-// Zbiera listę rozmiarów (kolejność) + mapę stanów { rozmiar: sztuki }.
-// Puste pole ilości = rozmiar bez limitu (pomijany w mapie stock).
+// Zbiera rozmiary (kolejność) + mapę stanów { rozmiar: sztuki } + mapę cen.
+// Puste pole ilości = bez limitu; puste pole ceny = cena bazowa produktu.
 function readStockEditor() {
-  const sizes = []; const stock = {};
+  const sizes = []; const stock = {}; const prices = {};
   $('f-stock-rows').querySelectorAll('.stock-row').forEach((row) => {
     const size = row.dataset.size;
     if (!size || sizes.includes(size)) return;
     sizes.push(size);
     const qv = row.querySelector('.stk-qty').value.trim();
     if (qv !== '') stock[size] = Math.max(0, Math.round(Number(qv)) || 0);
+    const pv = row.querySelector('.stk-price').value.trim();
+    if (pv !== '') prices[size] = Math.max(0, Math.round(Number(pv)) || 0);
   });
-  return { sizes, stock };
+  return { sizes, stock, prices };
 }
 
 // Klik na chip = dodaj/usuń rozmiar z listy wybranych.
@@ -478,8 +489,9 @@ function openModal(product) {
   $('f-featured').checked = product?.featured === true;
   $('f-tag').value       = product?.tag || '';
   $('f-tagType').value   = product?.tagType || 'sale';
+  $('f-code').value      = product?.code || '';
   $('f-stock-bulk').value = '';
-  renderStockRows(product?.sizes || [], product?.stock || {});
+  renderStockRows(product?.sizes || [], product?.stock || {}, product?.prices || {});
   renderSizePicker(product?.cat || CATEGORIES[0]);
 
   mainImage = product?.image || '';
@@ -556,7 +568,7 @@ $('product-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   notice($('form-error'), '', 'err');
   const id = $('f-id').value.trim();
-  const { sizes, stock } = readStockEditor();
+  const { sizes, stock, prices } = readStockEditor();
   const payload = {
     name: $('f-name').value.trim(),
     brand: $('f-brand').value.trim(),
@@ -567,6 +579,7 @@ $('product-form').addEventListener('submit', async (e) => {
     surface: $('f-surface').value,
     price: $('f-price').value,
     old: $('f-old').value,
+    code: $('f-code').value.trim(),
     description: $('f-description').value.trim(),
     note: $('f-note').value.trim(),
     featured: $('f-featured').checked,
@@ -574,6 +587,7 @@ $('product-form').addEventListener('submit', async (e) => {
     tagType: $('f-tagType').value,
     sizes,
     stock,
+    prices,
     image: mainImage,
     images: galleryImages,
   };

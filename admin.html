@@ -204,15 +204,17 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
   background:var(--surface-2);color:var(--grey-1);font-family:var(--display);font-weight:700;font-size:13px;cursor:pointer;transition:.15s;user-select:none}
 .sp-chip:hover{border-color:var(--grey-2);color:#fff}
 .sp-chip.active{background:var(--red);border-color:var(--red);color:#fff}
+.stock-head{display:grid;grid-template-columns:1fr 92px 108px 40px;gap:8px;margin-bottom:6px;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--grey-3)}
 .stock-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
 .stock-rows:empty{margin-bottom:0}
-.stock-row{display:grid;grid-template-columns:1fr 118px 40px;gap:8px;align-items:center}
+.stock-row{display:grid;grid-template-columns:1fr 92px 108px 40px;gap:8px;align-items:center}
 .stk-size-label{font-family:var(--display);font-weight:700;font-size:15px;padding:10px 12px;background:var(--black-2);
   border:1px solid var(--line);border-radius:9px}
-.stock-row .stk-qty-wrap{position:relative}
-.stock-row .stk-qty-wrap::after{content:'szt.';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--grey-3);font-size:12px;pointer-events:none}
-.stock-row .stk-qty{width:100%;padding:10px 38px 10px 12px;background:var(--black-2);border:1px solid var(--line-bright);border-radius:9px;color:#fff;font-size:14px}
-.stock-row .stk-qty:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px var(--red-glow)}
+.stock-row .stk-qty-wrap,.stock-row .stk-price-wrap{position:relative}
+.stock-row .stk-qty-wrap::after{content:'szt.';position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--grey-3);font-size:11px;pointer-events:none}
+.stock-row .stk-price-wrap::after{content:'zł';position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--grey-3);font-size:11px;pointer-events:none}
+.stock-row .stk-qty,.stock-row .stk-price{width:100%;padding:10px 30px 10px 11px;background:var(--black-2);border:1px solid var(--line-bright);border-radius:9px;color:#fff;font-size:14px}
+.stock-row .stk-qty:focus,.stock-row .stk-price:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px var(--red-glow)}
 .stk-rm{width:40px;height:40px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line-bright);color:var(--grey-1);font-size:18px;line-height:1;display:grid;place-items:center}
 .stk-rm:hover{background:var(--red-deep);border-color:var(--red-deep);color:#fff}
 .size-custom{margin-bottom:10px}
@@ -505,6 +507,11 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
           <input type="number" id="f-old" min="0" step="1">
         </div>
       </div>
+      <div class="field">
+        <label for="f-code">Kod produktu (z metki / pudełka)</label>
+        <input type="text" id="f-code" placeholder="np. IE5088 lub EAN 4066123456789">
+        <div class="hint">Kod z metki lub pudełka — pojawi się na stronie produktu, aby klient mógł zweryfikować oryginalność. Zostaw puste, jeśli nie chcesz go pokazywać.</div>
+      </div>
       <div class="grid2">
         <div class="field">
           <label for="f-condition">Stan</label>
@@ -547,9 +554,10 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
         <div class="hint">Zaznacz, aby ten produkt pojawił się wśród wyróżnionych na stronie głównej.</div>
       </div>
       <div class="field">
-        <label>Rozmiary i stany magazynowe</label>
+        <label>Rozmiary, stany magazynowe i ceny</label>
         <div class="size-picker-label">Kliknij dostępne rozmiary:</div>
         <div id="f-size-picker" class="size-picker"></div>
+        <div class="stock-head" id="f-stock-head" hidden><span>Rozmiar</span><span>Ilość</span><span>Cena (opcj.)</span><span></span></div>
         <div id="f-stock-rows" class="stock-rows"></div>
         <details class="size-custom">
           <summary>Inny rozmiar (spoza listy)</summary>
