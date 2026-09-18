@@ -84,6 +84,21 @@ function toPriceMap(v, sizes) {
   return out;
 }
 
+// Specyfikacja produktu: lista par { k: cecha, v: wartość } — np.
+// { k: 'Podeszwa', v: 'Guma' }. Renderowana jako czytelna lista na stronie.
+function toSpecList(v) {
+  if (!Array.isArray(v)) return [];
+  const out = [];
+  for (const item of v) {
+    if (!item || typeof item !== 'object') continue;
+    const k = String(item.k ?? item.label ?? '').trim().slice(0, 60);
+    const val = String(item.v ?? item.value ?? '').trim().slice(0, 200);
+    if (k && val) out.push({ k, v: val });
+    if (out.length >= 30) break;
+  }
+  return out;
+}
+
 // Validates + coerces an incoming product payload into the canonical shape.
 // Returns { value } on success or { error } with a human-readable message.
 export function normalizeProduct(body) {
@@ -140,6 +155,7 @@ export function normalizeProduct(body) {
     sizes,
     stock:  toStockMap(body.stock, sizes),
     prices: toPriceMap(body.prices, sizes),
+    specs:  toSpecList(body.specs),
     colors: toStringArray(body.colors),
     image, images,
     gradient,

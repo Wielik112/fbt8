@@ -132,6 +132,16 @@
 
     $('#pd-desc').textContent = (p.description && p.description.trim()) ? p.description : defaultDesc(p);
 
+    // Specyfikacja (cechy) — czytelna tabelka.
+    const escS = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const specs = Array.isArray(p.specs) ? p.specs.filter((s) => s && (s.k || s.label) && (s.v || s.value)) : [];
+    if (specs.length) {
+      const box = $('#pd-specs');
+      box.innerHTML = specs.map((s) =>
+        `<div class="spec"><span class="sk">${escS(s.k ?? s.label)}</span><span class="sv">${escS(s.v ?? s.value)}</span></div>`).join('');
+      box.hidden = false;
+    }
+
     // Sizes + stan magazynowy (per rozmiar)
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const sizes = Array.isArray(p.sizes) ? p.sizes : [];

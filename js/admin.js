@@ -468,6 +468,44 @@ $('f-stock-bulk').addEventListener('keydown', (e) => {
 // Zmiana kategorii → inne rozmiary do wyboru (wybrane pozostają).
 $('f-cat').addEventListener('change', () => renderSizePicker($('f-cat').value));
 
+/* ---------- Specs editor (cechy produktu) ---------- */
+function specRowHtml(k, v) {
+  return `<div class="spec-row">
+    <input class="spec-k" type="text" value="${esc(k || '')}" placeholder="Cecha (np. Podeszwa)">
+    <input class="spec-v" type="text" value="${esc(v || '')}" placeholder="Wartość (np. guma)">
+    <button type="button" class="spec-rm" aria-label="Usuń cechę">×</button>
+  </div>`;
+}
+function renderSpecs(specs) {
+  const box = $('f-specs-rows');
+  const list = Array.isArray(specs) ? specs : [];
+  box.innerHTML = list.map((s) => specRowHtml(s.k ?? s.label, s.v ?? s.value)).join('');
+  const head = $('f-specs-head');
+  if (head) head.hidden = list.length === 0;
+}
+function addSpecRow(k, v) {
+  $('f-specs-rows').insertAdjacentHTML('beforeend', specRowHtml(k || '', v || ''));
+  const head = $('f-specs-head');
+  if (head) head.hidden = false;
+}
+function readSpecs() {
+  const out = [];
+  $('f-specs-rows').querySelectorAll('.spec-row').forEach((row) => {
+    const k = row.querySelector('.spec-k').value.trim();
+    const v = row.querySelector('.spec-v').value.trim();
+    if (k && v) out.push({ k, v });
+  });
+  return out;
+}
+$('f-spec-add').addEventListener('click', () => addSpecRow());
+$('f-specs-rows').addEventListener('click', (e) => {
+  const rm = e.target.closest('.spec-rm');
+  if (!rm) return;
+  rm.closest('.spec-row').remove();
+  const head = $('f-specs-head');
+  if (head && !$('f-specs-rows').querySelector('.spec-row')) head.hidden = true;
+});
+
 function openModal(product) {
   const editing = !!product;
   $('modal-title').textContent = editing ? 'Edytuj produkt' : 'Nowy produkt';
@@ -490,6 +528,7 @@ function openModal(product) {
   $('f-tag').value       = product?.tag || '';
   $('f-tagType').value   = product?.tagType || 'sale';
   $('f-code').value      = product?.code || '';
+  renderSpecs(product?.specs || []);
   $('f-stock-bulk').value = '';
   renderStockRows(product?.sizes || [], product?.stock || {}, product?.prices || {});
   renderSizePicker(product?.cat || CATEGORIES[0]);
@@ -588,6 +627,7 @@ $('product-form').addEventListener('submit', async (e) => {
     sizes,
     stock,
     prices,
+    specs: readSpecs(),
     image: mainImage,
     images: galleryImages,
   };
