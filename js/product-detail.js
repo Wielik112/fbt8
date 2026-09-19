@@ -43,6 +43,46 @@
       + `Idealne uzupełnienie Twojej garderoby treningowej.`;
   }
 
+  const escHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // Zamienia surowy opis (zwykły tekst z panelu) na czytelny HTML: akapity
+  // oddzielone pustą linią, listy punktowane (linie od -, •, *) oraz pogrubione
+  // etykiety typu „Podeszwa: guma" na początku linii. Dzięki temu opis wygląda
+  // schludnie, nawet gdy jest to jeden wklejony blok tekstu.
+  function formatDesc(text) {
+    const raw = String(text || '').replace(/\r\n?/g, '\n').trim();
+    if (!raw) return '';
+    const isBullet = (l) => /^\s*[-•*–]\s+/.test(l);
+    const boldLabel = (l) => {
+      const m = l.match(/^([^:\n]{2,40}):\s+(.*\S)\s*$/);
+      return m ? `<strong>${escHtml(m[1])}:</strong> ${escHtml(m[2])}` : escHtml(l);
+    };
+    const bulletItem = (l) => `<li>${boldLabel(l.replace(/^\s*[-•*–]\s+/, ''))}</li>`;
+    // Bloki oddzielone jedną lub wieloma pustymi liniami.
+    return raw.split(/\n{2,}/).map((block) => {
+      const lines = block.split('\n').map((l) => l.trim()).filter(Boolean);
+      if (!lines.length) return '';
+      // Pojedyncza krótka linia zakończona „:" → nagłówek sekcji.
+      if (lines.length === 1 && /:\s*$/.test(lines[0]) && lines[0].length <= 40) {
+        return `<h4 class="pd-desc-h">${escHtml(lines[0].replace(/:\s*$/, ''))}</h4>`;
+      }
+      // Grupuj ciągi punktów w listę, pozostałe linie w akapity — zachowując
+      // kolejność (np. „Cechy:" + lista punktów w jednym bloku).
+      const out = [];
+      let para = [];
+      let bullets = [];
+      const flushPara = () => { if (para.length) { out.push(`<p>${para.map(boldLabel).join('<br>')}</p>`); para = []; } };
+      const flushBullets = () => { if (bullets.length) { out.push(`<ul class="pd-desc-list">${bullets.map(bulletItem).join('')}</ul>`); bullets = []; } };
+      lines.forEach((l) => {
+        if (isBullet(l)) { flushPara(); bullets.push(l); }
+        else { flushBullets(); para.push(l); }
+      });
+      flushPara(); flushBullets();
+      return out.join('');
+    }).filter(Boolean).join('');
+  }
+
   function render(p, all) {
     document.title = `${p.name} | FBT Outlet`;
 
@@ -130,7 +170,8 @@
       mainEl.style.background = p.gradient || DEFAULT_GRADIENT;
     }
 
-    $('#pd-desc').textContent = (p.description && p.description.trim()) ? p.description : defaultDesc(p);
+    const descText = (p.description && p.description.trim()) ? p.description : defaultDesc(p);
+    $('#pd-desc').innerHTML = formatDesc(descText);
 
     // Specyfikacja (cechy) — czytelna tabelka.
     const escS = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -195,7 +236,21 @@
 
     // Meta
     $('#pd-code').textContent = 'FBT-' + String(p.id).toUpperCase();
-    if (p.code && p.code.trim()) { $('#pd-mcode').textContent = p.code.trim(); $('#pd-mcode-row').hidden = false; }
+    if (p.code && p.code.trim()) {
+      const code = p.code.trim();
+      $('#pd-mcode').textContent = code;
+      $('#pd-code-verify').hidden = false;
+      const copyBtn = $('#pd-code-copy');
+      if (copyBtn) copyBtn.addEventListener('click', () => {
+        const done = () => { copyBtn.textContent = 'Skopiowano'; setTimeout(() => { copyBtn.textContent = 'Kopiuj'; }, 1600); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(done).catch(done);
+        } else {
+          const t = document.createElement('textarea'); t.value = code; document.body.appendChild(t);
+          t.select(); try { document.execCommand('copy'); } catch { /* ignore */ } t.remove(); done();
+        }
+      });
+    }
     $('#pd-brand').textContent = p.brand;
     $('#pd-cat').textContent = p.cat;
     const genderEl = $('#pd-gender');

@@ -23,6 +23,14 @@
 .pd-catA-body{padding:0 16px 16px}
 .pd-catA-body p{margin:0 0 10px;color:var(--grey-1);font-size:13.5px;line-height:1.65}
 .pd-catA-tag{color:#fff!important;font-weight:600}
+.pd-code-verify{border:1px solid #2f6b3a;background:rgba(127,224,175,.07);border-radius:12px;padding:14px 16px;margin:0 0 28px}
+.pd-code-verify .pcv-head{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#7fe0af;font-weight:700;margin-bottom:10px}
+.pd-code-verify .pcv-head svg{width:18px;height:18px;flex:0 0 auto}
+.pd-code-verify .pcv-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pd-code-verify code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:18px;font-weight:700;letter-spacing:1.5px;color:#fff;background:var(--black-2,#0e0e12);border:1px solid var(--line-bright);border-radius:8px;padding:8px 14px;word-break:break-all}
+.pd-code-verify .pcv-copy{padding:9px 16px;border:1px solid var(--line-bright);border-radius:8px;background:var(--surface-2,#1a1a20);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:.2s}
+.pd-code-verify .pcv-copy:hover{border-color:#7fe0af;color:#7fe0af}
+.pd-code-verify .pcv-hint{margin:10px 0 0;color:var(--grey-2);font-size:13px;line-height:1.55}
 </style>
 </head>
 <body>
@@ -69,7 +77,7 @@
         <span class="was" id="pd-old" hidden></span>
         <span class="save" id="pd-save" hidden></span>
       </div>
-      <p class="pd-desc" id="pd-desc"></p>
+      <div class="pd-desc" id="pd-desc"></div>
 
       <div id="pd-size-wrap">
         <div class="pd-opt-label">Rozmiar</div>
@@ -109,12 +117,24 @@
         <p id="pd-note-text"></p>
       </div>
 
+      <!-- Kod produktu do samodzielnej weryfikacji oryginalności -->
+      <div class="pd-code-verify" id="pd-code-verify" hidden>
+        <div class="pcv-head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          <span>Kod produktu — sprawdź oryginalność</span>
+        </div>
+        <div class="pcv-row">
+          <code id="pd-mcode"></code>
+          <button type="button" id="pd-code-copy" class="pcv-copy">Kopiuj</button>
+        </div>
+        <p class="pcv-hint">Ten sam kod znajdziesz na metce i pudełku. Możesz go wpisać na stronie producenta i potwierdzić, że to oryginał.</p>
+      </div>
+
       <!-- Specyfikacja (cechy produktu) -->
       <div class="pd-specs" id="pd-specs" hidden></div>
 
       <div class="pd-meta">
         <div><strong>Nr ref.</strong> <span id="pd-code"></span></div>
-        <div id="pd-mcode-row" hidden><strong>Kod produktu</strong> <span id="pd-mcode"></span></div>
         <div><strong>Marka</strong> <span id="pd-brand"></span></div>
         <div><strong>Kategoria</strong> <span id="pd-cat"></span></div>
         <div><strong>Płeć</strong> <span id="pd-gender"></span></div>
