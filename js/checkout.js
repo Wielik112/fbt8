@@ -8,12 +8,30 @@
   const $ = (id) => document.getElementById(id);
 
   // Display-only mirror of api/_lib/commerce.js (server is authoritative).
+  // Ceny w groszach; progi: 1-2 pary (maxQty 2) oraz 3+ par (Infinity).
   const SHIPPING = {
-    inpost_locker:  { label: 'InPost Paczkomat 24/7', sub: 'Odbiór 24/7 w paczkomacie', requiresPoint: true,
-                      tiers: [{ maxQty: 1, price: 1849 }, { maxQty: Infinity, price: 2049 }] },
-    inpost_courier: { label: 'Kurier InPost',         sub: 'Dostawa pod wskazany adres', requiresPoint: false,
-                      tiers: [{ maxQty: 1, price: 2049 }, { maxQty: Infinity, price: 2549 }] },
+    // Odbiór w punkcie / paczkomacie
+    dpd_point:      { label: 'DPD Pickup (punkt)',      sub: 'Odbiór w punkcie DPD Pickup',       requiresPoint: true,  carrier: 'dpd',
+                      tiers: [{ maxQty: 2, price: 1300 }, { maxQty: Infinity, price: 1500 }] },
+    pocztex_point:  { label: 'Pocztex (punkt/automat)', sub: 'Odbiór w punkcie lub automacie Pocztex', requiresPoint: true, carrier: 'pocztex',
+                      tiers: [{ maxQty: 2, price: 1400 }, { maxQty: Infinity, price: 1400 }] },
+    inpost_locker:  { label: 'InPost Paczkomat 24/7',   sub: 'Odbiór 24/7 w paczkomacie',         requiresPoint: true,  carrier: 'inpost',
+                      tiers: [{ maxQty: 2, price: 1700 }, { maxQty: Infinity, price: 2000 }] },
+    orlen_point:    { label: 'Orlen Paczka (punkt)',    sub: 'Odbiór w punkcie Orlen Paczka',     requiresPoint: true,  carrier: 'orlen',
+                      tiers: [{ maxQty: 2, price: 1500 }, { maxQty: Infinity, price: 1600 }] },
+    // Kurier na adres
+    dpd_courier:    { label: 'Kurier DPD',              sub: 'Dostawa kurierem pod adres',        requiresPoint: false, carrier: 'dpd',
+                      tiers: [{ maxQty: 2, price: 2400 }, { maxQty: Infinity, price: 2800 }] },
+    pocztex_courier:{ label: 'Kurier Pocztex',          sub: 'Dostawa kurierem pod adres',        requiresPoint: false, carrier: 'pocztex',
+                      tiers: [{ maxQty: 2, price: 1500 }, { maxQty: Infinity, price: 1500 }] },
+    inpost_courier: { label: 'Kurier InPost',           sub: 'Dostawa kurierem pod adres',        requiresPoint: false, carrier: 'inpost',
+                      tiers: [{ maxQty: 2, price: 1900 }, { maxQty: Infinity, price: 2300 }] },
   };
+  // Kolejność i nagłówki grup w wyborze dostawy.
+  const SHIP_GROUPS = [
+    { title: 'Odbiór w punkcie / paczkomacie', keys: ['dpd_point', 'pocztex_point', 'inpost_locker', 'orlen_point'] },
+    { title: 'Kurier na adres',                keys: ['dpd_courier', 'pocztex_courier', 'inpost_courier'] },
+  ];
   // Liczba sztuk w koszyku decyduje o progu ceny dostawy.
   function cartQty() { return cart().reduce((s, i) => s + i.qty, 0) || 1; }
   function shipPrice(key) {
@@ -66,9 +84,11 @@
   }
 
   function renderShipping() {
-    $('ship-options').innerHTML = Object.entries(SHIPPING).map(([key, m]) => {
-      const cost = shipPrice(key);
-      return `
+    $('ship-options').innerHTML = SHIP_GROUPS.map((g) => {
+      const opts = g.keys.map((key) => {
+        const m = SHIPPING[key];
+        const cost = shipPrice(key);
+        return `
         <label class="ship-opt${key === method ? ' active' : ''}" data-method="${key}">
           <input type="radio" name="ship" value="${key}" ${key === method ? 'checked' : ''}>
           <div class="so-main">
@@ -77,6 +97,8 @@
           </div>
           <div class="so-price">${cost === 0 ? 'Gratis' : fmt(cost)}</div>
         </label>`;
+      }).join('');
+      return `<div class="ship-group"><div class="ship-group-title">${g.title}</div>${opts}</div>`;
     }).join('');
 
     $('ship-options').querySelectorAll('.ship-opt').forEach((el) => {
@@ -92,15 +114,23 @@
   }
 
   function toggleDeliveryFields() {
-    const needsPoint = SHIPPING[method].requiresPoint;
+    const m = SHIPPING[method];
+    const needsPoint = m.requiresPoint;
     $('inpost-box').hidden = !needsPoint;
     $('address-box').hidden = needsPoint;
     if (needsPoint) {
+      const isInpost = m.carrier === 'inpost';
       const lbl = $('point-label');
-      if (lbl) lbl.textContent = 'Kod paczkomatu (np. KRA010)';
-      $('c-point').placeholder = 'Wpisz kod lub wybierz na mapie';
       const pickBtn = $('pick-point-btn');
-      if (pickBtn) pickBtn.textContent = 'Wybierz na mapie';
+      if (isInpost) {
+        if (lbl) lbl.textContent = 'Kod paczkomatu (np. KRA010)';
+        $('c-point').placeholder = 'Wpisz kod lub wybierz na mapie';
+        if (pickBtn) { pickBtn.hidden = false; pickBtn.textContent = 'Wybierz na mapie'; }
+      } else {
+        if (lbl) lbl.textContent = `Kod / adres punktu (${m.label})`;
+        $('c-point').placeholder = 'Wpisz kod lub adres wybranego punktu';
+        if (pickBtn) pickBtn.hidden = true;
+      }
     }
   }
 
@@ -134,12 +164,16 @@
     renderTotals();
   });
 
-  // ---- InPost point selection ----
+  // ---- Point selection (wpisanie ręczne) ----
   $('c-point').addEventListener('input', () => {
-    const v = $('c-point').value.trim().toUpperCase();
-    $('c-point').value = v;
+    // Kody paczkomatów InPost są wielkimi literami; adresy innych punktów nie.
+    if (SHIPPING[method] && SHIPPING[method].carrier === 'inpost') {
+      $('c-point').value = $('c-point').value.toUpperCase();
+    }
+    const v = $('c-point').value.trim();
     $('point-picked').style.display = v ? 'block' : 'none';
     $('point-code').textContent = v;
+    $('point-name').textContent = '';
   });
 
   $('pick-point-btn').addEventListener('click', openGeowidget);
@@ -176,6 +210,8 @@
   }
 
   function openGeowidget() {
+    // Mapa dotyczy wyłącznie paczkomatów InPost.
+    if (!SHIPPING[method] || SHIPPING[method].carrier !== 'inpost') { $('c-point').focus(); return; }
     const token = window.FBT_CONFIG && window.FBT_CONFIG.inpostGeowidgetToken;
     if (!token) { showToast('Wpisz kod paczkomatu ręcznie'); $('c-point').focus(); return; }
     loadGeowidgetAssets().then(() => {
@@ -210,7 +246,11 @@
     const shipping = { method };
     if (SHIPPING[method].requiresPoint) {
       const point = $('c-point').value.trim();
-      if (!point) { showError('Wybierz lub wpisz kod paczkomatu InPost.'); return; }
+      if (!point) {
+        const isInpost = SHIPPING[method].carrier === 'inpost';
+        showError(isInpost ? 'Wybierz lub wpisz kod paczkomatu InPost.' : 'Wpisz kod lub adres wybranego punktu odbioru.');
+        return;
+      }
       shipping.point = point;
     } else {
       const street = $('c-street').value.trim();

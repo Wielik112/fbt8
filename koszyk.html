@@ -160,7 +160,7 @@ function renderCart() {
   const total = sub - discAmt; // shipping is chosen and added at checkout
 
   document.getElementById('sum-sub').textContent = sub + ' zł';
-  document.getElementById('sum-ship').textContent = 'od 18,49 zł';
+  document.getElementById('sum-ship').textContent = 'od 13 zł';
   document.getElementById('sum-total').textContent = total + ' zł';
   const dRow = document.getElementById('sum-disc-row');
   if (discAmt > 0) { dRow.style.display = 'flex'; document.getElementById('sum-disc').textContent = '−' + discAmt + ' zł'; }
