@@ -15,14 +15,27 @@ export function paymentMethodTypes() {
   return raw.length ? raw : ['card'];
 }
 
-// Shipping methods. `price` is the base cost in grosze; `requiresPoint`
-// marks methods that need a parcel-locker point (InPost Paczkomat).
-// Ceny w groszach. `tiers` = progi wg liczby sztuk (qty <= maxQty -> price).
+// Shipping methods. `requiresPoint` marks methods delivered to a pickup
+// point / parcel locker (need a point code); the rest go to an address.
+// Ceny w groszach. `tiers` = progi wg liczby par: 1-2 pary (maxQty 2)
+// oraz 3+ par (Infinity). `carrier` steruje m.in. mapą InPost w checkoucie.
 export const SHIPPING_METHODS = {
-  inpost_locker:  { label: 'InPost Paczkomat 24/7', requiresPoint: true,  carrier: 'inpost',
-                    tiers: [{ maxQty: 1, price: 1849 }, { maxQty: Infinity, price: 2049 }] },
-  inpost_courier: { label: 'Kurier InPost',         requiresPoint: false, carrier: 'inpost',
-                    tiers: [{ maxQty: 1, price: 2049 }, { maxQty: Infinity, price: 2549 }] },
+  // --- Odbiór w punkcie / paczkomacie ---
+  dpd_point:      { label: 'DPD Pickup (punkt)',      requiresPoint: true,  carrier: 'dpd',
+                    tiers: [{ maxQty: 2, price: 1300 }, { maxQty: Infinity, price: 1500 }] },
+  pocztex_point:  { label: 'Pocztex (punkt/automat)', requiresPoint: true,  carrier: 'pocztex',
+                    tiers: [{ maxQty: 2, price: 1400 }, { maxQty: Infinity, price: 1400 }] },
+  inpost_locker:  { label: 'InPost Paczkomat 24/7',   requiresPoint: true,  carrier: 'inpost',
+                    tiers: [{ maxQty: 2, price: 1700 }, { maxQty: Infinity, price: 2000 }] },
+  orlen_point:    { label: 'Orlen Paczka (punkt)',    requiresPoint: true,  carrier: 'orlen',
+                    tiers: [{ maxQty: 2, price: 1500 }, { maxQty: Infinity, price: 1600 }] },
+  // --- Kurier na adres ---
+  dpd_courier:    { label: 'Kurier DPD',              requiresPoint: false, carrier: 'dpd',
+                    tiers: [{ maxQty: 2, price: 2400 }, { maxQty: Infinity, price: 2800 }] },
+  pocztex_courier:{ label: 'Kurier Pocztex',          requiresPoint: false, carrier: 'pocztex',
+                    tiers: [{ maxQty: 2, price: 1500 }, { maxQty: Infinity, price: 1500 }] },
+  inpost_courier: { label: 'Kurier InPost',           requiresPoint: false, carrier: 'inpost',
+                    tiers: [{ maxQty: 2, price: 1900 }, { maxQty: Infinity, price: 2300 }] },
 };
 
 // Free shipping is disabled — shipping is always charged per method.

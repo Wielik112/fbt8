@@ -79,7 +79,10 @@ export default async function handler(req, res) {
     let shippingAddress = null;
     if (method.requiresPoint) {
       inpostPoint = String(body?.shipping?.point ?? '').trim();
-      if (!inpostPoint) return res.status(400).json({ error: 'Wybierz paczkomat InPost.' });
+      if (!inpostPoint) {
+        const what = method.carrier === 'inpost' ? 'paczkomat InPost' : 'punkt odbioru';
+        return res.status(400).json({ error: `Wybierz ${what}.` });
+      }
     } else {
       const a = body?.shipping?.address || {};
       shippingAddress = {
