@@ -157,6 +157,9 @@
     const gallery = [p.image, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean);
     const mainEl = $('#pd-main');
     const mainLogo = $('#pd-main-logo');
+    const prevBtn = $('#pd-prev');
+    const nextBtn = $('#pd-next');
+    let curIdx = 0;
     mainLogo.alt = p.name;
     if (gallery.length) {
       mainEl.classList.add('has-photo');
@@ -269,19 +272,38 @@
     addBtn.dataset.price = p.price;
     addBtn.dataset.image = gallery.length ? gallery[0] : '';
 
-    // Gallery thumbnails
+    // Galeria: miniatury w jednym rzędzie + strzałki na głównym zdjęciu.
     const thumbs = $('#pd-thumbs');
     if (gallery.length) {
-      // Real product photos — click a thumb to swap the main image.
       thumbs.innerHTML = gallery.map((src, i) =>
-        `<div class="pd-thumb has-photo${i === 0 ? ' active' : ''}" data-img="${src}"><img src="${src}" alt=""></div>`).join('');
-      thumbs.querySelectorAll('.pd-thumb').forEach((t) => t.addEventListener('click', () => {
-        thumbs.querySelectorAll('.pd-thumb').forEach((x) => x.classList.remove('active'));
-        t.classList.add('active');
-        mainLogo.src = t.dataset.img;
-      }));
+        `<div class="pd-thumb has-photo${i === 0 ? ' active' : ''}" data-idx="${i}"><img src="${src}" alt=""></div>`).join('');
+      const thumbEls = Array.from(thumbs.querySelectorAll('.pd-thumb'));
+
+      // Pokazuje zdjęcie o indeksie i (zapętla), podświetla i przewija miniaturę.
+      const showPhoto = (i) => {
+        curIdx = (i + gallery.length) % gallery.length;
+        mainLogo.src = gallery[curIdx];
+        thumbEls.forEach((x, k) => x.classList.toggle('active', k === curIdx));
+        const act = thumbEls[curIdx];
+        if (act && act.scrollIntoView) act.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      };
+
+      thumbEls.forEach((t) => t.addEventListener('click', () => showPhoto(Number(t.dataset.idx))));
+
+      const multi = gallery.length > 1;
+      if (prevBtn) { prevBtn.hidden = !multi; prevBtn.addEventListener('click', () => showPhoto(curIdx - 1)); }
+      if (nextBtn) { nextBtn.hidden = !multi; nextBtn.addEventListener('click', () => showPhoto(curIdx + 1)); }
+      if (multi) {
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowLeft') showPhoto(curIdx - 1);
+          else if (e.key === 'ArrowRight') showPhoto(curIdx + 1);
+        });
+      }
+      showPhoto(0);
     } else {
-      // No photos uploaded — fall back to decorative gradient tiles.
+      // Brak zdjęć — dekoracyjne kafelki gradientowe, bez strzałek.
+      if (prevBtn) prevBtn.hidden = true;
+      if (nextBtn) nextBtn.hidden = true;
       const grads = [p.gradient || DEFAULT_GRADIENT,
         'linear-gradient(135deg,#2a0409,#0f0f12)',
         'linear-gradient(135deg,#151519,#2a0409)',
