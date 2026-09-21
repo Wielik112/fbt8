@@ -122,15 +122,11 @@
       const isInpost = m.carrier === 'inpost';
       const lbl = $('point-label');
       const pickBtn = $('pick-point-btn');
-      if (isInpost) {
-        if (lbl) lbl.textContent = 'Kod paczkomatu (np. KRA010)';
-        $('c-point').placeholder = 'Wpisz kod lub wybierz na mapie';
-        if (pickBtn) { pickBtn.hidden = false; pickBtn.textContent = 'Wybierz na mapie'; }
-      } else {
-        if (lbl) lbl.textContent = `Kod / adres punktu (${m.label})`;
-        $('c-point').placeholder = 'Wpisz kod lub adres wybranego punktu';
-        if (pickBtn) pickBtn.hidden = true;
-      }
+      // Mapa Furgonetki obsługuje wszystkie sieci punktów (InPost, Poczta,
+      // DPD, Orlen), więc przycisk wyboru na mapie pokazujemy zawsze.
+      if (lbl) lbl.textContent = isInpost ? 'Kod paczkomatu (np. KRA010)' : 'Kod punktu odbioru';
+      $('c-point').placeholder = 'Wybierz na mapie lub wpisz kod ręcznie';
+      if (pickBtn) { pickBtn.hidden = false; pickBtn.textContent = 'Wybierz punkt na mapie'; }
     }
   }
 
@@ -176,58 +172,60 @@
     $('point-name').textContent = '';
   });
 
-  $('pick-point-btn').addEventListener('click', openGeowidget);
-  $('gw-close').addEventListener('click', closeGeowidget);
+  $('pick-point-btn').addEventListener('click', openPointMap);
 
   // ---- Invoice (optional) ----
   $('c-invoice').addEventListener('change', () => {
     $('invoice-box').hidden = !$('c-invoice').checked;
   });
 
-  let gwAssetsLoaded = false;
-  function loadGeowidgetAssets() {
-    if (gwAssetsLoaded) return Promise.resolve();
-    return new Promise((resolve, reject) => {
-      const css = document.createElement('link');
-      css.rel = 'stylesheet';
-      css.href = 'https://geowidget.inpost.pl/inpost-geowidget.css';
-      document.head.appendChild(css);
-      const js = document.createElement('script');
-      js.src = 'https://geowidget.inpost.pl/inpost-geowidget.js';
-      js.defer = true;
-      js.onload = () => { gwAssetsLoaded = true; resolve(); };
-      js.onerror = () => reject(new Error('geowidget load failed'));
-      document.head.appendChild(js);
-    });
-  }
-
+  // Zapisuje wybrany punkt: kod trafia do #c-point (a stąd do zamówienia jako
+  // shipping.point), nazwa jest pokazywana użytkownikowi.
   function setPoint(code, name) {
     const v = String(code || '').trim().toUpperCase();
     $('c-point').value = v;
     $('point-picked').style.display = v ? 'block' : 'none';
     $('point-code').textContent = v;
-    $('point-name').textContent = name ? `, ${name}` : '';
+    $('point-name').textContent = name ? ` — ${name}` : '';
   }
 
-  function openGeowidget() {
-    // Mapa dotyczy wyłącznie paczkomatów InPost.
-    if (!SHIPPING[method] || SHIPPING[method].carrier !== 'inpost') { $('c-point').focus(); return; }
-    const token = window.FBT_CONFIG && window.FBT_CONFIG.inpostGeowidgetToken;
-    if (!token) { showToast('Wpisz kod paczkomatu ręcznie'); $('c-point').focus(); return; }
-    loadGeowidgetAssets().then(() => {
-      const mount = $('geowidget-mount');
-      mount.innerHTML = `<inpost-geowidget token="${token}" language="pl" config="parcelCollect247" style="width:100%;height:100%"></inpost-geowidget>`;
-      const el = mount.querySelector('inpost-geowidget');
-      el.addEventListener('onpoint', (e) => {
-        const p = e.detail || {};
-        const addr = (p.address && (p.address.line1 || p.address.line2)) || (p.location_description || '');
-        setPoint(p.name, addr);
-        closeGeowidget();
-      }, { once: true });
-      $('geowidget-modal').style.display = 'grid';
-    }).catch(() => { showToast('Nie udało się załadować mapy. Wpisz kod ręcznie.'); $('c-point').focus(); });
+  // Nasz przewoźnik -> sieć(-i) punktów w mapie Furgonetki.
+  function fgServicesFor(carrier) {
+    switch (carrier) {
+      case 'inpost':  return ['inpost'];
+      case 'dpd':     return ['dpd'];
+      case 'orlen':   return ['orlen'];
+      case 'pocztex': return ['poczta'];
+      default:        return [];
+    }
   }
-  function closeGeowidget() { $('geowidget-modal').style.display = 'none'; $('geowidget-mount').innerHTML = ''; }
+
+  // Otwiera mapę punktów odbioru Furgonetki dla aktualnie wybranej metody.
+  function openPointMap() {
+    const m = SHIPPING[method];
+    if (!m || !m.requiresPoint) return;
+    if (!window.Furgonetka || !window.Furgonetka.Map) {
+      showToast('Mapa jeszcze się ładuje — spróbuj za chwilę lub wpisz kod ręcznie.');
+      $('c-point').focus();
+      return;
+    }
+    const apiKey = window.FBT_CONFIG && window.FBT_CONFIG.furgonetkaApiKey;
+    if (!apiKey) { showToast('Wpisz kod punktu ręcznie'); $('c-point').focus(); return; }
+    try {
+      new window.Furgonetka.Map({
+        apiKey,
+        courierServices: fgServicesFor(m.carrier),
+        callback: (params) => {
+          const point = (params && params.point) || {};
+          if (point.code) setPoint(point.code, point.name);
+        },
+      }).show();
+    } catch (err) {
+      console.error('[furgonetka map]', err);
+      showToast('Nie udało się otworzyć mapy. Wpisz kod ręcznie.');
+      $('c-point').focus();
+    }
+  }
 
   // ---- Submit ----
   $('co-form').addEventListener('submit', async (e) => {

@@ -7,4 +7,9 @@ window.FBT_CONFIG = {
   // it falls back to manual Paczkomat code entry. The token is public
   // (client-side) by design and scoped to the geowidget only.
   inpostGeowidgetToken: '',
+
+  // Klucz mapy punktów odbioru Furgonetki. Przypisany do domeny sklepu,
+  // działa po stronie przeglądarki (publiczny z założenia). Obsługuje wybór
+  // punktu dla InPost, Poczty/Pocztexu, DPD i Orlen Paczki.
+  furgonetkaApiKey: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJGdXJnb25ldGthLnBsIiwiaWF0IjoxNzg5OTkwMzY5Ljc2MTkxOCwic3ViIjoiMmIwNzhhMDItYTU5OC00MjFlLWFjZDUtMjhiOTcyMGUwMWViIn0.pqozltNRex1nNVG6u5_aV2qulhVt7-jGbes5GsjqvtU',
 };
