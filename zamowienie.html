@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/pages.css">
+<!-- Mapa punktów odbioru Furgonetki — ładowana asynchronicznie, nie blokuje strony -->
+<script src="https://furgonetka.pl/js/dist/map/map.js" async></script>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <style>
@@ -44,9 +46,6 @@
 .inpost-box{border:1px dashed var(--line-bright);border-radius:12px;padding:16px;margin-top:4px}
 .point-picked{display:none;background:var(--black-2);border:1px solid var(--line-bright);border-radius:10px;padding:12px 14px;margin-bottom:12px}
 .point-picked strong{color:#fff}
-#geowidget-modal{position:fixed;inset:0;z-index:60;background:rgba(4,4,6,.75);display:none;place-items:center;padding:24px}
-#geowidget-modal .gw-inner{width:100%;max-width:900px;height:80vh;background:var(--surface);border-radius:16px;overflow:hidden;position:relative}
-#geowidget-modal .gw-close{position:absolute;top:10px;right:12px;z-index:2;width:36px;height:36px;border-radius:9px;background:var(--surface-2);color:#fff;font-size:22px}
 .co-summary{position:sticky;top:96px}
 .co-line{display:flex;justify-content:space-between;gap:12px;padding:9px 0;font-size:14px;border-bottom:1px solid var(--line)}
 .co-line.tot{border-bottom:none;font-family:var(--display);font-size:22px;text-transform:uppercase;padding-top:14px}
@@ -125,7 +124,7 @@
         <h2><span class="co-step">2</span>Dostawa</h2>
         <div id="ship-options"></div>
 
-        <!-- Point picker (InPost Paczkomat) -->
+        <!-- Wybór punktu odbioru (mapa Furgonetki: InPost / Poczta / DPD / Orlen) -->
         <div class="inpost-box" id="inpost-box" hidden>
           <div class="point-picked" id="point-picked">
             Wybrany punkt: <strong id="point-code"></strong> <span id="point-name" style="color:var(--grey-2)"></span>
@@ -215,8 +214,6 @@
     </aside>
   </form>
 </div>
-
-<div id="geowidget-modal"><div class="gw-inner"><button type="button" class="gw-close" id="gw-close" aria-label="Zamknij">×</button><div id="geowidget-mount" style="width:100%;height:100%"></div></div></div>
 
 <script src="js/config.js"></script>
 <script src="js/categories.js"></script>
