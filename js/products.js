@@ -218,8 +218,8 @@ function initShop() {
   function draw() {
     const list = currentList();
     renderProducts(shopGrid, list);
-    const ct = document.querySelector('.count-txt strong');
-    if (ct) ct.textContent = list.length;
+    const bar = document.querySelector('.count-txt');
+    if (bar) bar.innerHTML = `<strong>${list.length}</strong> ${plProdukty(list.length)}`;
   }
 
   // ---- Category accordion (built from the tree) ----
