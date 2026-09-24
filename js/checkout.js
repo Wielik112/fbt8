@@ -48,6 +48,7 @@
   let method = 'inpost_locker';
   let discountPercent = 0;
   let discountCode = '';
+  let pointName = ''; // nazwa/adres punktu wybranego na mapie
 
   // Live product data (by id) so the summary shows the real, current product photo.
   let productMap = {};
@@ -170,6 +171,7 @@
     $('point-picked').style.display = v ? 'block' : 'none';
     $('point-code').textContent = v;
     $('point-name').textContent = '';
+    pointName = '';
   });
 
   $('pick-point-btn').addEventListener('click', openPointMap);
@@ -183,6 +185,7 @@
   // shipping.point), nazwa jest pokazywana użytkownikowi.
   function setPoint(code, name) {
     const v = String(code || '').trim().toUpperCase();
+    pointName = String(name || '').trim();
     $('c-point').value = v;
     $('point-picked').style.display = v ? 'block' : 'none';
     $('point-code').textContent = v;
@@ -250,6 +253,7 @@
         return;
       }
       shipping.point = point;
+      if (pointName) shipping.pointName = pointName;
     } else {
       const street = $('c-street').value.trim();
       const postcode = $('c-postcode').value.trim();

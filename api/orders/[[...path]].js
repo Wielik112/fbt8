@@ -1,20 +1,30 @@
 import {
-  ensureOrdersSchema, listOrders, orderStats, getOrder, updateOrderAdmin,
-  setInpostShipment, updateInpostStatus,
+  ensureOrdersSchema, listOrders, orderStats, getOrder, getOrdersByIds, updateOrderAdmin,
 } from '../_lib/orders.js';
 import { isAdmin, readJsonBody } from '../_lib/auth.js';
 import { dbErrorMessage } from '../_lib/db.js';
-import { ORDER_STATUSES, ADMIN_SETTABLE_STATUSES, inpostServiceFor } from '../_lib/commerce.js';
-import { createShipment, getShipment, getLabel, inpostConfigured, inpostErrorMessage } from '../_lib/inpost.js';
+import { ORDER_STATUSES, ADMIN_SETTABLE_STATUSES, SHIPPING_METHODS } from '../_lib/commerce.js';
+import {
+  canShip, createShipmentForOrder, refreshShipmentForOrder, labelForOrder, bulkLabels,
+  cancelShipmentForOrder, shippingErrorResponse,
+} from '../_lib/shipping.js';
+import {
+  furgonetkaConfigured, furgonetkaAutoOrder, listAccountServices, serviceMapping,
+  senderAddress, senderMissingFields, accountBalance, furgonetkaErrorMessage,
+} from '../_lib/furgonetka.js';
+import { inpostConfigured } from '../_lib/inpost.js';
 
 // Consolidated, admin-only orders API. All order routes live in this single
 // function to stay within the serverless-function limit. Routes:
-//   GET   /api/orders                -> list (?status=&limit=&offset=&stats=1)
-//   GET   /api/orders/:id            -> detail
-//   PATCH /api/orders/:id            -> update status / tracking / notes
-//   POST  /api/orders/:id/shipment   -> create InPost shipment
-//   GET   /api/orders/:id/shipment   -> refresh InPost shipment status
-//   GET   /api/orders/:id/label      -> InPost label PDF (?type=A6|normal)
+//   GET    /api/orders                  -> list (?status=&limit=&offset=&stats=1)
+//   GET    /api/orders/shipping-config  -> Furgonetka / InPost setup check
+//   POST   /api/orders/labels           -> one PDF with many labels {ids, format}
+//   GET    /api/orders/:id              -> detail
+//   PATCH  /api/orders/:id              -> update status / tracking / notes
+//   POST   /api/orders/:id/shipment     -> create (+ order) shipment {template, weightKg, order}
+//   GET    /api/orders/:id/shipment     -> refresh shipment status / tracking
+//   DELETE /api/orders/:id/shipment     -> cancel / delete shipment
+//   GET    /api/orders/:id/label        -> label PDF (?format=a6|a4)
 export default async function handler(req, res) {
   if (!isAdmin(req)) return res.status(401).json({ error: 'Brak autoryzacji.' });
 
@@ -25,6 +35,8 @@ export default async function handler(req, res) {
     await ensureOrdersSchema();
 
     if (seg.length === 0) return await listHandler(req, res);
+    if (seg.length === 1 && seg[0] === 'shipping-config') return await configHandler(req, res);
+    if (seg.length === 1 && seg[0] === 'labels') return await bulkLabelHandler(req, res);
 
     const id = String(seg[0] ?? '').trim();
     if (!id) return res.status(400).json({ error: 'Brak ID zamówienia.' });
@@ -36,8 +48,8 @@ export default async function handler(req, res) {
     return res.status(404).json({ error: 'Nie znaleziono zasobu.' });
   } catch (err) {
     console.error('[api/orders]', err);
-    if (err.code === 'SHIPX_ERROR') return res.status(err.status === 404 ? 409 : 502).json({ error: inpostErrorMessage(err) });
-    if (err.code === 'NO_INPOST_CONFIG') return res.status(503).json({ error: inpostErrorMessage(err) });
+    const mapped = shippingErrorResponse(err);
+    if (mapped) return res.status(mapped.status).json({ error: mapped.error });
     return res.status(500).json({ error: dbErrorMessage(err) });
   }
 }
@@ -81,55 +93,82 @@ async function itemHandler(req, res, id) {
 }
 
 async function shipmentHandler(req, res, id) {
-  if (!inpostConfigured()) {
-    return res.status(503).json({ error: 'Integracja InPost nie jest skonfigurowana (INPOST_SHIPX_TOKEN, INPOST_ORG_ID).' });
-  }
   const order = await getOrder(id);
   if (!order) return res.status(404).json({ error: 'Nie znaleziono zamówienia.' });
 
-  if (req.method === 'GET') {
-    if (!order.inpostShipmentId) return res.status(404).json({ error: 'To zamówienie nie ma przesyłki InPost.' });
-    const s = await getShipment(order.inpostShipmentId);
-    const updated = await updateInpostStatus(id, { status: s.status, trackingNumber: s.tracking_number });
-    return res.status(200).json(updated);
-  }
+  if (req.method === 'GET') return res.status(200).json(await refreshShipmentForOrder(order));
+  if (req.method === 'DELETE') return res.status(200).json(await cancelShipmentForOrder(order));
   if (req.method === 'POST') {
-    if (!inpostServiceFor(order.shippingMethod)) {
-      return res.status(400).json({ error: 'Ta metoda dostawy nie jest obsługiwana przez InPost (tylko Paczkomat i Kurier InPost).' });
-    }
-    if (order.paymentStatus !== 'paid') return res.status(400).json({ error: 'Zamówienie nie jest opłacone.' });
-    if (order.inpostShipmentId) return res.status(409).json({ error: 'Przesyłka dla tego zamówienia już istnieje.', order });
-
     const body = await readJsonBody(req);
     const template = ['small', 'medium', 'large'].includes(body?.template) ? body.template : 'small';
-    const weightKg = Number(body?.weightKg) > 0 ? Number(body.weightKg) : 1;
-
-    const shipment = await createShipment(order, { template, weightKg });
-    const updated = await setInpostShipment(id, {
-      shipmentId: String(shipment.id),
-      trackingNumber: shipment.tracking_number || null,
-      status: shipment.status || 'created',
-    });
+    const weightKg = Number(body?.weightKg) > 0 ? Math.min(Number(body.weightKg), 50) : 1;
+    const updated = await createShipmentForOrder(order, { template, weightKg, order: body?.order !== false });
     return res.status(201).json(updated);
   }
-  res.setHeader('Allow', 'GET, POST');
+  res.setHeader('Allow', 'GET, POST, DELETE');
   return res.status(405).json({ error: 'Metoda niedozwolona.' });
+}
+
+function sendPdf(res, { buffer, contentType }, filename) {
+  res.setHeader('Content-Type', contentType || 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+  res.setHeader('Cache-Control', 'no-store');
+  res.statusCode = 200;
+  return res.end(buffer);
+}
+
+// Accepts ?format=a6|a4 (and the legacy ?type=A6|normal).
+function labelFormat(q) {
+  const f = String(q?.format || q?.type || '').toLowerCase();
+  return f === 'a4' || f === 'normal' ? 'a4' : 'a6';
 }
 
 async function labelHandler(req, res, id) {
   if (req.method !== 'GET') { res.setHeader('Allow', 'GET'); return res.status(405).json({ error: 'Metoda niedozwolona.' }); }
-  if (!inpostConfigured()) return res.status(503).json({ error: 'Integracja InPost nie jest skonfigurowana.' });
-
   const order = await getOrder(id);
   if (!order) return res.status(404).json({ error: 'Nie znaleziono zamówienia.' });
-  if (!order.inpostShipmentId) return res.status(404).json({ error: 'To zamówienie nie ma przesyłki InPost.' });
+  const pdf = await labelForOrder(order, { format: labelFormat(req.query) });
+  return sendPdf(res, pdf, `etykieta-${id}.pdf`);
+}
 
-  const type = req.query?.type === 'normal' ? 'normal' : 'A6';
-  const { buffer, contentType } = await getLabel(order.inpostShipmentId, { format: 'Pdf', type });
+async function bulkLabelHandler(req, res) {
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).json({ error: 'Metoda niedozwolona.' }); }
+  const body = await readJsonBody(req);
+  const ids = (Array.isArray(body?.ids) ? body.ids : []).map((x) => String(x).trim()).filter(Boolean).slice(0, 100);
+  if (!ids.length) return res.status(400).json({ error: 'Zaznacz zamówienia do wydruku.' });
+  const orders = await getOrdersByIds(ids);
+  const pdf = await bulkLabels(orders, { format: labelFormat(body) });
+  return sendPdf(res, pdf, `etykiety-${new Date().toISOString().slice(0, 10)}.pdf`);
+}
 
-  res.setHeader('Content-Type', contentType || 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="etykieta-${id}.pdf"`);
-  res.setHeader('Cache-Control', 'no-store');
-  res.statusCode = 200;
-  return res.end(buffer);
+// Setup check for the panel: which integration is active, what's missing,
+// and which Furgonetka service each shipping method resolves to. Never
+// returns secrets — only names and booleans.
+async function configHandler(req, res) {
+  if (req.method !== 'GET') { res.setHeader('Allow', 'GET'); return res.status(405).json({ error: 'Metoda niedozwolona.' }); }
+  const out = {
+    furgonetka: {
+      configured: furgonetkaConfigured(),
+      env: (process.env.FURGONETKA_ENV || 'production').toLowerCase() === 'sandbox' ? 'sandbox' : 'production',
+      autoOrder: furgonetkaAutoOrder(),
+      missing: ['FURGONETKA_CLIENT_ID', 'FURGONETKA_CLIENT_SECRET', 'FURGONETKA_USERNAME', 'FURGONETKA_PASSWORD']
+        .filter((k) => !process.env[k])
+        .concat(senderMissingFields().map((k) => 'FURGONETKA_SENDER_' + k.toUpperCase())),
+      sender: senderAddress(),
+    },
+    inpostShipx: { configured: inpostConfigured() },
+    methods: Object.fromEntries(Object.entries(SHIPPING_METHODS).map(([k, m]) => [k, { label: m.label, provider: canShip({ shippingMethod: k }) }])),
+  };
+  if (out.furgonetka.configured) {
+    try {
+      out.furgonetka.services = await listAccountServices();
+      out.furgonetka.mapping = await serviceMapping();
+      out.furgonetka.balance = await accountBalance();
+      out.furgonetka.ok = true;
+    } catch (err) {
+      out.furgonetka.ok = false;
+      out.furgonetka.error = furgonetkaErrorMessage(err);
+    }
+  }
+  return res.status(200).json(out);
 }

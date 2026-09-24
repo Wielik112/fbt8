@@ -1,4 +1,5 @@
 import { connectionString, detectedDbVars, ping } from './_lib/db.js';
+import { furgonetkaConfigured } from './_lib/furgonetka.js';
 
 // GET /api/health -> quick diagnostics. Exposes env var NAMES only (never
 // values/secrets) plus the result of a real `SELECT 1` against the database.
@@ -13,6 +14,7 @@ export default async function handler(req, res) {
     hasConnectionString: !!cs,
     detectedDbEnvVars: detected,
     adminPasswordSet: !!process.env.ADMIN_PASSWORD,
+    furgonetkaConfigured: furgonetkaConfigured(),
   };
 
   if (!cs) {

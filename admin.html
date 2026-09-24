@@ -138,6 +138,18 @@ h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:.5px;text-transform:
 .orders-toolbar{display:flex;gap:12px;align-items:center;margin-bottom:16px}
 .orders-toolbar select{padding:10px 14px;background:var(--black-2);border:1px solid var(--line-bright);
   border-radius:10px;color:#fff;font-size:14px;font-family:inherit}
+.btn[hidden]{display:none}
+.col-check{width:36px}
+.col-check input,.row-check{width:16px;height:16px;accent-color:var(--red);cursor:pointer}
+.ship-cell{font-size:12px;color:var(--grey-2);white-space:nowrap}
+.ship-cell b{color:#fff;font-weight:600}
+.ship-config{background:var(--black-2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px;font-size:13px;line-height:1.7}
+.ship-config h4{margin:0 0 8px;font-size:14px}
+.ship-config .ok{color:#4ade80}.ship-config .bad{color:#ff6b6b}
+.ship-config table{border-collapse:collapse;margin-top:8px}
+.ship-config td{padding:2px 14px 2px 0;vertical-align:top}
+.ship-events{list-style:none;margin:14px 0 0;padding:0 0 0 14px;border-left:2px solid var(--line-bright);display:grid;gap:8px;font-size:13px}
+.ship-events time{display:block;color:var(--grey-2);font-size:11px}
 .orders-pager{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:18px;color:var(--grey-2);font-size:13px}
 .order-id{font-weight:600;font-family:var(--display);letter-spacing:.5px}
 .ostatus{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.4px;
@@ -416,7 +428,10 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
         <option value="cancelled">Anulowane</option>
       </select>
       <button id="orders-refresh" class="btn btn-ghost btn-sm">Odśwież</button>
+      <button id="orders-labels" class="btn btn-primary btn-sm" disabled>Drukuj etykiety (0)</button>
+      <button id="orders-ship-config" class="btn btn-ghost btn-sm">Konfiguracja wysyłek</button>
     </div>
+    <div id="ship-config" class="ship-config" hidden></div>
 
     <div id="orders-notice"></div>
 
@@ -424,16 +439,18 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
       <table class="tbl">
         <thead>
           <tr>
+            <th class="col-check"><input type="checkbox" id="orders-check-all" aria-label="Zaznacz wszystkie"></th>
             <th>Nr zamówienia</th>
             <th class="hide-sm">Data</th>
             <th class="hide-sm">Klient</th>
             <th>Kwota</th>
             <th>Płatność</th>
             <th>Status</th>
+            <th class="hide-sm">Przesyłka</th>
           </tr>
         </thead>
         <tbody id="order-rows">
-          <tr><td colspan="6" class="loading">Ładowanie…</td></tr>
+          <tr><td colspan="8" class="loading">Ładowanie…</td></tr>
         </tbody>
       </table>
     </div>
@@ -658,7 +675,7 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
           </select>
         </div>
         <div class="field">
-          <label for="om-tracking">Numer przesyłki (InPost / kurier)</label>
+          <label for="om-tracking">Numer przesyłki (uzupełnia się sam po zamówieniu)</label>
           <input type="text" id="om-tracking" placeholder="np. 6200000000000000">
         </div>
       </div>
@@ -667,38 +684,46 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
         <textarea id="om-notes" rows="2" placeholder="Widoczna tylko w panelu."></textarea>
       </div>
 
-      <!-- InPost shipment -->
-      <div class="od-block" id="om-inpost" style="margin:6px 0 16px" hidden>
-        <h3>Przesyłka InPost</h3>
-        <div id="om-inpost-create">
+      <!-- Shipment (Furgonetka: InPost / DPD / Pocztex / Orlen; fallback InPost ShipX) -->
+      <div class="od-block" id="om-ship" style="margin:6px 0 16px" hidden>
+        <h3 id="om-ship-title">Przesyłka</h3>
+        <div id="om-ship-create">
           <div class="od-grid">
             <div class="field">
               <label for="om-parcel">Gabaryt paczki</label>
               <select id="om-parcel">
-                <option value="small">Gabaryt A: do 8×38×64 cm</option>
-                <option value="medium">Gabaryt B: do 19×38×64 cm</option>
-                <option value="large">Gabaryt C: do 41×38×64 cm</option>
+                <option value="small">Gabaryt A: do 8×38×64 cm (1 para)</option>
+                <option value="medium">Gabaryt B: do 19×38×64 cm (2–3 pary)</option>
+                <option value="large">Gabaryt C: do 41×38×64 cm (więcej)</option>
               </select>
             </div>
-            <div class="field" id="om-weight-field">
+            <div class="field">
               <label for="om-weight">Waga (kg)</label>
-              <input type="number" id="om-weight" min="0.1" step="0.1" value="1">
+              <input type="number" id="om-weight" min="0.1" max="50" step="0.1" value="1">
             </div>
           </div>
-          <button type="button" class="btn btn-primary" id="om-create-ship">Utwórz przesyłkę InPost</button>
-          <div class="hint" id="om-inpost-hint" style="margin-top:8px"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button type="button" class="btn btn-primary" id="om-create-ship">Zamów przesyłkę + etykieta</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="om-draft-ship">Tylko szkic (bez zamawiania)</button>
+          </div>
+          <div class="hint" id="om-ship-hint" style="margin-top:8px"></div>
         </div>
-        <div id="om-inpost-have" hidden>
+        <div id="om-ship-have" hidden>
           <div class="kv">
-            <div><b>Nr nadania:</b> <span id="om-ship-tracking">—</span></div>
+            <div><b>Przewoźnik:</b> <span id="om-ship-carrier">—</span></div>
+            <div><b>Nr przesyłki:</b> <span id="om-ship-tracking">—</span></div>
             <div><b>Status:</b> <span class="ostatus" id="om-ship-status">—</span></div>
-            <div><b>ID ShipX:</b> <span id="om-ship-id" style="color:var(--grey-2)">—</span></div>
+            <div id="om-ship-price-row"><b>Koszt:</b> <span id="om-ship-price">—</span></div>
+            <div><b>ID paczki:</b> <span id="om-ship-id" style="color:var(--grey-2)">—</span> <a id="om-ship-edit" href="#" target="_blank" rel="noopener" hidden>otwórz w Furgonetce ↗</a></div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+            <button type="button" class="btn btn-primary btn-sm" id="om-order-ship" hidden>Zamów przesyłkę</button>
             <button type="button" class="btn btn-primary btn-sm" id="om-label-a6">Etykieta A6 (drukarka etykiet)</button>
             <button type="button" class="btn btn-ghost btn-sm" id="om-label-a4">Etykieta A4</button>
             <button type="button" class="btn btn-ghost btn-sm" id="om-refresh-ship">Odśwież status</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="om-cancel-ship">Anuluj przesyłkę</button>
           </div>
+          <ol class="ship-events" id="om-ship-events" hidden></ol>
         </div>
       </div>
 

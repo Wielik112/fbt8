@@ -42,6 +42,14 @@ export async function ensureOrdersSchema() {
   await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice JSONB`;
   // Regulamin (terms) acceptance recorded at checkout.
   await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ`;
+  // Carrier-agnostic shipment (Furgonetka): provider, package id, state and a
+  // small JSON bag (pending order-command uuid, carrier, price, e-mail flags).
+  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_provider TEXT`;
+  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_id TEXT`;
+  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_status TEXT`;
+  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_meta JSONB`;
+  // Human-readable name/address of the pickup point chosen on the map.
+  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS point_name TEXT`;
   ordersSchemaReady = true;
 }
 
@@ -72,6 +80,10 @@ export function mapOrder(r) {
     invoice: r.invoice || null,
     termsAcceptedAt: r.terms_accepted_at || null,
     inpostPoint: r.inpost_point,
+    pointName: r.point_name || null,
+    shipment: r.shipment_id
+      ? { ...(r.shipment_meta || {}), provider: r.shipment_provider, id: r.shipment_id, status: r.shipment_status }
+      : (r.inpost_shipment_id ? { ...(r.shipment_meta || {}), provider: 'inpost', id: r.inpost_shipment_id, status: r.inpost_status } : null),
     inpostShipmentId: r.inpost_shipment_id,
     inpostStatus: r.inpost_status,
     trackingNumber: r.tracking_number,
@@ -89,13 +101,13 @@ export async function createOrder(o) {
     INSERT INTO orders (
       id, status, payment_status, currency, items, subtotal, discount, discount_code,
       shipping_method, shipping_label, shipping_cost, total,
-      customer_email, customer_name, customer_phone, shipping_address, inpost_point, invoice, terms_accepted_at
+      customer_email, customer_name, customer_phone, shipping_address, inpost_point, point_name, invoice, terms_accepted_at
     ) VALUES (
       ${o.id}, ${o.status || 'pending'}, ${o.paymentStatus || 'unpaid'}, ${o.currency || 'pln'},
       ${JSON.stringify(o.items || [])}::jsonb, ${o.subtotal || 0}, ${o.discount || 0}, ${o.discountCode || null},
       ${o.shippingMethod || null}, ${o.shippingLabel || null}, ${o.shippingCost || 0}, ${o.total || 0},
       ${o.customer?.email || null}, ${o.customer?.name || null}, ${o.customer?.phone || null},
-      ${o.shippingAddress ? JSON.stringify(o.shippingAddress) : null}::jsonb, ${o.inpostPoint || null},
+      ${o.shippingAddress ? JSON.stringify(o.shippingAddress) : null}::jsonb, ${o.inpostPoint || null}, ${o.pointName || null},
       ${o.invoice ? JSON.stringify(o.invoice) : null}::jsonb, ${o.termsAccepted ? new Date().toISOString() : null}
     ) RETURNING *`;
   return mapOrder(rows[0]);
@@ -175,6 +187,48 @@ export async function updateInpostStatus(id, { status, trackingNumber }) {
       updated_at = now()
     WHERE id = ${id}
     RETURNING *`;
+  return rows[0] ? mapOrder(rows[0]) : null;
+}
+
+// Records / updates the Furgonetka shipment. `meta` is merged into the JSON
+// bag; tracking only overwrites when a new number is known. Moving an order
+// that is still "paid" to "fulfilled" once a label exists keeps the list tidy.
+export async function setShipment(id, { provider = 'furgonetka', shipmentId, status, trackingNumber, meta = {}, markFulfilled = false }) {
+  const { rows } = await sql`
+    UPDATE orders SET
+      shipment_provider = ${provider},
+      shipment_id = COALESCE(${shipmentId || null}, shipment_id),
+      shipment_status = COALESCE(${status || null}, shipment_status),
+      shipment_meta = COALESCE(shipment_meta, '{}'::jsonb) || ${JSON.stringify(meta)}::jsonb,
+      tracking_number = COALESCE(${trackingNumber || null}, tracking_number),
+      status = CASE WHEN ${markFulfilled} AND status = 'paid' THEN 'fulfilled' ELSE status END,
+      updated_at = now()
+    WHERE id = ${id}
+    RETURNING *`;
+  return rows[0] ? mapOrder(rows[0]) : null;
+}
+
+// Forgets the shipment (after cancelling / deleting it at the carrier).
+export async function clearShipment(id) {
+  const { rows } = await sql`
+    UPDATE orders SET
+      shipment_provider = NULL, shipment_id = NULL, shipment_status = NULL, shipment_meta = NULL,
+      inpost_shipment_id = NULL, inpost_status = NULL, tracking_number = NULL,
+      updated_at = now()
+    WHERE id = ${id}
+    RETURNING *`;
+  return rows[0] ? mapOrder(rows[0]) : null;
+}
+
+export async function getOrdersByIds(ids) {
+  if (!ids.length) return [];
+  const { rows } = await sql`SELECT * FROM orders WHERE id = ANY(${ids})`;
+  return rows.map(mapOrder);
+}
+
+// Public lookup for the tracking page: order id + matching e-mail.
+export async function getOrderForCustomer(id, email) {
+  const { rows } = await sql`SELECT * FROM orders WHERE id = ${id} AND lower(customer_email) = lower(${email}) LIMIT 1`;
   return rows[0] ? mapOrder(rows[0]) : null;
 }
 

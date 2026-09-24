@@ -8,12 +8,12 @@ managed from `/admin`.
 
 | Part | Files |
 |------|-------|
-| Storefront pages | `index.html`, `sklep.html`, `produkt-*.html`, `koszyk.html`, … |
+| Storefront pages | `index.html`, `sklep.html`, `produkt-*.html`, `koszyk.html`, `sledzenie.html`, … |
 | Storefront logic | `js/main.js`, `js/products.js` |
 | Admin panel UI | `admin.html`, `js/admin.js` (Products + Orders tabs) |
 | Checkout | `koszyk.html` → `zamowienie.html` (`js/checkout.js`) → Stripe → `dziekujemy.html` |
 | API (serverless) | `api/login.js`, `api/products/*`, `api/checkout.js`, `api/stripe-webhook.js`, `api/orders/*`, `api/order-status.js`, `api/health.js` |
-| Shared server code | `api/_lib/*` (db, auth, validation, seed, `commerce`, `stripe`, `orders`) |
+| Shared server code | `api/_lib/*` (db, auth, validation, seed, `commerce`, `stripe`, `orders`, `shipping`, `furgonetka`, `inpost`, `mailer`) |
 
 - `js/products.js` fetches the catalog from `GET /api/products`. If the API is
   unreachable (e.g. the page is opened directly as a file, or the DB isn't
@@ -66,9 +66,13 @@ uses its fallback catalog.
 | `GET` | `/api/orders` | admin | List orders (`?status=&limit=&offset=&stats=1`) |
 | `GET` | `/api/orders/:id` | admin | Full order detail |
 | `PATCH` | `/api/orders/:id` | admin | Update status / tracking / notes |
-| `POST` | `/api/orders/:id/shipment` | admin | Create an InPost shipment |
-| `GET` | `/api/orders/:id/shipment` | admin | Refresh InPost shipment status |
-| `GET` | `/api/orders/:id/label` | admin | InPost label PDF (`?type=A6\|normal`) |
+| `POST` | `/api/orders/:id/shipment` | admin | Create (+ order) shipment `{template, weightKg, order}` |
+| `GET` | `/api/orders/:id/shipment` | admin | Refresh shipment status / tracking |
+| `DELETE` | `/api/orders/:id/shipment` | admin | Cancel / delete shipment |
+| `GET` | `/api/orders/:id/label` | admin | Label PDF (`?format=a6\|a4`) |
+| `POST` | `/api/orders/labels` | admin | One PDF with labels for many orders `{ids, format}` |
+| `GET` | `/api/orders/shipping-config` | admin | Furgonetka setup check (services, missing vars) |
+| `GET` | `/api/order-status?order=&email=` | public | Customer tracking lookup (`/sledzenie`) |
 | `GET` | `/api/health` | public | DB + config diagnostics (names only) |
 
 Admin requests are authorized by an HttpOnly, `Secure`, `SameSite=Strict`
@@ -117,40 +121,53 @@ verification) via `export const config = { api: { bodyParser: false } }`.
 
 ## Shipping & InPost
 
-Shipping methods and prices live in `api/_lib/commerce.js` (`SHIPPING_METHODS`,
-`FREE_SHIPPING_THRESHOLD`) — the server-authoritative config:
+Shipping methods and prices live in `api/_lib/commerce.js` (`SHIPPING_METHODS`)
+— the server-authoritative config: DPD (punkt / kurier), Pocztex (punkt /
+kurier), InPost (Paczkomat / kurier) and Orlen Paczka. Prices are tiered by the
+number of pairs (1–2 / 3+).
 
-- **InPost Paczkomat 24/7** (parcel locker, requires a point) — 12,99 zł
-- **Kurier InPost** — 15,99 zł
-- **Kurier standardowy** — 19,99 zł
-- Free shipping from **300 zł**.
+### Checkout map
 
-### InPost shipping labels (ShipX)
+Pickup points for every network (InPost, DPD, Poczta/Pocztex, Orlen) are chosen
+on the **Furgonetka map** (`furgonetkaApiKey` in `js/config.js`, a public,
+domain-bound key). The point code and its name/address are stored on the order.
 
-The full fulfilment loop is wired via **InPost ShipX** (`api/_lib/inpost.js`):
+### Labels & tracking — Furgonetka (`api/_lib/furgonetka.js`)
 
-1. Order is paid → shows in **/admin → Zamówienia** as *Opłacone*.
-2. Open the order → **Przesyłka InPost**: pick the parcel size (Gabaryt A/B/C,
-   plus weight for courier) → **Utwórz przesyłkę InPost**. The server calls
-   ShipX, creates the shipment, and stores its id + **tracking number** on the
-   order.
-3. **Etykieta A6 / A4** downloads the label **PDF** to print.
-4. Stick the label on the parcel and drop it in any Paczkomat (locker) or hand
-   it to the InPost courier. **Odśwież status** re-polls ShipX.
+All carriers go through **one Furgonetka account** (REST API, OAuth2):
 
-The customer gets InPost tracking + notifications automatically — nothing is
-sent by hand. Only **InPost Paczkomat** and **Kurier InPost** orders get a label
-(the generic *Kurier* method is a non-InPost carrier you handle yourself).
+1. Order is paid → the Stripe webhook creates the parcel in Furgonetka with the
+   carrier matching the customer's method, the point / address, and the sender
+   address from `FURGONETKA_SENDER_*`. By default it is **ordered right away**
+   (`FURGONETKA_AUTO_ORDER=1`), so the label and tracking number exist within
+   seconds; with `0` only a draft is created.
+2. **/admin → Zamówienia**: the *Przesyłka* column shows carrier, state and
+   tracking number. In the order: **Zamów przesyłkę + etykieta** (pick parcel
+   size/weight first if the default 1 pair / 1 kg doesn't fit), **Etykieta A6**
+   (label printer) / **A4**, **Odśwież status**, **Anuluj przesyłkę**, and a
+   link to edit the parcel in the Furgonetka panel.
+3. **Bulk printing**: tick orders in the list → **Drukuj etykiety** — one PDF.
+4. The customer gets an e-mail with the tracking number (Resend) once the label
+   exists, and can check status + carrier events at **/sledzenie** (order
+   number + e-mail).
+5. **Konfiguracja wysyłek** in the orders tab tests the connection and shows
+   which Furgonetka service each shipping method uses, missing env vars and
+   account balance.
 
-**Setup:** set `INPOST_SHIPX_TOKEN`, `INPOST_ORG_ID` and `INPOST_ENV`
-(`sandbox` → `production`) in the Vercel env. Get the API token + organization
-id from the InPost manager (API / ShipX section). For the checkout **map**
-picker, also set the public `inpostGeowidgetToken` in `js/config.js`; with no
-token, checkout falls back to manual Paczkomat code entry.
+The OAuth token is cached in Postgres (`furgonetka_auth` table) and refreshed
+automatically. Carrier ↔ service matching is automatic (by the carriers active
+on the Furgonetka account); pin ids with `FURGONETKA_SERVICE_IDS` if needed.
 
-Endpoints: `POST /api/orders/:id/shipment` (create), `GET
-/api/orders/:id/shipment` (refresh status), `GET /api/orders/:id/label?type=A6|normal`
-(label PDF) — all admin-only.
+**Setup (Vercel env):** `FURGONETKA_CLIENT_ID`, `FURGONETKA_CLIENT_SECRET`,
+`FURGONETKA_USERNAME`, `FURGONETKA_PASSWORD`, `FURGONETKA_ENV`
+(`sandbox` → `production`), `FURGONETKA_SENDER_STREET`, `_POSTCODE`, `_CITY`,
+`_PHONE` (+ optional `_NAME`, `_COMPANY`, `_EMAIL`). See `.env.example`.
+
+### InPost ShipX (fallback)
+
+`api/_lib/inpost.js` talks to InPost directly. It is used only for InPost
+methods when Furgonetka is **not** configured (and for orders already shipped
+through it). Env: `INPOST_SHIPX_TOKEN`, `INPOST_ORG_ID`, `INPOST_ENV`.
 
 ## Product detail pages
 
