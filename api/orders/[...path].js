@@ -16,7 +16,7 @@ import { inpostConfigured } from '../_lib/inpost.js';
 
 // Consolidated, admin-only orders API. All order routes live in this single
 // function to stay within the serverless-function limit. Routes:
-//   GET    /api/orders                  -> list (?status=&limit=&offset=&stats=1)
+//   GET    /api/orders(/list)           -> list (?status=&limit=&offset=&stats=1)
 //   GET    /api/orders/shipping-config  -> Furgonetka / InPost setup check
 //   POST   /api/orders/labels           -> one PDF with many labels {ids, format}
 //   GET    /api/orders/:id              -> detail
@@ -28,8 +28,12 @@ import { inpostConfigured } from '../_lib/inpost.js';
 export default async function handler(req, res) {
   if (!isAdmin(req)) return res.status(401).json({ error: 'Brak autoryzacji.' });
 
+  // Catch-all segments; Vercel may pass them as an array or as "a/b".
+  // "/api/orders" itself is rewritten to "/api/orders/list" (vercel.json),
+  // because plain Vercel functions don't support optional catch-alls.
   const raw = req.query?.path;
-  const seg = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+  let seg = (Array.isArray(raw) ? raw : String(raw ?? '').split('/')).filter(Boolean);
+  if (seg.length === 1 && seg[0] === 'list') seg = [];
 
   try {
     await ensureOrdersSchema();

@@ -733,7 +733,7 @@ async function loadOrders() {
     q.set('limit', ordersState.limit);
     q.set('offset', ordersState.offset);
     q.set('stats', '1');
-    const data = await api('/api/orders?' + q.toString());
+    const data = await api('/api/orders/list?' + q.toString());
     ordersState.loaded = true;
     ordersState.total = data.total;
     ordersCache = data.orders;
