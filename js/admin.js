@@ -809,6 +809,7 @@ async function openOrder(id) {
   let o;
   try { o = await api('/api/orders/' + encodeURIComponent(id)); }
   catch (err) { ordersNotice(err.message, 'err'); return; }
+  if (!o || !o.id) { ordersNotice('Nie udało się wczytać zamówienia (nieoczekiwana odpowiedź serwera).', 'err'); return; }
   currentOrder = o;
 
   $('om-title').textContent = 'Zamówienie ' + o.id;

@@ -28,11 +28,10 @@ import { inpostConfigured } from '../_lib/inpost.js';
 export default async function handler(req, res) {
   if (!isAdmin(req)) return res.status(401).json({ error: 'Brak autoryzacji.' });
 
-  // Catch-all segments; Vercel may pass them as an array or as "a/b".
-  // "/api/orders" itself is rewritten to "/api/orders/list" (vercel.json),
-  // because plain Vercel functions don't support optional catch-alls.
-  const raw = req.query?.path;
-  let seg = (Array.isArray(raw) ? raw : String(raw ?? '').split('/')).filter(Boolean);
+  // Route segments after /api/orders. Read from the URL itself: on plain
+  // Vercel functions the catch-all param doesn't always reach req.query.
+  // "/api/orders" is rewritten to "/api/orders/list" (vercel.json).
+  let seg = routeSegments(req);
   if (seg.length === 1 && seg[0] === 'list') seg = [];
 
   try {
@@ -56,6 +55,16 @@ export default async function handler(req, res) {
     if (mapped) return res.status(mapped.status).json({ error: mapped.error });
     return res.status(500).json({ error: dbErrorMessage(err) });
   }
+}
+
+function routeSegments(req) {
+  let pathname = '';
+  try { pathname = new URL(req.url || '', 'http://x').pathname; } catch { /* ignore */ }
+  const m = pathname.match(/\/api\/orders(?:\/(.*))?$/);
+  if (m) return (m[1] || '').split('/').filter(Boolean).map((p) => decodeURIComponent(p));
+  const raw = req.query?.path;
+  if (Array.isArray(raw)) return raw.map(String).filter(Boolean);
+  return String(raw ?? '').split('/').filter(Boolean);
 }
 
 async function listHandler(req, res) {
