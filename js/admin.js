@@ -900,29 +900,42 @@ function shipCell(o) {
 
 // Opens a PDF response in a new tab (labels need the admin auth header).
 async function openPdf(url, opts = {}) {
-  const res = await fetch(url, { credentials: 'same-origin', ...opts, headers: { ...authHeaders(), ...(opts.headers || {}) } });
+  // Open the tab synchronously (inside the click) so popup blockers allow it,
+  // then point it at the PDF once it's ready.
+  const win = window.open('', '_blank');
+  if (win) win.document.write('<p style="font-family:sans-serif;padding:20px">Generuję etykietę…</p>');
+  let res;
+  try {
+    res = await fetch(url, { credentials: 'same-origin', ...opts, headers: { ...authHeaders(), ...(opts.headers || {}) } });
+  } catch (err) { if (win) win.close(); throw err; }
   if (!res.ok) {
+    if (win) win.close();
     let m = 'Nie udało się pobrać etykiety.';
     try { m = (await res.json()).error || m; } catch { /* not json */ }
     throw new Error(m);
   }
+  const skipped = res.headers.get('X-Skipped');
   const blob = await res.blob();
   const href = URL.createObjectURL(blob);
-  window.open(href, '_blank');
+  if (win) win.location.href = href; else window.open(href, '_blank');
   setTimeout(() => URL.revokeObjectURL(href), 60000);
+  return skipped ? decodeURIComponent(skipped) : '';
 }
 
 $('orders-labels').addEventListener('click', async () => {
   const btn = $('orders-labels');
   btn.disabled = true;
-  ordersNotice('Generuję etykiety…', 'ok');
+  if (!confirm('Zamówienia bez przesyłki zostaną teraz zamówione w Furgonetce (płatne), a potem wydrukowane. Kontynuować?')) { syncSelection(); return; }
+  ordersNotice('Przygotowuję przesyłki i etykiety…', 'ok');
   try {
-    await openPdf('/api/orders/labels', {
+    const skipped = await openPdf('/api/orders/labels', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: [...selectedOrders], format: 'a6' }),
     });
-    ordersNotice('Etykiety gotowe do druku.', 'ok');
+    if (skipped) ordersNotice('Etykiety gotowe, ale pominięto: ' + skipped, 'err');
+    else ordersNotice('Etykiety gotowe do druku.', 'ok');
+    loadOrders();
   } catch (err) {
     ordersNotice(err.message, 'err');
   } finally {
@@ -953,6 +966,7 @@ $('orders-ship-config').addEventListener('click', async () => {
         : '<span class="bad">nieskonfigurowana</span>'}</h4>
       ${f.missing.length ? `<div>Brakujące zmienne w Vercel: <b>${f.missing.map(esc).join(', ')}</b></div>` : ''}
       <div>Nadawca: ${esc([f.sender.name, f.sender.street, `${f.sender.postcode} ${f.sender.city}`, f.sender.phone].filter((x) => x && x.trim()).join(', ') || '—')}</div>
+      <div>Stripe: klucz ${c.stripe.secretKey ? '<span class="ok">ustawiony</span>' : '<span class="bad">brak STRIPE_SECRET_KEY</span>'} · webhook ${c.stripe.webhookSecret ? '<span class="ok">ustawiony</span>' : '<span class="bad">brak STRIPE_WEBHOOK_SECRET</span>'} (płatności i tak są dociągane ze Stripe przy otwarciu panelu)</div>
       <div>Automatyczne zamawianie etykiety po opłaceniu: <b>${f.autoOrder ? 'tak' : 'nie (tylko szkic)'}</b>${f.balance != null ? ` · Saldo: <b>${esc(f.balance)} zł</b>` : ''}</div>
       <table>${methodRows}</table>`;
   } catch (err) {

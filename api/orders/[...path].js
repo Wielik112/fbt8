@@ -13,6 +13,7 @@ import {
   senderAddress, senderMissingFields, accountBalance, furgonetkaErrorMessage,
 } from '../_lib/furgonetka.js';
 import { inpostConfigured } from '../_lib/inpost.js';
+import { syncPaymentFromStripe, syncRecentUnpaid } from '../_lib/payments.js';
 
 // Consolidated, admin-only orders API. All order routes live in this single
 // function to stay within the serverless-function limit. Routes:
@@ -72,6 +73,8 @@ async function listHandler(req, res) {
   const status = req.query?.status && ORDER_STATUSES.includes(req.query.status) ? req.query.status : null;
   const limit = req.query?.limit ? Number(req.query.limit) : 25;
   const offset = req.query?.offset ? Number(req.query.offset) : 0;
+  // Pick up payments whose Stripe webhook never arrived.
+  if (offset === 0) await syncRecentUnpaid();
   const result = await listOrders({ status, limit, offset });
   if (req.query?.stats) result.stats = await orderStats();
   res.setHeader('Cache-Control', 'no-store');
@@ -80,7 +83,7 @@ async function listHandler(req, res) {
 
 async function itemHandler(req, res, id) {
   if (req.method === 'GET') {
-    const order = await getOrder(id);
+    const order = await syncPaymentFromStripe(await getOrder(id));
     if (!order) return res.status(404).json({ error: 'Nie znaleziono zamówienia.' });
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json(order);
@@ -106,7 +109,7 @@ async function itemHandler(req, res, id) {
 }
 
 async function shipmentHandler(req, res, id) {
-  const order = await getOrder(id);
+  const order = await syncPaymentFromStripe(await getOrder(id));
   if (!order) return res.status(404).json({ error: 'Nie znaleziono zamówienia.' });
 
   if (req.method === 'GET') return res.status(200).json(await refreshShipmentForOrder(order));
@@ -149,7 +152,36 @@ async function bulkLabelHandler(req, res) {
   const body = await readJsonBody(req);
   const ids = (Array.isArray(body?.ids) ? body.ids : []).map((x) => String(x).trim()).filter(Boolean).slice(0, 100);
   if (!ids.length) return res.status(400).json({ error: 'Zaznacz zamówienia do wydruku.' });
-  const orders = await getOrdersByIds(ids);
+  let orders = await getOrdersByIds(ids);
+  if (!orders.length) return res.status(404).json({ error: 'Nie znaleziono zaznaczonych zamówień.' });
+
+  // Orders without a label yet: confirm payment with Stripe, then create +
+  // order the shipment so one click prints everything that is ready.
+  const skipped = [];
+  const ready = [];
+  for (let o of orders) {
+    const sh = o.shipment;
+    const hasLabel = sh && (sh.provider === 'inpost' || sh.ordered);
+    if (!hasLabel && body?.createMissing !== false) {
+      o = await syncPaymentFromStripe(o);
+      if (o.paymentStatus !== 'paid') { skipped.push(`${o.id}: nieopłacone`); continue; }
+      if (!canShip(o) && !o.shipment) { skipped.push(`${o.id}: brak integracji dla „${o.shippingLabel || o.shippingMethod}”`); continue; }
+      try {
+        o = await createShipmentForOrder(o, { order: true });
+      } catch (err) {
+        const mapped = shippingErrorResponse(err);
+        skipped.push(`${o.id}: ${mapped ? mapped.error : err.message}`);
+        continue;
+      }
+      if (!o.shipment?.ordered) { skipped.push(`${o.id}: przesyłka w trakcie zamawiania, spróbuj za chwilę`); continue; }
+    }
+    ready.push(o);
+  }
+  if (!ready.some((o) => o.shipment?.provider === 'furgonetka' && o.shipment?.ordered)) {
+    return res.status(409).json({ error: 'Nie udało się przygotować etykiet. ' + skipped.join('; ') });
+  }
+  if (skipped.length) res.setHeader('X-Skipped', encodeURIComponent(skipped.join('; ')));
+  orders = ready;
   const pdf = await bulkLabels(orders, { format: labelFormat(body) });
   return sendPdf(res, pdf, `etykiety-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
@@ -170,6 +202,7 @@ async function configHandler(req, res) {
       sender: senderAddress(),
     },
     inpostShipx: { configured: inpostConfigured() },
+    stripe: { secretKey: !!process.env.STRIPE_SECRET_KEY, webhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET },
     methods: Object.fromEntries(Object.entries(SHIPPING_METHODS).map(([k, m]) => [k, { label: m.label, provider: canShip({ shippingMethod: k }) }])),
   };
   if (out.furgonetka.configured) {
