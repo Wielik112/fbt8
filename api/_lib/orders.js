@@ -232,6 +232,12 @@ export async function getOrderForCustomer(id, email) {
   return rows[0] ? mapOrder(rows[0]) : null;
 }
 
+// Permanently removes an order (admin). Returns true when a row was deleted.
+export async function deleteOrder(id) {
+  const { rowCount } = await sql`DELETE FROM orders WHERE id = ${id}`;
+  return rowCount > 0;
+}
+
 // Admin edit: fulfilment status, tracking number, notes.
 export async function updateOrderAdmin(id, fields) {
   const { rows } = await sql`

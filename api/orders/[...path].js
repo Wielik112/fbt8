@@ -1,5 +1,5 @@
 import {
-  ensureOrdersSchema, listOrders, orderStats, getOrder, getOrdersByIds, updateOrderAdmin,
+  ensureOrdersSchema, listOrders, orderStats, getOrder, getOrdersByIds, updateOrderAdmin, deleteOrder,
 } from '../_lib/orders.js';
 import { isAdmin, readJsonBody } from '../_lib/auth.js';
 import { dbErrorMessage } from '../_lib/db.js';
@@ -22,6 +22,7 @@ import { syncPaymentFromStripe, syncRecentUnpaid } from '../_lib/payments.js';
 //   POST   /api/orders/labels           -> one PDF with many labels {ids, format}
 //   GET    /api/orders/:id              -> detail
 //   PATCH  /api/orders/:id              -> update status / tracking / notes
+//   DELETE /api/orders/:id              -> delete order (?force=1 skips shipment cancel)
 //   POST   /api/orders/:id/shipment     -> create (+ order) shipment {template, weightKg, order}
 //   GET    /api/orders/:id/shipment     -> refresh shipment status / tracking
 //   DELETE /api/orders/:id/shipment     -> cancel / delete shipment
@@ -104,7 +105,29 @@ async function itemHandler(req, res, id) {
     if (!updated) return res.status(404).json({ error: 'Nie znaleziono zamówienia.' });
     return res.status(200).json(updated);
   }
-  res.setHeader('Allow', 'GET, PATCH');
+  if (req.method === 'DELETE') {
+    const order = await getOrder(id);
+    if (!order) return res.status(404).json({ error: 'Nie znaleziono zamówienia.' });
+    const force = ['1', 'true'].includes(String(req.query?.force || ''));
+    // Cancel the parcel at the carrier first so no orphan label stays billable.
+    if (order.shipment?.id && !force) {
+      if (order.shipment.provider !== 'furgonetka') {
+        return res.status(409).json({ error: 'To zamówienie ma przesyłkę InPost ShipX — anuluj ją w InPost, potem usuń z opcją „usuń mimo to”.', needsForce: true });
+      }
+      try {
+        await cancelShipmentForOrder(order);
+      } catch (err) {
+        const mapped = shippingErrorResponse(err);
+        return res.status(409).json({
+          error: `Nie udało się anulować przesyłki w Furgonetce: ${mapped ? mapped.error : err.message}`,
+          needsForce: true,
+        });
+      }
+    }
+    await deleteOrder(id);
+    return res.status(200).json({ deleted: id });
+  }
+  res.setHeader('Allow', 'GET, PATCH, DELETE');
   return res.status(405).json({ error: 'Metoda niedozwolona.' });
 }
 

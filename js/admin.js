@@ -880,6 +880,8 @@ const selectedOrders = new Set();
 function syncSelection() {
   $('orders-labels').textContent = `Drukuj etykiety (${selectedOrders.size})`;
   $('orders-labels').disabled = selectedOrders.size === 0;
+  $('orders-delete').textContent = `Usuń zaznaczone (${selectedOrders.size})`;
+  $('orders-delete').disabled = selectedOrders.size === 0;
   const boxes = [...document.querySelectorAll('#order-rows input[data-sel]')];
   $('orders-check-all').checked = boxes.length > 0 && boxes.every((b) => b.checked);
 }
@@ -972,6 +974,73 @@ $('orders-ship-config').addEventListener('click', async () => {
   } catch (err) {
     box.innerHTML = `<span class="bad">${esc(err.message)}</span>`;
   }
+});
+
+/* ---------- Deleting orders ---------- */
+// Deletes one order; if its parcel can't be cancelled, asks whether to
+// delete anyway (the parcel then has to be cancelled in Furgonetka by hand).
+async function deleteOrderById(id) {
+  const url = '/api/orders/' + encodeURIComponent(id);
+  try {
+    await api(url, { method: 'DELETE' });
+  } catch (err) {
+    if (err.status !== 409) throw err;
+    if (!confirm(`${id}: ${err.message}\n\nUsunąć zamówienie mimo to? (przesyłkę trzeba wtedy anulować ręcznie w panelu przewoźnika)`)) return false;
+    await api(url + '?force=1', { method: 'DELETE' });
+  }
+  selectedOrders.delete(id);
+  return true;
+}
+
+// Polish plural: 1 zamówienie, 2–4 zamówienia, 5+ zamówień.
+function ordersWord(n) {
+  if (n === 1) return 'zamówienie';
+  const d = n % 10, t = n % 100;
+  return d >= 2 && d <= 4 && (t < 12 || t > 14) ? 'zamówienia' : 'zamówień';
+}
+
+function deleteWarning(list) {
+  const paid = list.filter((o) => o && o.paymentStatus === 'paid').length;
+  const withShip = list.filter((o) => o && o.shipment?.id).length;
+  return (paid ? `\n• ${paid} opłacone — pieniędzy nie zwraca to automatycznie (zwrot zrób w Stripe).` : '')
+    + (withShip ? `\n• ${withShip} z przesyłką — zostanie anulowana w Furgonetce.` : '')
+    + '\n\nTej operacji nie można cofnąć.';
+}
+
+$('om-delete').addEventListener('click', async (e) => {
+  if (!currentOrder) return;
+  const o = currentOrder;
+  if (!confirm(`Usunąć zamówienie ${o.id}?` + deleteWarning([o]))) return;
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  notice($('om-error'), '', 'err');
+  try {
+    if (await deleteOrderById(o.id)) {
+      closeOrder();
+      ordersNotice(`Usunięto zamówienie ${o.id}.`, 'ok');
+      loadOrders();
+    }
+  } catch (err) {
+    shipErr(err);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$('orders-delete').addEventListener('click', async () => {
+  const ids = [...selectedOrders];
+  if (!ids.length) return;
+  const list = ids.map((id) => ordersCache.find((o) => o.id === id));
+  if (!confirm(`Usunąć ${ids.length} ${ordersWord(ids.length)}?` + deleteWarning(list))) return;
+  $('orders-delete').disabled = true;
+  const failed = [];
+  let done = 0;
+  for (const id of ids) {
+    try { if (await deleteOrderById(id)) done++; } catch (err) { failed.push(`${id}: ${err.message}`); }
+  }
+  if (failed.length) ordersNotice(`Usunięto ${done} ${ordersWord(done)}. Błędy: ${failed.join('; ')}`, 'err');
+  else ordersNotice(`Usunięto ${done} ${ordersWord(done)}.`, 'ok');
+  loadOrders();
 });
 
 function renderShipSection(o) {
