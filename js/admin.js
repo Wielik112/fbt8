@@ -726,7 +726,7 @@ function ordersNotice(msg, kind) {
 
 async function loadOrders() {
   const tbody = $('order-rows');
-  tbody.innerHTML = '<tr><td colspan="6" class="loading">Ładowanie…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="loading">Ładowanie…</td></tr>';
   try {
     const q = new URLSearchParams();
     if (ordersState.status) q.set('status', ordersState.status);
@@ -741,7 +741,7 @@ async function loadOrders() {
     renderOrders(data.orders);
     renderPager();
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty">${esc(err.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="empty">${esc(err.message)}</td></tr>`;
   }
 }
 
@@ -755,16 +755,19 @@ function renderOrderStats(s) {
 
 function renderOrders(list) {
   const tbody = $('order-rows');
-  if (!list.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Brak zamówień.</td></tr>'; return; }
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">Brak zamówień.</td></tr>'; return; }
   tbody.innerHTML = list.map((o) => `
     <tr class="clickable" data-id="${esc(o.id)}">
+      <td class="col-check"><input type="checkbox" class="row-check" data-sel="${esc(o.id)}" ${selectedOrders.has(o.id) ? 'checked' : ''} aria-label="Zaznacz"></td>
       <td class="cell-title"><span class="order-id">${esc(o.id)}</span></td>
       <td class="hide-sm" data-label="Data">${esc(fmtDateTime(o.createdAt))}</td>
       <td class="hide-sm cell-sub">${esc(o.customer?.name || '—')}<div class="pmeta">${esc(o.customer?.email || '')}</div></td>
       <td class="price" data-label="Kwota">${fmtPLN(o.total)}</td>
       <td data-label="Płatność"><span class="ostatus ${esc(o.paymentStatus)}">${esc(PAYMENT_LABELS[o.paymentStatus] || o.paymentStatus)}</span></td>
       <td data-label="Status"><span class="ostatus ${esc(o.status)}">${esc(ORDER_STATUS_LABELS[o.status] || o.status)}</span></td>
+      <td class="hide-sm ship-cell">${shipCell(o)}</td>
     </tr>`).join('');
+  syncSelection();
 }
 
 function renderPager() {
@@ -781,8 +784,15 @@ function renderPager() {
   if (canNext) $('pg-next').addEventListener('click', () => { ordersState.offset += ordersState.limit; loadOrders(); });
 }
 
-// Row click -> open detail
+// Row click -> open detail (checkbox clicks only toggle selection)
 $('order-rows').addEventListener('click', (e) => {
+  const cb = e.target.closest('input[data-sel]');
+  if (cb) {
+    if (cb.checked) selectedOrders.add(cb.dataset.sel); else selectedOrders.delete(cb.dataset.sel);
+    syncSelection();
+    return;
+  }
+  if (e.target.closest('.col-check')) return;
   const tr = e.target.closest('tr[data-id]');
   if (tr) openOrder(tr.dataset.id);
 });
@@ -817,7 +827,7 @@ async function openOrder(id) {
 
   const addr = o.shippingAddress;
   const shipDetail = o.inpostPoint
-    ? `<div><b>Paczkomat:</b> ${esc(o.inpostPoint)}</div>`
+    ? `<div><b>Punkt odbioru:</b> ${esc(o.inpostPoint)}</div>${o.pointName ? `<div>${esc(o.pointName)}</div>` : ''}`
     : (addr ? `<div>${esc(addr.street || '')}</div><div>${esc(addr.postcode || '')} ${esc(addr.city || '')}</div><div>${esc(addr.country || '')}</div>` : '<div>—</div>');
   $('om-shipping').innerHTML = `<div><b>Metoda:</b> ${esc(o.shippingLabel || o.shippingMethod || '—')}</div>${shipDetail}`;
 
@@ -843,104 +853,198 @@ async function openOrder(id) {
     + (o.termsAcceptedAt ? ` · ✓ Regulamin zaakceptowany ${fmtDateTime(o.termsAcceptedAt)}` : '')
     + (o.stripePaymentIntent ? ` · ${o.stripePaymentIntent}` : '');
 
-  renderInpostSection(o);
+  renderShipSection(o);
   orderModal.classList.remove('hidden');
 }
 
-/* ---------- InPost shipments ---------- */
-const INPOST_METHODS = ['inpost_locker', 'inpost_courier'];
+/* ---------- Shipments (Furgonetka / InPost) ---------- */
+const CARRIER_NAMES = { inpost: 'InPost', inpostkurier: 'InPost Kurier', dpd: 'DPD', poczta: 'Poczta Polska', pocztex: 'Pocztex', orlen: 'Orlen Paczka', ruch: 'Orlen Paczka' };
 const SHIP_STATUS_LABELS = {
+  // Furgonetka
+  waiting: 'Szkic (niezamówiona)', ordering: 'Zamawianie…', ordered: 'Zamówiona', sent: 'Nadana',
+  in_transit: 'W drodze', delivered: 'Doręczona', returned: 'Zwrócona',
+  // InPost ShipX
   created: 'Utworzona', confirmed: 'Potwierdzona', offer_selected: 'Wybrano ofertę',
   offers_prepared: 'Oferty gotowe', dispatched_by_sender: 'Nadana',
   collected_from_sender: 'Odebrana od nadawcy', taken_by_courier: 'U kuriera',
   adopted_at_source_branch: 'W sortowni', out_for_delivery: 'W doręczeniu',
-  ready_to_pickup: 'Gotowa do odbioru', delivered: 'Doręczona',
+  ready_to_pickup: 'Gotowa do odbioru',
   canceled: 'Anulowana', cancelled: 'Anulowana',
 };
+const shipStatusLabel = (st) => SHIP_STATUS_LABELS[st] || st || '—';
+const carrierName = (o) => CARRIER_NAMES[o.shipment?.carrier] || o.shipment?.carrier || (o.shipment?.provider === 'inpost' ? 'InPost' : '—');
 
-function renderInpostSection(o) {
-  const box = $('om-inpost');
-  if (!INPOST_METHODS.includes(o.shippingMethod)) { box.hidden = true; return; }
-  box.hidden = false;
-  const have = !!o.inpostShipmentId;
-  $('om-inpost-create').hidden = have;
-  $('om-inpost-have').hidden = !have;
-  $('om-weight-field').style.display = o.shippingMethod === 'inpost_courier' ? '' : 'none';
+// Selection for bulk label printing.
+const selectedOrders = new Set();
+function syncSelection() {
+  $('orders-labels').textContent = `Drukuj etykiety (${selectedOrders.size})`;
+  $('orders-labels').disabled = selectedOrders.size === 0;
+  const boxes = [...document.querySelectorAll('#order-rows input[data-sel]')];
+  $('orders-check-all').checked = boxes.length > 0 && boxes.every((b) => b.checked);
+}
+$('orders-check-all').addEventListener('change', (e) => {
+  document.querySelectorAll('#order-rows input[data-sel]').forEach((b) => {
+    b.checked = e.target.checked;
+    if (b.checked) selectedOrders.add(b.dataset.sel); else selectedOrders.delete(b.dataset.sel);
+  });
+  syncSelection();
+});
 
-  if (have) {
-    $('om-ship-tracking').textContent = o.trackingNumber || '—';
-    const raw = o.inpostStatus || '—';
-    const st = $('om-ship-status');
-    st.textContent = SHIP_STATUS_LABELS[raw] || raw;
-    st.className = 'ostatus ' + (raw === 'delivered' ? 'completed' : (raw === 'cancelled' || raw === 'canceled' ? 'cancelled' : 'shipped'));
-    $('om-ship-id').textContent = o.inpostShipmentId;
-  } else {
-    $('om-inpost-hint').textContent = o.paymentStatus !== 'paid'
-      ? 'Przesyłkę InPost można utworzyć po opłaceniu zamówienia.' : '';
-  }
+function shipCell(o) {
+  const sh = o.shipment;
+  if (!sh) return o.paymentStatus === 'paid' ? '<span style="color:var(--red)">brak etykiety</span>' : '—';
+  const label = shipStatusLabel(sh.status);
+  return `<b>${esc(carrierName(o))}</b> · ${esc(label)}${o.trackingNumber ? `<div>${esc(o.trackingNumber)}</div>` : ''}`;
 }
 
-async function createShipment() {
-  if (!currentOrder) return;
-  const btn = $('om-create-ship');
+// Opens a PDF response in a new tab (labels need the admin auth header).
+async function openPdf(url, opts = {}) {
+  const res = await fetch(url, { credentials: 'same-origin', ...opts, headers: { ...authHeaders(), ...(opts.headers || {}) } });
+  if (!res.ok) {
+    let m = 'Nie udało się pobrać etykiety.';
+    try { m = (await res.json()).error || m; } catch { /* not json */ }
+    throw new Error(m);
+  }
+  const blob = await res.blob();
+  const href = URL.createObjectURL(blob);
+  window.open(href, '_blank');
+  setTimeout(() => URL.revokeObjectURL(href), 60000);
+}
+
+$('orders-labels').addEventListener('click', async () => {
+  const btn = $('orders-labels');
   btn.disabled = true;
-  notice($('om-error'), '', 'err');
+  ordersNotice('Generuję etykiety…', 'ok');
   try {
-    const body = { template: $('om-parcel').value, weightKg: Number($('om-weight').value) || 1 };
-    const updated = await api(`/api/orders/${encodeURIComponent(currentOrder.id)}/shipment`, { method: 'POST', body });
-    currentOrder = updated;
-    const idx = ordersCache.findIndex((x) => x.id === updated.id);
-    if (idx >= 0) ordersCache[idx] = updated;
-    renderInpostSection(updated);
-    if (updated.trackingNumber) $('om-tracking').value = updated.trackingNumber;
-    ordersNotice(`Utworzono przesyłkę InPost dla ${updated.id}.`, 'ok');
-  } catch (err) {
-    if (err.status === 401) { notice($('om-error'), 'Sesja wygasła. Zaloguj się ponownie.', 'err'); setTimeout(() => { closeOrder(); show('login'); }, 1200); }
-    else notice($('om-error'), err.message, 'err');
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-async function refreshShipment() {
-  if (!currentOrder?.inpostShipmentId) return;
-  try {
-    const updated = await api(`/api/orders/${encodeURIComponent(currentOrder.id)}/shipment`);
-    currentOrder = updated;
-    const idx = ordersCache.findIndex((x) => x.id === updated.id);
-    if (idx >= 0) ordersCache[idx] = updated;
-    renderInpostSection(updated);
-    ordersNotice('Zaktualizowano status przesyłki.', 'ok');
-  } catch (err) {
-    notice($('om-error'), err.message, 'err');
-  }
-}
-
-async function downloadLabel(type) {
-  if (!currentOrder?.inpostShipmentId) return;
-  notice($('om-error'), '', 'err');
-  try {
-    const res = await fetch(`/api/orders/${encodeURIComponent(currentOrder.id)}/label?type=${type}`, {
-      headers: authHeaders(), credentials: 'same-origin',
+    await openPdf('/api/orders/labels', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [...selectedOrders], format: 'a6' }),
     });
-    if (!res.ok) {
-      let m = 'Nie udało się pobrać etykiety.';
-      try { m = (await res.json()).error || m; } catch { /* not json */ }
-      throw new Error(m);
-    }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    ordersNotice('Etykiety gotowe do druku.', 'ok');
   } catch (err) {
-    notice($('om-error'), err.message, 'err');
+    ordersNotice(err.message, 'err');
+  } finally {
+    syncSelection();
   }
+});
+
+$('orders-ship-config').addEventListener('click', async () => {
+  const box = $('ship-config');
+  if (!box.hidden) { box.hidden = true; return; }
+  box.hidden = false;
+  box.innerHTML = 'Sprawdzam połączenie z Furgonetką…';
+  try {
+    const c = await api('/api/orders/shipping-config');
+    const f = c.furgonetka;
+    const services = f.services || [];
+    const svcName = (id) => { const s = services.find((x) => x.id === id); return s ? `${s.name || s.service} (#${id})` : (id ? `#${id}` : ''); };
+    const methodRows = Object.entries(c.methods).map(([k, m]) => {
+      const id = f.mapping ? f.mapping[k] : null;
+      const via = m.provider === 'furgonetka'
+        ? (id ? `<span class="ok">Furgonetka → ${esc(svcName(id))}</span>` : (f.ok ? '<span class="bad">brak aktywnego przewoźnika na koncie</span>' : 'Furgonetka'))
+        : (m.provider === 'inpost' ? 'InPost ShipX' : '<span class="bad">brak integracji — ręcznie</span>');
+      return `<tr><td>${esc(m.label)}</td><td>${via}</td></tr>`;
+    }).join('');
+    box.innerHTML = `
+      <h4>Furgonetka: ${f.configured
+        ? (f.ok ? `<span class="ok">połączono</span> (${esc(f.env)})` : `<span class="bad">błąd</span> — ${esc(f.error || '')}`)
+        : '<span class="bad">nieskonfigurowana</span>'}</h4>
+      ${f.missing.length ? `<div>Brakujące zmienne w Vercel: <b>${f.missing.map(esc).join(', ')}</b></div>` : ''}
+      <div>Nadawca: ${esc([f.sender.name, f.sender.street, `${f.sender.postcode} ${f.sender.city}`, f.sender.phone].filter((x) => x && x.trim()).join(', ') || '—')}</div>
+      <div>Automatyczne zamawianie etykiety po opłaceniu: <b>${f.autoOrder ? 'tak' : 'nie (tylko szkic)'}</b>${f.balance != null ? ` · Saldo: <b>${esc(f.balance)} zł</b>` : ''}</div>
+      <table>${methodRows}</table>`;
+  } catch (err) {
+    box.innerHTML = `<span class="bad">${esc(err.message)}</span>`;
+  }
+});
+
+function renderShipSection(o) {
+  const box = $('om-ship');
+  const sh = o.shipment;
+  // Shipment actions only for paid orders or ones that already have a parcel.
+  if (!sh && o.paymentStatus !== 'paid') { box.hidden = true; return; }
+  box.hidden = false;
+  $('om-ship-create').hidden = !!sh;
+  $('om-ship-have').hidden = !sh;
+  $('om-ship-title').textContent = sh?.provider === 'inpost' ? 'Przesyłka InPost (ShipX)' : 'Przesyłka (Furgonetka)';
+
+  if (!sh) {
+    $('om-ship-hint').textContent = 'Zamówienie tworzy paczkę u przewoźnika z metody dostawy klienta i od razu generuje etykietę (koszt pobiera Furgonetka). Szkic możesz poprawić w panelu Furgonetki.';
+    return;
+  }
+  const ordered = sh.provider === 'inpost' || !!sh.ordered;
+  $('om-ship-carrier').textContent = carrierName(o);
+  $('om-ship-tracking').textContent = o.trackingNumber || (ordered ? 'nadawany…' : '—');
+  const st = $('om-ship-status');
+  st.textContent = shipStatusLabel(sh.status);
+  st.className = 'ostatus ' + (sh.status === 'delivered' ? 'completed' : (['cancelled', 'canceled'].includes(sh.status) ? 'cancelled' : (ordered ? 'shipped' : 'pending')));
+  $('om-ship-price-row').hidden = sh.price == null;
+  $('om-ship-price').textContent = sh.price != null ? `${sh.price} zł` : '—';
+  $('om-ship-id').textContent = sh.id;
+  $('om-ship-edit').hidden = !sh.editUrl;
+  if (sh.editUrl) $('om-ship-edit').href = sh.editUrl;
+
+  $('om-order-ship').hidden = ordered || sh.status === 'ordering';
+  $('om-label-a6').hidden = !ordered;
+  $('om-label-a4').hidden = !ordered;
+  $('om-cancel-ship').hidden = sh.provider === 'inpost';
+
+  const ev = sh.events || [];
+  $('om-ship-events').hidden = !ev.length;
+  $('om-ship-events').innerHTML = ev.map((e) => `<li><time>${esc(fmtDateTime(e.datetime))}${e.branch ? ' · ' + esc(e.branch) : ''}</time>${esc(e.status)}</li>`).join('');
 }
 
-$('om-create-ship').addEventListener('click', createShipment);
-$('om-refresh-ship').addEventListener('click', refreshShipment);
-$('om-label-a6').addEventListener('click', () => downloadLabel('A6'));
-$('om-label-a4').addEventListener('click', () => downloadLabel('normal'));
+function applyOrderUpdate(updated, msg) {
+  currentOrder = updated;
+  const idx = ordersCache.findIndex((x) => x.id === updated.id);
+  if (idx >= 0) ordersCache[idx] = updated;
+  renderOrders(ordersCache);
+  renderShipSection(updated);
+  if (updated.trackingNumber) $('om-tracking').value = updated.trackingNumber;
+  if (msg) ordersNotice(msg, 'ok');
+}
+
+function shipErr(err) {
+  if (err.status === 401) { notice($('om-error'), 'Sesja wygasła. Zaloguj się ponownie.', 'err'); setTimeout(() => { closeOrder(); show('login'); }, 1200); }
+  else notice($('om-error'), err.message, 'err');
+}
+
+async function shipAction(btn, fn) {
+  if (!currentOrder) return;
+  btn.disabled = true;
+  const label = btn.textContent;
+  btn.textContent = 'Chwila…';
+  notice($('om-error'), '', 'err');
+  try { await fn(); } catch (err) { shipErr(err); } finally { btn.disabled = false; btn.textContent = label; }
+}
+
+function shipmentBody(order) {
+  return { template: $('om-parcel').value, weightKg: Number($('om-weight').value) || 1, order };
+}
+const shipUrl = () => `/api/orders/${encodeURIComponent(currentOrder.id)}/shipment`;
+
+$('om-create-ship').addEventListener('click', (e) => shipAction(e.currentTarget, async () => {
+  const u = await api(shipUrl(), { method: 'POST', body: shipmentBody(true) });
+  applyOrderUpdate(u, u.shipment?.ordered ? `Przesyłka zamówiona dla ${u.id} — etykieta gotowa.` : `Przesyłka ${u.id} jest zamawiana — odśwież status za chwilę.`);
+}));
+$('om-draft-ship').addEventListener('click', (e) => shipAction(e.currentTarget, async () => {
+  const u = await api(shipUrl(), { method: 'POST', body: shipmentBody(false) });
+  applyOrderUpdate(u, `Utworzono szkic przesyłki dla ${u.id}.`);
+}));
+$('om-order-ship').addEventListener('click', (e) => shipAction(e.currentTarget, async () => {
+  const u = await api(shipUrl(), { method: 'POST', body: shipmentBody(true) });
+  applyOrderUpdate(u, u.shipment?.ordered ? 'Przesyłka zamówiona — etykieta gotowa.' : 'Zamawianie w toku — odśwież status za chwilę.');
+}));
+$('om-refresh-ship').addEventListener('click', (e) => shipAction(e.currentTarget, async () => {
+  applyOrderUpdate(await api(shipUrl()), 'Zaktualizowano status przesyłki.');
+}));
+$('om-cancel-ship').addEventListener('click', (e) => shipAction(e.currentTarget, async () => {
+  if (!confirm('Anulować tę przesyłkę u przewoźnika? Etykieta przestanie być ważna.')) return;
+  applyOrderUpdate(await api(shipUrl(), { method: 'DELETE' }), 'Przesyłka anulowana.');
+}));
+$('om-label-a6').addEventListener('click', (e) => shipAction(e.currentTarget, () => openPdf(`/api/orders/${encodeURIComponent(currentOrder.id)}/label?format=a6`)));
+$('om-label-a4').addEventListener('click', (e) => shipAction(e.currentTarget, () => openPdf(`/api/orders/${encodeURIComponent(currentOrder.id)}/label?format=a4`)));
 
 function closeOrder() { orderModal.classList.add('hidden'); currentOrder = null; }
 

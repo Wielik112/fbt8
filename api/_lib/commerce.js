@@ -51,6 +51,33 @@ export function inpostServiceFor(method) {
   return INPOST_SERVICES[method] || null;
 }
 
+// Maps our shipping method -> Furgonetka service codes (as listed by
+// GET /account/services), tried in order. The first carrier active on the
+// Furgonetka account wins; FURGONETKA_SERVICE_IDS can pin exact ids instead.
+export const FURGONETKA_SERVICES = {
+  dpd_point:       { services: ['dpd'] },
+  dpd_courier:     { services: ['dpd'] },
+  pocztex_point:   { services: ['pocztex', 'poczta'] },
+  pocztex_courier: { services: ['pocztex', 'poczta'] },
+  inpost_locker:   { services: ['inpost'] },
+  inpost_courier:  { services: ['inpostkurier', 'inpost_courier', 'inpost'] },
+  orlen_point:     { services: ['orlen', 'ruch'] },
+};
+
+// Public tracking pages per carrier (used in e-mails and /sledzenie).
+export const CARRIER_TRACKING_URLS = {
+  inpost:  (n) => `https://inpost.pl/sledzenie-przesylek?number=${encodeURIComponent(n)}`,
+  dpd:     (n) => `https://tracktrace.dpd.com.pl/parcelDetails?p1=${encodeURIComponent(n)}`,
+  pocztex: (n) => `https://emonitoring.poczta-polska.pl/?numer=${encodeURIComponent(n)}`,
+  orlen:   (n) => `https://www.orlenpaczka.pl/sledz-paczke/?numer=${encodeURIComponent(n)}`,
+};
+export function trackingUrlFor(methodKey, number) {
+  if (!number) return null;
+  const carrier = SHIPPING_METHODS[methodKey]?.carrier;
+  const fn = CARRIER_TRACKING_URLS[carrier];
+  return fn ? fn(number) : null;
+}
+
 // InPost Paczkomat parcel templates (gabaryty). Dimensions in millimetres.
 export const PARCEL_TEMPLATES = {
   small:  { label: 'Gabaryt A', dimensions: { length: 640, width: 380, height: 80,  unit: 'mm' } },

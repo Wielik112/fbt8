@@ -76,6 +76,7 @@ export default async function handler(req, res) {
     if (!method) return res.status(400).json({ error: 'Wybierz metodę dostawy.' });
 
     let inpostPoint = null;
+    let pointName = null;
     let shippingAddress = null;
     if (method.requiresPoint) {
       inpostPoint = String(body?.shipping?.point ?? '').trim();
@@ -83,6 +84,8 @@ export default async function handler(req, res) {
         const what = method.carrier === 'inpost' ? 'paczkomat InPost' : 'punkt odbioru';
         return res.status(400).json({ error: `Wybierz ${what}.` });
       }
+      inpostPoint = inpostPoint.slice(0, 64);
+      pointName = String(body?.shipping?.pointName ?? '').trim().slice(0, 200) || null;
     } else {
       const a = body?.shipping?.address || {};
       shippingAddress = {
@@ -139,6 +142,7 @@ export default async function handler(req, res) {
       customer: { email, name, phone },
       shippingAddress,
       inpostPoint,
+      pointName,
       invoice,
       termsAccepted: true,
     });
