@@ -48,21 +48,48 @@ async function maybeNotify(order, notify) {
 }
 
 // Re-reads the Furgonetka package and stores state / tracking on the order.
+// The package itself decides whether it's ordered (tracking number / state
+// past draft), so a slow or oddly-reported order command can't wedge it.
 async function syncFurgonetka(order, extraMeta = {}) {
   const pkg = fgApi.summarizePackage(await fgApi.getPackage(order.shipment.id));
-  const ordered = !!(order.shipment?.ordered || extraMeta.ordered);
+  const wasOrdered = !!order.shipment?.ordered;
+  const ordered = !!(wasOrdered || extraMeta.ordered || fgApi.packageLooksOrdered(pkg));
+  const meta = {
+    carrier: pkg.carrier || order.shipment?.carrier || null,
+    price: pkg.price ?? order.shipment?.price ?? null,
+    editUrl: pkg.editUrl || order.shipment?.editUrl || null,
+    ...extraMeta,
+  };
+  if (ordered && !wasOrdered) Object.assign(meta, { ordered: true, orderCommand: null, orderError: null, orderedAt: new Date().toISOString() });
   return setShipment(order.id, {
     provider: 'furgonetka',
     status: pkg.state || (ordered ? 'ordered' : 'waiting'),
     trackingNumber: pkg.trackingNumber,
-    meta: {
-      carrier: pkg.carrier || order.shipment?.carrier || null,
-      price: pkg.price ?? order.shipment?.price ?? null,
-      editUrl: pkg.editUrl || order.shipment?.editUrl || null,
-      ...extraMeta,
-    },
+    meta,
     markFulfilled: ordered,
   });
+}
+
+const COMMAND_STALE_MS = 3 * 60_000;
+
+// Checks a previously submitted order command. Returns the updated order, or
+// throws a friendly "still ordering" error while it is genuinely in flight.
+async function settlePendingOrder(order) {
+  const sh = order.shipment;
+  let r;
+  try {
+    r = await fgApi.orderCommandStatus(sh.orderCommand);
+  } catch (err) {
+    // Rejected: forget the command so the next click can retry, and say why.
+    await setShipment(order.id, { provider: 'furgonetka', status: 'waiting', meta: { orderCommand: null, orderError: err.message } });
+    throw err;
+  }
+  if (r.result === 'done') return syncFurgonetka(order, { ordered: true });
+  const age = Date.now() - new Date(sh.orderCommandAt || 0).getTime();
+  if (age < COMMAND_STALE_MS) {
+    throw shipError(`Przesyłka jest jeszcze zamawiana w Furgonetce (status: ${r.status || 'brak'}). Spróbuj za minutę.`, 409);
+  }
+  return null; // stale — caller may submit a fresh order
 }
 
 // Creates (and by default orders) the shipment for a paid order.
@@ -86,9 +113,18 @@ export async function createShipmentForOrder(order, opts = {}) {
 
   // --- Furgonetka ---
   let current = order;
-  if (current.shipment?.ordered) throw shipError('Przesyłka dla tego zamówienia jest już zamówiona.', 409);
+  if (current.shipment?.ordered) return maybeNotify(current, notify);
 
-  if (!current.shipment?.id) {
+  if (current.shipment?.id) {
+    // Existing package: check its real state first (an earlier click may
+    // already have ordered it), then any order command still in flight.
+    current = await syncFurgonetka(current);
+    if (current.shipment?.ordered) return maybeNotify(current, notify);
+    if (doOrder && current.shipment?.orderCommand) {
+      const settled = await settlePendingOrder(current);
+      if (settled?.shipment?.ordered) return maybeNotify(settled, notify);
+    }
+  } else {
     const created = fgApi.summarizePackage(await fgApi.createPackage(current, { template, weightKg }));
     if (!created.packageId) throw shipError('Furgonetka nie zwróciła numeru paczki.', 502);
     current = await setShipment(current.id, {
@@ -101,11 +137,25 @@ export async function createShipmentForOrder(order, opts = {}) {
   }
   if (!doOrder) return current;
 
-  const { uuid, result } = await fgApi.orderPackages([current.shipment.id], { budgetMs });
-  if (result === 'pending') {
-    return setShipment(current.id, { provider: 'furgonetka', status: 'ordering', meta: { orderCommand: uuid } });
+  let cmd;
+  try {
+    cmd = await fgApi.orderPackages([current.shipment.id], { budgetMs });
+  } catch (err) {
+    await setShipment(current.id, { provider: 'furgonetka', meta: { orderCommand: null, orderError: err.message } });
+    throw err;
   }
-  current = await syncFurgonetka(current, { ordered: true, orderCommand: null, orderedAt: new Date().toISOString() });
+  if (cmd.result === 'pending') {
+    current = await setShipment(current.id, {
+      provider: 'furgonetka',
+      status: 'ordering',
+      meta: { orderCommand: cmd.uuid, orderCommandAt: new Date().toISOString(), orderCommandStatus: cmd.status, orderError: null },
+    });
+    // The package may already be ordered even if the command says otherwise.
+    current = await syncFurgonetka(current);
+    if (!current.shipment?.ordered) current = await setShipment(current.id, { provider: 'furgonetka', status: 'ordering' });
+    return current.shipment?.ordered ? maybeNotify(current, notify) : current;
+  }
+  current = await syncFurgonetka(current, { ordered: true });
   return maybeNotify(current, notify);
 }
 
@@ -121,18 +171,22 @@ export async function refreshShipmentForOrder(order, { notify = true } = {}) {
   }
 
   const extra = {};
-  if (sh.orderCommand) {
-    const r = await fgApi.orderCommandStatus(sh.orderCommand);
-    if (r === 'done') Object.assign(extra, { ordered: true, orderCommand: null, orderedAt: new Date().toISOString() });
-  }
-  if (sh.ordered || extra.ordered) {
+  if (sh.orderCommand && !sh.ordered) {
     try {
-      const events = await fgApi.getTracking(sh.id);
-      if (events.length) extra.events = events.slice(0, 30);
-    } catch { /* tracking appears only once the carrier scans the parcel */ }
+      const r = await fgApi.orderCommandStatus(sh.orderCommand);
+      if (r.result === 'done') extra.ordered = true;
+      else extra.orderCommandStatus = r.status;
+    } catch (err) {
+      Object.assign(extra, { orderCommand: null, orderError: err.message });
+    }
   }
   let updated = await syncFurgonetka(order, extra);
-  if (!updated.shipment?.ordered && updated.shipment?.orderCommand) {
+  if (updated.shipment?.ordered) {
+    try {
+      const events = await fgApi.getTracking(sh.id);
+      if (events.length) updated = await setShipment(order.id, { provider: 'furgonetka', meta: { events: events.slice(0, 30) } });
+    } catch { /* tracking appears only once the carrier scans the parcel */ }
+  } else if (updated.shipment?.orderCommand) {
     updated = await setShipment(order.id, { provider: 'furgonetka', status: 'ordering' });
   }
   return maybeNotify(updated, notify);

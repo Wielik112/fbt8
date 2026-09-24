@@ -26,9 +26,15 @@ function envName() {
 }
 function baseHost() { return HOSTS[envName()]; }
 
+// Env value with pasted junk removed: surrounding whitespace / newlines and
+// wrapping quotes ("..." or '...') are common when copying into Vercel.
+function envVal(name) {
+  return String(process.env[name] ?? '').trim().replace(/^(['"])(.*)\1$/s, '$2').trim();
+}
+
 export function furgonetkaConfigured() {
-  return !!(process.env.FURGONETKA_CLIENT_ID && process.env.FURGONETKA_CLIENT_SECRET
-    && process.env.FURGONETKA_USERNAME && process.env.FURGONETKA_PASSWORD);
+  return !!(envVal('FURGONETKA_CLIENT_ID') && envVal('FURGONETKA_CLIENT_SECRET')
+    && envVal('FURGONETKA_USERNAME') && envVal('FURGONETKA_PASSWORD'));
 }
 
 function credentials() {
@@ -38,10 +44,11 @@ function credentials() {
     throw err;
   }
   return {
-    clientId: process.env.FURGONETKA_CLIENT_ID,
-    clientSecret: process.env.FURGONETKA_CLIENT_SECRET,
-    username: process.env.FURGONETKA_USERNAME,
-    password: process.env.FURGONETKA_PASSWORD,
+    clientId: envVal('FURGONETKA_CLIENT_ID'),
+    clientSecret: envVal('FURGONETKA_CLIENT_SECRET'),
+    username: envVal('FURGONETKA_USERNAME'),
+    // Passwords may legitimately end in spaces/quotes: only strip newlines.
+    password: String(process.env.FURGONETKA_PASSWORD ?? '').replace(/[\r\n]+$/, ''),
   };
 }
 
@@ -130,7 +137,14 @@ async function requestToken(params) {
   if (!res.ok || !data?.access_token) {
     const reason = data?.error_description || data?.message || data?.error || `HTTP ${res.status}`;
     const code = data?.error === '2fa_required' ? 'FURGONETKA_2FA' : 'FURGONETKA_AUTH';
-    throw fgError(`Logowanie do Furgonetki nieudane: ${reason}`, { status: res.status, details: data, code });
+    let hint = '';
+    if (data?.error === 'invalid_grant') {
+      hint = ` — login lub hasło nie pasują do konta w środowisku „${envName()}” (${baseHost().replace('https://api.', '')}). `
+        + 'Sprawdź FURGONETKA_USERNAME / FURGONETKA_PASSWORD oraz FURGONETKA_ENV (konto sandbox to osobne konto niż produkcyjne).';
+    } else if (data?.error === 'invalid_client') {
+      hint = ' — nieprawidłowy FURGONETKA_CLIENT_ID lub FURGONETKA_CLIENT_SECRET (albo aplikacja z innego środowiska).';
+    }
+    throw fgError(`Logowanie do Furgonetki nieudane: ${reason}${hint}`, { status: res.status, details: data, code });
   }
   const tok = {
     env: envName(),
@@ -374,8 +388,8 @@ export async function getTracking(packageId) {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const DONE = ['successful', 'success', 'completed', 'done'];
-const FAILED = ['failed', 'error', 'unsuccessful'];
+const DONE = ['successful', 'success', 'completed', 'done', 'finished', 'processed', 'ok'];
+const FAILED = ['failed', 'error', 'errors', 'unsuccessful', 'rejected', 'canceled', 'cancelled'];
 
 // Polls an async "command" (order / cancel / documents) until it settles or
 // the time budget runs out. Returns the last summary seen.
@@ -391,10 +405,20 @@ async function pollCommand(path, budgetMs) {
   return last;
 }
 
+function commandErrors(summary) {
+  const list = Array.isArray(summary?.errors) ? summary.errors : [];
+  // Per-package errors can also sit under packages[].errors.
+  for (const p of Array.isArray(summary?.packages) ? summary.packages : []) {
+    if (Array.isArray(p?.errors)) list.push(...p.errors);
+  }
+  return list;
+}
+
 function commandResult(summary) {
   const st = String(summary?.status || '').toLowerCase();
-  if (FAILED.includes(st)) {
-    throw fgError(errorText(summary?.errors) || 'Furgonetka odrzuciła zlecenie.', { details: summary });
+  const errors = commandErrors(summary);
+  if (FAILED.includes(st) || (errors.length && !DONE.includes(st))) {
+    throw fgError(errorText(errors) || `Furgonetka odrzuciła zlecenie (status: ${st || 'brak'}).`, { details: summary });
   }
   return DONE.includes(st) ? 'done' : 'pending';
 }
@@ -410,12 +434,22 @@ export async function orderPackages(packageIds, { budgetMs = 8000 } = {}) {
     },
   });
   const summary = await pollCommand(`/order-commands/${uuid}`, budgetMs);
-  return { uuid, result: commandResult(summary) };
+  return { uuid, result: commandResult(summary), status: summary?.status || null };
 }
 
 export async function orderCommandStatus(uuid) {
   const summary = await fg(`/order-commands/${encodeURIComponent(uuid)}`);
-  return commandResult(summary);
+  return { result: commandResult(summary), status: summary?.status || null };
+}
+
+// A package counts as ordered once it has a tracking number or has left the
+// draft state — this is the source of truth, whatever the command reports.
+const DRAFT_STATES = ['waiting', 'cart', 'in_cart', 'draft', 'new', 'saved'];
+export function packageLooksOrdered(pkg) {
+  if (!pkg) return false;
+  if (pkg.trackingNumber) return true;
+  const st = String(pkg.state || '').toLowerCase();
+  return !!st && !DRAFT_STATES.includes(st) && !['cancelled', 'canceled'].includes(st);
 }
 
 export async function cancelPackages(packageIds, { budgetMs = 6000 } = {}) {
