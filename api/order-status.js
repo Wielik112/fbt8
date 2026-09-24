@@ -2,6 +2,7 @@ import { ensureOrdersSchema, getOrderBySession, getOrderForCustomer } from './_l
 import { dbErrorMessage } from './_lib/db.js';
 import { trackingUrlFor } from './_lib/commerce.js';
 import { refreshShipmentForOrder } from './_lib/shipping.js';
+import { syncPaymentFromStripe } from './_lib/payments.js';
 
 // GET /api/order-status?session_id=cs_...
 // Public confirmation lookup for the thank-you page. Keyed by the Stripe
@@ -23,7 +24,8 @@ export default async function handler(req, res) {
 
   try {
     await ensureOrdersSchema();
-    const order = await getOrderBySession(sessionId);
+    // Thank-you page: if the webhook hasn't landed yet, ask Stripe directly.
+    const order = await syncPaymentFromStripe(await getOrderBySession(sessionId));
     if (!order) return res.status(404).json({ error: 'Nie znaleziono zamówienia.' });
 
     res.setHeader('Cache-Control', 'no-store');
