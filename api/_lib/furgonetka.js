@@ -388,8 +388,8 @@ export async function getTracking(packageId) {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const DONE = ['successful', 'success', 'completed', 'done'];
-const FAILED = ['failed', 'error', 'unsuccessful'];
+const DONE = ['successful', 'success', 'completed', 'done', 'finished', 'processed', 'ok'];
+const FAILED = ['failed', 'error', 'errors', 'unsuccessful', 'rejected', 'canceled', 'cancelled'];
 
 // Polls an async "command" (order / cancel / documents) until it settles or
 // the time budget runs out. Returns the last summary seen.
@@ -405,10 +405,20 @@ async function pollCommand(path, budgetMs) {
   return last;
 }
 
+function commandErrors(summary) {
+  const list = Array.isArray(summary?.errors) ? summary.errors : [];
+  // Per-package errors can also sit under packages[].errors.
+  for (const p of Array.isArray(summary?.packages) ? summary.packages : []) {
+    if (Array.isArray(p?.errors)) list.push(...p.errors);
+  }
+  return list;
+}
+
 function commandResult(summary) {
   const st = String(summary?.status || '').toLowerCase();
-  if (FAILED.includes(st)) {
-    throw fgError(errorText(summary?.errors) || 'Furgonetka odrzuciła zlecenie.', { details: summary });
+  const errors = commandErrors(summary);
+  if (FAILED.includes(st) || (errors.length && !DONE.includes(st))) {
+    throw fgError(errorText(errors) || `Furgonetka odrzuciła zlecenie (status: ${st || 'brak'}).`, { details: summary });
   }
   return DONE.includes(st) ? 'done' : 'pending';
 }
@@ -424,12 +434,22 @@ export async function orderPackages(packageIds, { budgetMs = 8000 } = {}) {
     },
   });
   const summary = await pollCommand(`/order-commands/${uuid}`, budgetMs);
-  return { uuid, result: commandResult(summary) };
+  return { uuid, result: commandResult(summary), status: summary?.status || null };
 }
 
 export async function orderCommandStatus(uuid) {
   const summary = await fg(`/order-commands/${encodeURIComponent(uuid)}`);
-  return commandResult(summary);
+  return { result: commandResult(summary), status: summary?.status || null };
+}
+
+// A package counts as ordered once it has a tracking number or has left the
+// draft state — this is the source of truth, whatever the command reports.
+const DRAFT_STATES = ['waiting', 'cart', 'in_cart', 'draft', 'new', 'saved'];
+export function packageLooksOrdered(pkg) {
+  if (!pkg) return false;
+  if (pkg.trackingNumber) return true;
+  const st = String(pkg.state || '').toLowerCase();
+  return !!st && !DRAFT_STATES.includes(st) && !['cancelled', 'canceled'].includes(st);
 }
 
 export async function cancelPackages(packageIds, { budgetMs = 6000 } = {}) {

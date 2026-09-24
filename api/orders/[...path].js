@@ -173,7 +173,10 @@ async function bulkLabelHandler(req, res) {
         skipped.push(`${o.id}: ${mapped ? mapped.error : err.message}`);
         continue;
       }
-      if (!o.shipment?.ordered) { skipped.push(`${o.id}: przesyłka w trakcie zamawiania, spróbuj za chwilę`); continue; }
+      if (!o.shipment?.ordered) {
+        skipped.push(`${o.id}: przesyłka jeszcze zamawiana w Furgonetce (status: ${o.shipment?.orderCommandStatus || 'brak'}), spróbuj za minutę`);
+        continue;
+      }
     }
     ready.push(o);
   }
