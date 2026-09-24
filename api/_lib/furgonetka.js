@@ -26,9 +26,15 @@ function envName() {
 }
 function baseHost() { return HOSTS[envName()]; }
 
+// Env value with pasted junk removed: surrounding whitespace / newlines and
+// wrapping quotes ("..." or '...') are common when copying into Vercel.
+function envVal(name) {
+  return String(process.env[name] ?? '').trim().replace(/^(['"])(.*)\1$/s, '$2').trim();
+}
+
 export function furgonetkaConfigured() {
-  return !!(process.env.FURGONETKA_CLIENT_ID && process.env.FURGONETKA_CLIENT_SECRET
-    && process.env.FURGONETKA_USERNAME && process.env.FURGONETKA_PASSWORD);
+  return !!(envVal('FURGONETKA_CLIENT_ID') && envVal('FURGONETKA_CLIENT_SECRET')
+    && envVal('FURGONETKA_USERNAME') && envVal('FURGONETKA_PASSWORD'));
 }
 
 function credentials() {
@@ -38,10 +44,11 @@ function credentials() {
     throw err;
   }
   return {
-    clientId: process.env.FURGONETKA_CLIENT_ID,
-    clientSecret: process.env.FURGONETKA_CLIENT_SECRET,
-    username: process.env.FURGONETKA_USERNAME,
-    password: process.env.FURGONETKA_PASSWORD,
+    clientId: envVal('FURGONETKA_CLIENT_ID'),
+    clientSecret: envVal('FURGONETKA_CLIENT_SECRET'),
+    username: envVal('FURGONETKA_USERNAME'),
+    // Passwords may legitimately end in spaces/quotes: only strip newlines.
+    password: String(process.env.FURGONETKA_PASSWORD ?? '').replace(/[\r\n]+$/, ''),
   };
 }
 
@@ -130,7 +137,14 @@ async function requestToken(params) {
   if (!res.ok || !data?.access_token) {
     const reason = data?.error_description || data?.message || data?.error || `HTTP ${res.status}`;
     const code = data?.error === '2fa_required' ? 'FURGONETKA_2FA' : 'FURGONETKA_AUTH';
-    throw fgError(`Logowanie do Furgonetki nieudane: ${reason}`, { status: res.status, details: data, code });
+    let hint = '';
+    if (data?.error === 'invalid_grant') {
+      hint = ` — login lub hasło nie pasują do konta w środowisku „${envName()}” (${baseHost().replace('https://api.', '')}). `
+        + 'Sprawdź FURGONETKA_USERNAME / FURGONETKA_PASSWORD oraz FURGONETKA_ENV (konto sandbox to osobne konto niż produkcyjne).';
+    } else if (data?.error === 'invalid_client') {
+      hint = ' — nieprawidłowy FURGONETKA_CLIENT_ID lub FURGONETKA_CLIENT_SECRET (albo aplikacja z innego środowiska).';
+    }
+    throw fgError(`Logowanie do Furgonetki nieudane: ${reason}${hint}`, { status: res.status, details: data, code });
   }
   const tok = {
     env: envName(),
