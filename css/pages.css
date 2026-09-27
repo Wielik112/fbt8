@@ -200,7 +200,10 @@
 
 /* ---------- Product detail ---------- */
 .pd-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; padding: calc(var(--nav-h) + 60px) 0 100px; align-items: start; }
-.pd-gallery { position: sticky; top: calc(var(--nav-h) + 24px); }
+/* Pozwól kolumnom siatki kurczyć się do szerokości ekranu — bez tego rząd
+   miniatur (5+ zdjęć) rozpychał całą stronę poza ekran na telefonie. */
+.pd-wrap > * { min-width: 0; }
+.pd-gallery { position: sticky; top: calc(var(--nav-h) + 24px); min-width: 0; }
 .pd-main-img {
   position: relative;
   aspect-ratio: 3 / 4; background: linear-gradient(135deg, var(--surface-2), var(--black-2));
@@ -222,6 +225,7 @@
 /* Miniatury w JEDNYM rzędzie, przewijane poziomo (nie zawijają się w dół). */
 .pd-thumbs {
   display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden;
+  min-width: 0; max-width: 100%;
   padding-bottom: 4px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch;
   scrollbar-width: thin; scrollbar-color: var(--line-bright) transparent;
 }
