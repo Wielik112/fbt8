@@ -234,11 +234,11 @@
 .pd-thumb.has-photo img { object-fit: contain; padding: 6px; }
 
 .pd-info .tag { margin-bottom: 18px; }
-.pd-info h1 { font-size: clamp(38px, 5vw, 60px); text-transform: uppercase; font-style: italic; margin-bottom: 16px; }
+.pd-info h1 { font-size: clamp(28px, 7vw, 60px); text-transform: uppercase; font-style: italic; margin-bottom: 16px; overflow-wrap: anywhere; }
 .pd-rating { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
 .pd-rating .stars { color: var(--red); letter-spacing: 3px; }
 .pd-rating span { color: var(--grey-2); font-size: 14px; }
-.pd-price { display: flex; align-items: baseline; gap: 14px; margin-bottom: 28px; }
+.pd-price { display: flex; align-items: baseline; gap: 14px; margin-bottom: 28px; flex-wrap: wrap; }
 .pd-price .now { font-family: var(--display); font-weight: 900; font-size: 46px; }
 .pd-price .was { font-size: 22px; color: var(--grey-3); text-decoration: line-through; }
 .pd-price .save { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--red); background: rgba(224,16,32,0.12); padding: 5px 12px; }
@@ -282,8 +282,10 @@
 
 /* ---------- Cart ---------- */
 .cart-wrap { display: grid; grid-template-columns: 1fr 380px; gap: 44px; padding: calc(var(--nav-h) + 60px) 0 100px; align-items: start; }
-.cart-item { display: grid; grid-template-columns: 100px 1fr auto; gap: 22px; padding: 24px 0; border-bottom: 1px solid var(--line); align-items: center; }
-.cart-item-img { aspect-ratio: 1; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; display: grid; place-items: center; }
+.cart-item { display: grid; grid-template-columns: 90px 1fr auto; gap: 20px; padding: 24px 0; border-bottom: 1px solid var(--line); align-items: center; }
+.cart-item > div { min-width: 0; }
+.cart-item-name { overflow-wrap: anywhere; }
+.cart-item-img { aspect-ratio: 3 / 4; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; display: grid; place-items: center; }
 /* Show the whole product photo (like on the product page), not a crop. */
 .cart-item-img img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
 .cart-item-name { font-family: var(--display); font-weight: 700; font-size: 20px; font-style: italic; text-transform: uppercase; margin-bottom: 6px; }
@@ -427,6 +429,11 @@
   .cats-grid { grid-template-columns: 1fr; }
   .pd-perks { grid-template-columns: 1fr; }
   .hero-stat .num { font-size: 40px; }
+  /* Strona produktu na telefonie: cena i przycisk nie wychodzą poza ekran */
+  .pd-price .now { font-size: 38px; }
+  .pd-wrap { padding-top: calc(var(--nav-h) + 28px); gap: 30px; }
+  .pd-qty-row { flex-wrap: wrap; }
+  #pd-add { flex: 1 1 220px; }
 }
 
 /* ============================================

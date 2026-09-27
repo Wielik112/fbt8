@@ -59,8 +59,17 @@ function updateCartCount() {
 function addToCart(product) {
   const cart = getCart();
   const existing = cart.find(i => i.id === product.id && i.size === product.size);
-  if (existing) existing.qty += product.qty || 1;
-  else cart.push({ ...product, qty: product.qty || 1 });
+  // Limit sztuk = dostępny stan magazynowy dla tego rozmiaru (jeśli podany).
+  const max = Number.isFinite(product.max) ? product.max : Infinity;
+  const add = product.qty || 1;
+  if (existing) {
+    if (existing.qty >= max) { showToast('To już cały dostępny stan tego produktu'); return; }
+    existing.qty = Math.min(max, existing.qty + add);
+    if (Number.isFinite(max)) existing.max = max;
+  } else {
+    if (max <= 0) { showToast('Produkt jest chwilowo niedostępny'); return; }
+    cart.push({ ...product, qty: Math.min(max, add), ...(Number.isFinite(max) ? { max } : {}) });
+  }
   saveCart(cart);
   showToast(`${product.name} dodano do koszyka`);
 }
@@ -135,7 +144,9 @@ document.querySelectorAll('[data-add]').forEach(btn => {
       if (activeSize && activeSize.classList.contains('out')) { showToast('Ten rozmiar jest niedostępny'); return; }
       const size = activeSize?.dataset.size || activeSize?.querySelector('.ps-label')?.textContent || activeSize?.textContent?.trim() || 'M';
       const qtyEl = document.querySelector('.pd-qty-row .qty input');
-      const max = qtyEl && qtyEl.dataset.max ? +qtyEl.dataset.max : Infinity;
+      // Dostępny stan wybranego rozmiaru (rozmiary bez limitu nie mają data-stock).
+      const stockAttr = activeSize?.dataset.stock;
+      const max = stockAttr !== undefined ? Math.max(0, parseInt(stockAttr, 10) || 0) : Infinity;
       const qty = qtyEl ? Math.min(max, Math.max(1, +qtyEl.value || 1)) : 1;
       product = {
         id: btn.dataset.add,
@@ -143,7 +154,8 @@ document.querySelectorAll('[data-add]').forEach(btn => {
         price: +btn.dataset.price,
         image: btn.dataset.image || '',
         size,
-        qty
+        qty,
+        max
       };
     }
     addToCart(product);
