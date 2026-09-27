@@ -279,13 +279,20 @@
         `<div class="pd-thumb has-photo${i === 0 ? ' active' : ''}" data-idx="${i}"><img src="${src}" alt=""></div>`).join('');
       const thumbEls = Array.from(thumbs.querySelectorAll('.pd-thumb'));
 
-      // Pokazuje zdjęcie o indeksie i (zapętla), podświetla i przewija miniaturę.
+      // Lightbox (powiększona galeria).
+      const lb = $('#pd-lightbox'), lbImg = $('#pdl-img'), lbCount = $('#pdl-counter');
+      const lbPrev = $('#pdl-prev'), lbNext = $('#pdl-next'), lbClose = $('#pdl-close');
+      const lbOpen = () => !!(lb && lb.classList.contains('open'));
+
+      // Pokazuje zdjęcie o indeksie i (zapętla): główne, miniatury i lightbox.
       const showPhoto = (i) => {
         curIdx = (i + gallery.length) % gallery.length;
         mainLogo.src = gallery[curIdx];
         thumbEls.forEach((x, k) => x.classList.toggle('active', k === curIdx));
         const act = thumbEls[curIdx];
         if (act && act.scrollIntoView) act.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        if (lbImg) lbImg.src = gallery[curIdx];
+        if (lbCount) lbCount.textContent = `${curIdx + 1} / ${gallery.length}`;
       };
 
       thumbEls.forEach((t) => t.addEventListener('click', () => showPhoto(Number(t.dataset.idx))));
@@ -293,12 +300,36 @@
       const multi = gallery.length > 1;
       if (prevBtn) { prevBtn.hidden = !multi; prevBtn.addEventListener('click', () => showPhoto(curIdx - 1)); }
       if (nextBtn) { nextBtn.hidden = !multi; nextBtn.addEventListener('click', () => showPhoto(curIdx + 1)); }
-      if (multi) {
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'ArrowLeft') showPhoto(curIdx - 1);
-          else if (e.key === 'ArrowRight') showPhoto(curIdx + 1);
-        });
+
+      // Otwieranie/zamykanie powiększonej galerii.
+      function openLightbox() {
+        if (!lb) return;
+        lb.hidden = false; lb.classList.add('open'); lb.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        showPhoto(curIdx);
       }
+      function closeLightbox() {
+        if (!lb) return;
+        lb.classList.remove('open'); lb.hidden = true; lb.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+      // Klik w główne zdjęcie otwiera lightbox (poza klikiem w strzałki).
+      mainEl.addEventListener('click', (e) => { if (e.target.closest('.pd-nav')) return; openLightbox(); });
+      if (lbClose) lbClose.addEventListener('click', closeLightbox);
+      if (lbImg) lbImg.addEventListener('click', closeLightbox);
+      if (lbPrev) lbPrev.addEventListener('click', (e) => { e.stopPropagation(); showPhoto(curIdx - 1); });
+      if (lbNext) lbNext.addEventListener('click', (e) => { e.stopPropagation(); showPhoto(curIdx + 1); });
+      if (lb) lb.addEventListener('click', (e) => { if (e.target === lb) closeLightbox(); });
+
+      // Klawiatura: strzałki przewijają, Escape zamyka lightbox.
+      document.addEventListener('keydown', (e) => {
+        const t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+        if (e.key === 'Escape') { if (lbOpen()) closeLightbox(); return; }
+        if (!multi) return;
+        if (e.key === 'ArrowLeft') showPhoto(curIdx - 1);
+        else if (e.key === 'ArrowRight') showPhoto(curIdx + 1);
+      });
       showPhoto(0);
     } else {
       // Brak zdjęć — dekoracyjne kafelki gradientowe, bez strzałek.
