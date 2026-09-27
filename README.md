@@ -81,8 +81,9 @@ accepted as a same-origin fallback.
 
 ## Payments & orders (Stripe)
 
-Checkout uses **Stripe Checkout** (hosted, redirect) in **PLN** with **card,
-BLIK and Przelewy24**. The design keeps the shop as the source of truth:
+Checkout uses **Stripe Checkout** (hosted, redirect) in **PLN** with the payment
+methods enabled in the Stripe Dashboard (e.g. card, BLIK, Przelewy24 when the
+account supports it; override with `STRIPE_PAYMENT_METHODS`). The design keeps the shop as the source of truth:
 
 - **Server-side pricing.** `POST /api/checkout` ignores any prices sent by the
   browser and re-reads every product's price from the database, recomputes the
@@ -105,8 +106,9 @@ tracking number, and leave internal notes.
 
 ### Stripe setup
 
-1. Create a Stripe account; enable **card, BLIK, Przelewy24** (Settings → Payment
-   methods). Use **test mode** first.
+1. Create a Stripe account; enable the methods you want — e.g. **card, BLIK,
+   Przelewy24** (Settings → Payment methods). Checkout shows whatever is enabled
+   there. Use **test mode** first.
 2. Set env vars in Vercel: `STRIPE_SECRET_KEY` (`sk_test_…`), and after step 3
    `STRIPE_WEBHOOK_SECRET` (`whsec_…`).
 3. Add a webhook endpoint → `https://<your-domain>/api/stripe-webhook`, subscribe

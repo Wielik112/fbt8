@@ -165,7 +165,6 @@ export default async function handler(req, res) {
     const sessionParams = {
       mode: 'payment',
       locale: 'pl',
-      payment_method_types: paymentMethodTypes(),
       line_items,
       customer_email: email,
       client_reference_id: orderId,
@@ -183,6 +182,11 @@ export default async function handler(req, res) {
       // Stripe requires expiry to be at least 30 min out; add a buffer.
       expires_at: Math.floor(Date.now() / 1000) + 60 * 31,
     };
+
+    // Explicit list only when configured; otherwise Stripe picks the methods
+    // enabled in the Dashboard.
+    const methods = paymentMethodTypes();
+    if (methods) sessionParams.payment_method_types = methods;
 
     if (percent) {
       // percent_off coupons must NOT carry a currency (that's amount_off only).
