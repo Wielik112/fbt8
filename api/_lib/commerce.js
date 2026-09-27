@@ -6,13 +6,16 @@
 
 export const CURRENCY = 'pln';
 
-// Payment methods offered on Stripe Checkout. Override via env
-// STRIPE_PAYMENT_METHODS="card,blik,p24". Each must also be enabled
-// in the Stripe Dashboard for the account.
+// Payment methods offered on Stripe Checkout. By default (env unset) this
+// returns null and Checkout shows every method enabled in the Stripe
+// Dashboard (Settings -> Payment methods) that supports PLN — so a method
+// the account can't use (e.g. P24 for some business types) never breaks
+// checkout. Set STRIPE_PAYMENT_METHODS="card,blik" to force an explicit list;
+// each listed method must then be enabled for the account.
 export function paymentMethodTypes() {
-  const raw = (process.env.STRIPE_PAYMENT_METHODS || 'card,blik,p24')
+  const raw = (process.env.STRIPE_PAYMENT_METHODS || '')
     .split(',').map((s) => s.trim()).filter(Boolean);
-  return raw.length ? raw : ['card'];
+  return raw.length ? raw : null;
 }
 
 // Shipping methods. `requiresPoint` marks methods delivered to a pickup
