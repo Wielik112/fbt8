@@ -107,7 +107,7 @@ async function loadProductMap() {
     if (!r.ok) return;
     const data = await r.json();
     if (Array.isArray(data)) data.forEach((p) => {
-      if (p && p.id) productMap[p.id] = { image: p.image || '', gradient: p.gradient || '' };
+      if (p && p.id) productMap[p.id] = { image: p.image || '', gradient: p.gradient || '', stock: (p.stock && typeof p.stock === 'object') ? p.stock : {} };
     });
   } catch { /* offline — fall back to stored image */ }
 }
@@ -168,9 +168,30 @@ function renderCart() {
   else dRow.style.display = 'none';
 }
 
+// Maksymalna dostępna ilość dla pozycji: stan magazynowy danego rozmiaru
+// (z API, jeśli znany), inaczej zapamiętany limit z chwili dodania.
+function itemMax(item) {
+  const p = productMap[item.id];
+  if (p && p.stock && item.size != null && Object.prototype.hasOwnProperty.call(p.stock, item.size)) {
+    return Math.max(0, parseInt(p.stock[item.size], 10) || 0);
+  }
+  return Number.isFinite(item.max) ? item.max : Infinity;
+}
+// Przycina ilości w koszyku do aktualnie dostępnego stanu (np. gdy stan spadł).
+function clampCartToStock() {
+  const cart = getCart();
+  let changed = false;
+  cart.forEach((it) => {
+    const m = itemMax(it);
+    if (Number.isFinite(m) && it.qty > m) { it.qty = Math.max(1, m); changed = true; }
+  });
+  if (changed) saveCart(cart);
+}
 function changeQty(i, delta) {
   const cart = getCart();
-  cart[i].qty = Math.max(1, cart[i].qty + delta);
+  const max = itemMax(cart[i]);
+  if (delta > 0 && cart[i].qty >= max) { showToast('To już cały dostępny stan tego rozmiaru'); return; }
+  cart[i].qty = Math.max(1, Math.min(Number.isFinite(max) ? max : Infinity, cart[i].qty + delta));
   saveCart(cart);
   renderCart();
 }
@@ -197,8 +218,8 @@ document.getElementById('checkout-btn').addEventListener('click', (e) => {
 });
 
 renderCart();
-// Pull live product photos, then re-render so the cart shows the real images.
-loadProductMap().then(renderCart);
+// Pull live product photos + stock, przytnij ilości do stanu, potem odśwież.
+loadProductMap().then(() => { clampCartToStock(); renderCart(); });
 </script>
 </body>
 </html>
