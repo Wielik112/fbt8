@@ -289,8 +289,14 @@
         curIdx = (i + gallery.length) % gallery.length;
         mainLogo.src = gallery[curIdx];
         thumbEls.forEach((x, k) => x.classList.toggle('active', k === curIdx));
+        // Wyśrodkuj aktywną miniaturę TYLKO w pasku miniatur (przewijanie w
+        // poziomie), nie ruszając całej strony — scrollIntoView przesuwał
+        // widok w dół przy wejściu w produkt i przy klikaniu strzałek.
         const act = thumbEls[curIdx];
-        if (act && act.scrollIntoView) act.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        if (act && thumbs) {
+          const left = act.offsetLeft - (thumbs.clientWidth - act.offsetWidth) / 2;
+          thumbs.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+        }
         if (lbImg) lbImg.src = gallery[curIdx];
         if (lbCount) lbCount.textContent = `${curIdx + 1} / ${gallery.length}`;
       };
