@@ -234,11 +234,11 @@
 .pd-thumb.has-photo img { object-fit: contain; padding: 6px; }
 
 .pd-info .tag { margin-bottom: 18px; }
-.pd-info h1 { font-size: clamp(38px, 5vw, 60px); text-transform: uppercase; font-style: italic; margin-bottom: 16px; }
+.pd-info h1 { font-size: clamp(28px, 7vw, 60px); text-transform: uppercase; font-style: italic; margin-bottom: 16px; overflow-wrap: anywhere; }
 .pd-rating { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
 .pd-rating .stars { color: var(--red); letter-spacing: 3px; }
 .pd-rating span { color: var(--grey-2); font-size: 14px; }
-.pd-price { display: flex; align-items: baseline; gap: 14px; margin-bottom: 28px; }
+.pd-price { display: flex; align-items: baseline; gap: 14px; margin-bottom: 28px; flex-wrap: wrap; }
 .pd-price .now { font-family: var(--display); font-weight: 900; font-size: 46px; }
 .pd-price .was { font-size: 22px; color: var(--grey-3); text-decoration: line-through; }
 .pd-price .save { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--red); background: rgba(224,16,32,0.12); padding: 5px 12px; }
@@ -427,6 +427,11 @@
   .cats-grid { grid-template-columns: 1fr; }
   .pd-perks { grid-template-columns: 1fr; }
   .hero-stat .num { font-size: 40px; }
+  /* Strona produktu na telefonie: cena i przycisk nie wychodzą poza ekran */
+  .pd-price .now { font-size: 38px; }
+  .pd-wrap { padding-top: calc(var(--nav-h) + 28px); gap: 30px; }
+  .pd-qty-row { flex-wrap: wrap; }
+  #pd-add { flex: 1 1 220px; }
 }
 
 /* ============================================
