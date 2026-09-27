@@ -26,6 +26,10 @@
     {
       "source": "/api/orders",
       "destination": "/api/orders/list"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
     }
   ]
 }
