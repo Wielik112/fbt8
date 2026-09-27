@@ -12,5 +12,4 @@ Disallow: /dziekujemy.html
 Disallow: /koszyk
 Disallow: /koszyk.html
 
-# Sitemap (dodać pełny adres po ustawieniu własnej domeny):
-# Sitemap: https://twoja-domena.pl/sitemap.xml
+Sitemap: https://fbtoutlet.pl/sitemap.xml

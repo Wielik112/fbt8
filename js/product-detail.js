@@ -97,6 +97,39 @@
     const md = document.querySelector('meta[name="description"]');
     if (md) md.setAttribute('content', (p.description || defaultDesc(p)).slice(0, 155));
 
+    // Canonical + Open Graph / Twitter — lepsze SEO i podgląd w social media.
+    try {
+      const origin = location.origin;
+      const cleanUrl = `${origin}/produkt?id=${encodeURIComponent(p.id)}`;
+      const desc = (p.description || defaultDesc(p)).slice(0, 200);
+      // Crawlerzy nie obsługują data-URI jako obrazka — wtedy używamy logo.
+      let ogImg = origin + '/assets/logo.png';
+      if (p.image) {
+        if (p.image.startsWith('http')) ogImg = p.image;
+        else if (!p.image.startsWith('data:')) ogImg = origin + '/' + p.image.replace(/^\//, '');
+      }
+      const setMeta = (attr, key, val) => {
+        let el = document.head.querySelector(`meta[${attr}="${key}"]`);
+        if (!el) { el = document.createElement('meta'); el.setAttribute(attr, key); document.head.appendChild(el); }
+        el.setAttribute('content', val);
+      };
+      let canon = document.head.querySelector('link[rel="canonical"]');
+      if (!canon) { canon = document.createElement('link'); canon.rel = 'canonical'; document.head.appendChild(canon); }
+      canon.setAttribute('href', cleanUrl);
+      setMeta('property', 'og:type', 'product');
+      setMeta('property', 'og:title', `${p.name} | FBT Outlet`);
+      setMeta('property', 'og:description', desc);
+      setMeta('property', 'og:image', ogImg);
+      setMeta('property', 'og:url', cleanUrl);
+      setMeta('property', 'og:site_name', 'FBT Outlet');
+      setMeta('property', 'product:price:amount', String(p.price));
+      setMeta('property', 'product:price:currency', 'PLN');
+      setMeta('name', 'twitter:card', 'summary_large_image');
+      setMeta('name', 'twitter:title', `${p.name} | FBT Outlet`);
+      setMeta('name', 'twitter:description', desc);
+      setMeta('name', 'twitter:image', ogImg);
+    } catch { /* non-critical */ }
+
     // Structured data (Product) for richer Google results.
     try {
       const origin = location.origin;
