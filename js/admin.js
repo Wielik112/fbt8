@@ -14,7 +14,7 @@ const CATEGORIES = window.CATEGORY_LEAVES || CATEGORY_TREE.flatMap((g) => g.subs
 const mainCategoryOf = window.mainCategoryOf || ((leaf) => (CATEGORY_TREE.find((g) => g.subs.includes(leaf)) || {}).name || '');
 const CONDITIONS = ['Nowy'];
 const GENDERS = ['Męskie', 'Damskie', 'Unisex'];
-const LEVELS = ['Rekreacyjne', 'Treningowe', 'Półprofesjonalne', 'Profesjonalne'];
+const LEVELS = ['Rekreacyjne', 'Półamatorskie', 'Półprofesjonalne', 'Profesjonalne'];
 const SURFACES = ['Na trawę (lanki)', 'Na sztuczną trawę/orlika (turfy)', 'Na mokrą trawę (wkręty/mixy)', 'Na halę (halówki)'];
 const GARMENTS = ['Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'];
 const TOKEN_KEY = 'fbt_admin_token';
