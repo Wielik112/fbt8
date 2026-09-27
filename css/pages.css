@@ -310,8 +310,8 @@
 .pd-meta div { display: flex; gap: 10px; font-size: 14px; color: var(--grey-2); }
 .pd-meta strong { color: var(--grey-1); font-family: var(--display); font-weight: 600; letter-spacing: 0.04em; min-width: 110px; text-transform: uppercase; font-size: 13px; }
 .pd-perks { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin: 30px 0; }
-.pd-perk { border: 1px solid var(--line); padding: 16px; text-align: center; }
-.pd-perk svg { width: 24px; height: 24px; color: var(--red); margin: 0 auto 10px; }
+.pd-perk { border: 1px solid var(--line); padding: 18px 14px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.pd-perk svg { width: 26px; height: 26px; color: var(--red); margin: 0 0 8px; flex: 0 0 auto; }
 .pd-perk span { font-size: 12px; color: var(--grey-2); font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 
 /* ---------- Cart ---------- */
