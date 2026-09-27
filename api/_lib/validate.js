@@ -16,7 +16,7 @@ export const GENDERS     = ['Męskie', 'Damskie', 'Unisex'];
 export const TAG_TYPES   = ['sale', 'hit', 'new'];
 
 // Poziom zaawansowania — istotny głównie dla butów piłkarskich.
-export const LEVELS = ['Rekreacyjne', 'Treningowe', 'Półprofesjonalne', 'Profesjonalne'];
+export const LEVELS = ['Rekreacyjne', 'Półamatorskie', 'Półprofesjonalne', 'Profesjonalne'];
 // Przeznaczenie (rodzaj nawierzchni) — dla butów piłkarskich.
 export const SURFACES = [
   'Na trawę (lanki)',

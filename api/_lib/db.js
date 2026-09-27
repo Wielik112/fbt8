@@ -123,6 +123,9 @@ export async function ensureSchema() {
   // Idempotentne — po pierwszym przebiegu żadne wiersze nie pasują.
   await sql`UPDATE products SET cat = garment WHERE cat = 'Odzież' AND garment IS NOT NULL AND garment <> ''`;
   await sql`UPDATE products SET cat = 'Akcesoria piłkarskie' WHERE cat IN ('Piłki', 'Akcesoria', 'Odzież')`;
+  // Zmiana nazwy poziomu zaawansowania: „Treningowe" → „Półamatorskie".
+  // Idempotentne — po pierwszym przebiegu żaden wiersz nie pasuje.
+  await sql`UPDATE products SET level = 'Półamatorskie' WHERE level = 'Treningowe'`;
   // Customer reviews (simple, public).
   await sql`
     CREATE TABLE IF NOT EXISTS reviews (
