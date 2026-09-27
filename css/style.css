@@ -39,7 +39,15 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html { scroll-behavior: smooth; overflow-x: hidden; }
+html {
+  scroll-behavior: smooth; overflow-x: hidden;
+  /* Blokuje automatyczne powiększanie tekstu przez przeglądarki mobilne
+     (iOS Safari / Android „font boosting"), przez które strona wyglądała
+     na „za bardzo przybliżoną" na telefonie. */
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 
 body {
   background: var(--black);
