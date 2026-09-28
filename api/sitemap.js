@@ -1,4 +1,4 @@
-import { ensureSchema, listProducts } from './_lib/db.js';
+import { ensureSchema, listProductsPublic as listProducts } from './_lib/db.js';
 import { baseUrl } from './_lib/commerce.js';
 
 // Strony statyczne warte indeksowania (bez koszyka/zamówienia/panelu).
