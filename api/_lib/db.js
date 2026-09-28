@@ -190,6 +190,72 @@ export async function listProducts() {
   return rows.map(mapRow);
 }
 
+// ---- Public (storefront) shape: photos as URLs instead of inline base64 ----
+// Uploaded photos are stored as data: URLs, which made every catalog response
+// carry every photo. The storefront gets short, versioned URLs instead
+// (served by /api/products/:id?img=…), so the browser loads only the photos
+// it shows, lazily, and caches them.
+const imgVersion = (r) => Math.floor(new Date(r.updated_at || 0).getTime() / 1000);
+function publicImage(r, raw, key) {
+  const s = String(raw || '');
+  if (!s) return '';
+  if (!s.startsWith('data:')) return s; // already a URL
+  return `/api/products/${encodeURIComponent(r.id)}?img=${key}&v=${imgVersion(r)}`;
+}
+
+// Catalog listing for the storefront. Skips the gallery column entirely and
+// never reads the base64 of the main photo out of the database.
+export async function listProductsPublic() {
+  const { rows } = await sql`
+    SELECT id, name, cat, brand, condition, gender, level, surface, garment, price, old_price,
+           description, note, featured, tag, tag_type, code, sizes, stock, prices, specs, colors,
+           gradient, updated_at,
+           CASE WHEN left(image, 5) = 'data:' THEN 'data:' ELSE image END AS image
+    FROM products ORDER BY sort_order ASC, created_at ASC`;
+  return rows.map((r) => ({ ...mapRow({ ...r, images: [] }), image: publicImage(r, r.image, 'main') }));
+}
+
+export function toPublicProduct(r) {
+  const images = Array.isArray(r.images) ? r.images : [];
+  return {
+    ...mapRow(r),
+    image: publicImage(r, r.image, 'main'),
+    images: images.map((src, i) => publicImage(r, src, i)).filter(Boolean),
+  };
+}
+
+export async function getProductPublic(id) {
+  const { rows } = await sql`SELECT * FROM products WHERE id = ${id}`;
+  return rows[0] ? toPublicProduct(rows[0]) : null;
+}
+
+// A product saved with our own photo URLs (e.g. the public shape reached the
+// panel) must keep its photos: swap each /api/products/:id?img=… reference
+// back to the stored data before validation, which only accepts data:/http(s).
+const OWN_IMG_RE = /^\/api\/products\/([^?]+)\?img=(main|\d+)/;
+export async function resolveImageRefs(body) {
+  if (!body || typeof body !== 'object') return body;
+  const resolve = async (v) => {
+    const m = OWN_IMG_RE.exec(String(v ?? ''));
+    return m ? ((await getProductImage(decodeURIComponent(m[1]), m[2])) || '') : v;
+  };
+  const out = { ...body, image: await resolve(body.image) };
+  if (Array.isArray(body.images)) out.images = await Promise.all(body.images.map(resolve));
+  return out;
+}
+
+// Raw stored photo for the image endpoint: key 'main' or a gallery index.
+export async function getProductImage(id, key) {
+  if (key === 'main') {
+    const { rows } = await sql`SELECT image AS src FROM products WHERE id = ${id}`;
+    return rows[0]?.src || null;
+  }
+  const idx = Number(key);
+  if (!Number.isInteger(idx) || idx < 0 || idx > 50) return null;
+  const { rows } = await sql`SELECT images->>${idx}::int AS src FROM products WHERE id = ${id}`;
+  return rows[0]?.src || null;
+}
+
 export async function getProduct(id) {
   const { rows } = await sql`SELECT * FROM products WHERE id = ${id}`;
   return rows[0] ? mapRow(rows[0]) : null;
