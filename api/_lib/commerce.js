@@ -88,8 +88,20 @@ export const PARCEL_TEMPLATES = {
   large:  { label: 'Gabaryt C', dimensions: { length: 640, width: 380, height: 410, unit: 'mm' } },
 };
 
-// Discount codes -> percent off. Validated server-side at checkout.
-export const COUPONS = { FBT15: 15, START10: 10 };
+// Discount codes -> percent off. Validated server-side only — the list never
+// reaches the browser. Set COUPONS="KOD1:15,KOD2:10" in the environment to
+// replace the defaults below without a code change.
+const DEFAULT_COUPONS = { FBT15: 15, START10: 10 };
+function parseCoupons(raw) {
+  const out = {};
+  for (const part of String(raw || '').split(',')) {
+    const [code, pct] = part.split(':').map((s) => s.trim());
+    const n = Math.round(Number(pct));
+    if (code && n > 0 && n <= 100) out[code.toUpperCase()] = n;
+  }
+  return out;
+}
+export const COUPONS = process.env.COUPONS?.trim() ? parseCoupons(process.env.COUPONS) : DEFAULT_COUPONS;
 
 // Resolved shipping cost for a method given the goods subtotal (grosze).
 // Returns null for an unknown method.
@@ -106,7 +118,8 @@ export function shippingCostFor(methodKey, qty = 1) {
 
 export function couponPercent(code) {
   if (!code) return 0;
-  return COUPONS[String(code).trim().toUpperCase()] || 0;
+  const key = String(code).trim().toUpperCase();
+  return Object.prototype.hasOwnProperty.call(COUPONS, key) ? COUPONS[key] : 0;
 }
 
 // ---- Order lifecycle -------------------------------------------------

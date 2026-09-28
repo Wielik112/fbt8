@@ -12,9 +12,19 @@ const MAX_QTY = 99;
 // POST /api/checkout
 // Body: { items:[{id, qty, size?}], customer:{email,name,phone}, shipping:{method, point?, address?}, coupon? }
 // Re-prices from the DB, creates a pending order, and returns a Stripe Checkout URL.
+// GET /api/checkout?coupon=CODE -> { code, percent } or 404.
+// Lets the cart preview a discount without shipping the code list to the
+// browser (kept in this function to stay within the serverless-function limit).
 export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    res.setHeader('Cache-Control', 'no-store');
+    const code = String(req.query?.coupon ?? '').trim().toUpperCase().slice(0, 40);
+    const percent = couponPercent(code);
+    if (!percent) return res.status(404).json({ error: 'Nieprawidłowy kod rabatowy.' });
+    return res.status(200).json({ code, percent });
+  }
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
+    res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ error: 'Metoda niedozwolona.' });
   }
 
