@@ -107,9 +107,21 @@ function fillCategoryCounts() {
   document.querySelectorAll('.cat-count[data-cat]').forEach((el) => {
     const key = el.dataset.cat;
     const n = PRODUCTS.filter((p) => p.cat === key || mainOf(p.cat) === key).length;
-    el.textContent = `${n} ${plProdukty(n)}`;
+    el.textContent = n ? `${n} ${plProdukty(n)}` : 'Nowości wkrótce';
   });
 }
+
+// Homepage collection tiles: subcategory links straight from CATEGORY_TREE,
+// so a new subcategory shows up here without touching the HTML.
+(function fillCategorySubs() {
+  const tree = window.CATEGORY_TREE || [];
+  document.querySelectorAll('.ctile-subs[data-main]').forEach((box) => {
+    const group = tree.find((g) => g.name === box.dataset.main);
+    if (!group) return;
+    box.innerHTML = group.subs.slice(0, 4)
+      .map((s) => `<a href="sklep.html?cat=${encodeURIComponent(s)}">${s}</a>`).join('');
+  });
+})();
 
 function renderRelated() {
   const rel = document.querySelector('#related-products');
