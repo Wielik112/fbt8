@@ -203,16 +203,19 @@ function publicImage(r, raw, key) {
   return `/api/products/${encodeURIComponent(r.id)}?img=${key}&v=${imgVersion(r)}`;
 }
 
-// Catalog listing for the storefront. Skips the gallery column entirely and
-// never reads the base64 of the main photo out of the database.
+// Catalog listing (storefront and admin panel). Photo data never leaves the
+// database: each photo comes back as a URL, gallery included, so the panel's
+// edit form keeps every photo (saving resolves the URLs via resolveImageRefs).
 export async function listProductsPublic() {
   const { rows } = await sql`
     SELECT id, name, cat, brand, condition, gender, level, surface, garment, price, old_price,
            description, note, featured, tag, tag_type, code, sizes, stock, prices, specs, colors,
            gradient, updated_at,
-           CASE WHEN left(image, 5) = 'data:' THEN 'data:' ELSE image END AS image
+           CASE WHEN left(image, 5) = 'data:' THEN 'data:' ELSE image END AS image,
+           COALESCE((SELECT jsonb_agg(CASE WHEN left(e, 5) = 'data:' THEN 'data:' ELSE e END ORDER BY n)
+                     FROM jsonb_array_elements_text(images) WITH ORDINALITY AS g(e, n)), '[]'::jsonb) AS images
     FROM products ORDER BY sort_order ASC, created_at ASC`;
-  return rows.map((r) => ({ ...mapRow({ ...r, images: [] }), image: publicImage(r, r.image, 'main') }));
+  return rows.map(toPublicProduct);
 }
 
 export function toPublicProduct(r) {

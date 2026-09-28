@@ -196,30 +196,49 @@ document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
   const track = document.querySelector('.brand-track');
   if (!track) return;
   const marquee = track.closest('.brand-marquee') || track.parentElement;
-  const baseHTML = track.innerHTML; // jeden komplet logo
+  const base = Array.from(track.children); // jeden komplet logo (zostaje w DOM)
   const SPEED = 70; // px na sekundę (stała prędkość niezależnie od liczby kopii)
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) return; // CSS układa jeden komplet bez animacji
 
-  function build() {
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    track.style.animation = 'none';
-    track.innerHTML = baseHTML;               // zmierz szerokość jednego kompletu
-    // eslint-disable-next-line no-unused-expressions
-    track.offsetWidth;                        // wymuś reflow
-    const oneSet = track.scrollWidth;
-    if (reduce || !oneSet) return;            // reduced-motion: zostaw jeden komplet, bez animacji
+  // Ruch dopiero, gdy wszystkie loga są pobrane i zdekodowane: szerokość
+  // kompletu jest wtedy prawdziwa, a kopie od razu pokazują gotowe obrazki.
+  track.style.animationName = 'none';
+  track.style.willChange = 'transform';
+  const imgs = Array.from(track.querySelectorAll('img'));
+  const loaded = (img) => (img.complete ? Promise.resolve() : new Promise((res) => {
+    img.addEventListener('load', res, { once: true });
+    img.addEventListener('error', res, { once: true });
+  })).then(() => (img.decode ? img.decode().catch(() => {}) : null));
+  const timeout = new Promise((res) => setTimeout(res, 4000));
+  let ready = false;
+  Promise.race([Promise.all(imgs.map(loaded)), timeout]).then(() => { ready = true; build(true); });
+
+  let lastWidth = 0;
+  function build(force) {
     const container = marquee.clientWidth || window.innerWidth || 1200;
+    // Na telefonie „resize" leci przy chowaniu paska adresu (zmienia się tylko
+    // wysokość) — przebudowa za każdym razem powodowała przeskoki.
+    if (!force && container === lastWidth) return;
+    lastWidth = container;
+    const oneSet = base.reduce((s, el) =>
+      s + el.getBoundingClientRect().width + (parseFloat(getComputedStyle(el).marginRight) || 0), 0);
+    if (!oneSet) return;
     // Każda „połowa" ścieżki musi zakryć ekran → zapas +1 komplet.
     const halfSets = Math.ceil(container / oneSet) + 1;
-    const copies = halfSets * 2;              // parzyście, by -50% trafiało w granicę kompletu
-    track.innerHTML = baseHTML.repeat(copies);
-    const halfWidth = oneSet * halfSets;
-    const dur = Math.max(18, Math.round(halfWidth / SPEED));
-    track.style.animation = `scroll-x ${dur}s linear infinite`;
+    const copies = halfSets * 2; // parzyście, by -50% trafiało w granicę kompletu
+    if (track.children.length !== base.length * copies) {
+      while (track.children.length > base.length) track.lastElementChild.remove();
+      const frag = document.createDocumentFragment();
+      for (let i = 1; i < copies; i++) base.forEach((el) => frag.appendChild(el.cloneNode(true)));
+      track.appendChild(frag);
+    }
+    // Tylko czas trwania — reszta animacji (i pauza po najechaniu) zostaje z CSS.
+    track.style.animationDuration = `${Math.max(18, Math.round((oneSet * halfSets) / SPEED))}s`;
+    track.style.animationName = '';
   }
 
-  build();
-  window.addEventListener('load', build);
-  let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(build, 200); });
+  let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { if (ready) build(false); }, 200); });
 })();
 
 /* ============================================
