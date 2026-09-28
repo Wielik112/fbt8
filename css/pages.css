@@ -560,3 +560,63 @@
 .cats-grid-3 { grid-template-columns: repeat(3, 1fr); grid-template-rows: auto; }
 .cats-grid-3 .cat { min-height: 240px; }
 @media (max-width: 760px) { .cats-grid-3 { grid-template-columns: 1fr; } }
+
+/* ---------- Dostawa i płatności (zaufanie: znani przewoźnicy / metody) ----------
+   Znaczki to napisy w barwach marek (bez plików logo), więc zawsze się
+   wczytują od razu i są ostre na każdym ekranie. */
+.trust-strip { padding: 56px 0 50px; background: var(--black); border-bottom: 1px solid var(--line); }
+.trust-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.trust-col { border: 1px solid var(--line); background: var(--black-2); border-radius: 14px; padding: 26px 26px 22px; }
+.trust-col .eyebrow { margin-bottom: 12px; }
+.trust-col h3 { font-family: var(--display); font-size: 22px; text-transform: uppercase; letter-spacing: .5px; margin: 0 0 18px; color: #fff; }
+.trust-logos { display: flex; flex-wrap: wrap; gap: 10px; }
+.trust-note { margin: 16px 0 0; color: var(--grey-2); font-size: 13.5px; line-height: 1.55; }
+.trust-note strong { color: #fff; font-weight: 600; }
+.trust-facts { list-style: none; margin: 22px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 28px; }
+.trust-facts li { display: flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 13px; color: var(--grey-1); }
+.trust-facts li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex: 0 0 auto; }
+
+/* Znaczek marki */
+.lg { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; min-width: 92px; padding: 0 14px; border-radius: 8px; font-family: Arial, Helvetica, sans-serif; font-weight: 800; font-size: 16px; line-height: 1; white-space: nowrap; user-select: none; }
+.lg-inpost  { background: #FFCD00; color: #1d1d1b; letter-spacing: -.02em; }
+.lg-dpd     { background: #DC0032; color: #fff; text-transform: lowercase; font-size: 19px; letter-spacing: -.03em; }
+.lg-pocztex { background: #fff; color: #1d1d1b; letter-spacing: .02em; }
+.lg-pocztex b { color: #E2001A; }
+.lg-orlen   { background: #fff; color: #E4002B; font-size: 14px; }
+.lg-orlen i { font-style: normal; color: #1d1d1b; font-weight: 700; }
+.lg-visa    { background: #fff; color: #1A1F71; font-style: italic; font-size: 19px; letter-spacing: -.01em; }
+.lg-mc      { background: #fff; color: #1d1d1b; font-size: 13px; font-weight: 700; }
+.lg-mc .mc  { position: relative; width: 30px; height: 18px; flex: 0 0 auto; }
+.lg-mc .mc::before, .lg-mc .mc::after { content: ""; position: absolute; top: 0; width: 18px; height: 18px; border-radius: 50%; }
+.lg-mc .mc::before { left: 0; background: #EB001B; }
+.lg-mc .mc::after  { right: 0; background: #F79E1B; mix-blend-mode: multiply; }
+.lg-apple   { background: #000; color: #fff; border: 1px solid var(--line-bright); font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; }
+.lg-gpay    { background: #fff; color: #3c4043; font-weight: 600; }
+.lg-gpay b  { font-weight: 700; background: linear-gradient(90deg,#4285F4 0 25%,#EA4335 25% 50%,#FBBC05 50% 75%,#34A853 75%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* Wersja kompaktowa: linia pod „Dodaj do koszyka" na stronie produktu */
+.pd-ship { margin: -10px 0 26px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--black-2); }
+.pd-ship-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px; font-size: 13px; color: var(--grey-2); }
+.pd-ship-head strong { color: #fff; font-weight: 600; white-space: nowrap; }
+.pd-ship .trust-logos { gap: 8px; }
+.pd-ship .lg { height: 30px; min-width: 0; padding: 0 10px; font-size: 13px; border-radius: 6px; }
+.pd-ship .lg-dpd { font-size: 15px; }
+.pd-ship .lg-orlen { font-size: 12px; }
+
+@media (max-width: 860px) {
+  .trust-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .trust-strip { padding: 40px 0 36px; }
+  .trust-col { padding: 20px 16px 18px; }
+  .trust-col h3 { font-size: 19px; }
+  .trust-col .trust-logos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .lg { height: 38px; min-width: 0; padding: 0 10px; font-size: 14px; }
+  .lg-dpd, .lg-visa { font-size: 17px; }
+  .trust-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+  .trust-facts li { font-size: 12px; }
+  .pd-ship .trust-logos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .pd-ship .lg { padding: 0 4px; font-size: 12px; }
+  .pd-ship .lg-dpd { font-size: 14px; }
+  .pd-ship .lg-orlen { font-size: 9.5px; gap: 2px; letter-spacing: -.02em; }
+}
