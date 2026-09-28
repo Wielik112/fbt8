@@ -387,9 +387,10 @@
     }
 
     // Related: prefer same category, then fill with others
+    const RELATED_COUNT = 10;
     let rel = all.filter((x) => x.id !== p.id && x.cat === p.cat);
-    if (rel.length < 4) rel = rel.concat(all.filter((x) => x.id !== p.id && x.cat !== p.cat));
-    rel = rel.slice(0, 4);
+    if (rel.length < RELATED_COUNT) rel = rel.concat(all.filter((x) => x.id !== p.id && x.cat !== p.cat));
+    rel = rel.slice(0, RELATED_COUNT);
     if (rel.length && typeof renderProducts === 'function') {
       renderProducts('#pd-related', rel);
       $('#pd-related-sec').hidden = false;

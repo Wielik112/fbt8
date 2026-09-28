@@ -1,5 +1,5 @@
 import {
-  ensureSchema, seedIfEmpty, listProducts, listProductsPublic, insertProduct, resolveImageRefs, dbErrorMessage,
+  ensureSchema, seedIfEmpty, listProductsPublic, insertProduct, resolveImageRefs, dbErrorMessage,
 } from '../_lib/db.js';
 import { isAdmin, readJsonBody } from '../_lib/auth.js';
 import { normalizeProduct, genId } from '../_lib/validate.js';
@@ -10,7 +10,7 @@ export const config = { api: { bodyParser: { sizeLimit: '8mb' } } };
 
 // GET  /api/products  -> public list (photos as URLs; seeds on first run).
 //                        The signed-in admin panel (Bearer token) gets the
-//                        full list with the stored photos, uncached.
+//                        same list uncached, so its edits show up at once.
 // POST /api/products  -> create a product (admin only)
 export default async function handler(req, res) {
   try {
@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       await seedIfEmpty();
       if (String(req.headers?.authorization || '').startsWith('Bearer ') && isAdmin(req)) {
         res.setHeader('Cache-Control', 'private, no-store');
-        return res.status(200).json(await listProducts());
+        return res.status(200).json(await listProductsPublic());
       }
       const products = await listProductsPublic();
       // Short CDN cache: pages load instantly, and panel edits / stock show up
