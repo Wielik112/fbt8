@@ -67,6 +67,13 @@
 .usp-intro p{color:var(--grey-1,#cfcfd6);font-size:15px;line-height:1.7;margin:0 0 10px}
 @media(max-width:860px){.usp-grid{grid-template-columns:repeat(2,1fr)}.usp:nth-child(3){border-left:none}}
 @media(max-width:520px){.usp-grid{grid-template-columns:1fr}.usp{border-left:none;border-top:1px solid var(--line,#22222a)}.usp:first-child{border-top:none}}
+/* Odstępy sekcji strony głównej: produkty bliżej kolekcji */
+.home-cats{padding-bottom:36px}
+.home-featured{padding-top:36px}
+.home-cats .section-head,.home-featured .section-head{margin-bottom:36px}
+.brand-strip .bs-head .eyebrow{justify-content:center}
+@media(max-width:760px){.home-cats .cats-grid-3 .cat{min-height:120px}}
+@media(max-width:560px){.home-featured .section-head{flex-wrap:wrap;gap:18px}}
 /* Brand strip */
 .brand-strip{padding:34px 0 40px;border-top:1px solid var(--line,#22222a);border-bottom:1px solid var(--line,#22222a);background:var(--black-2,#0d0d10);overflow:hidden}
 .brand-strip .bs-head{text-align:center;margin-bottom:22px}
@@ -146,43 +153,8 @@
   </div>
 </div>
 
-<!-- VALUE PROPS (under hero banner) -->
-<section class="usp-band">
-  <div class="shell">
-    <div class="usp-grid">
-      <div class="usp reveal">
-        <h3>Oryginalne produkty</h3>
-        <p>Tylko sprawdzone, oryginalne produkty renomowanych marek.</p>
-      </div>
-      <div class="usp reveal">
-        <h3>Marki premium</h3>
-        <p>Wybieramy marki cenione za jakość, funkcjonalność i design.</p>
-      </div>
-      <div class="usp reveal">
-        <h3>Ceny outletowe</h3>
-        <p>Szukamy najlepszych okazji, aby oferować atrakcyjne ceny.</p>
-      </div>
-      <div class="usp reveal">
-        <h3>Sport i styl</h3>
-        <p>Odzież, obuwie, akcesoria i sprzęt dla aktywnych i nie tylko.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- BRAND INTRO -->
-<section class="usp-intro-wrap">
-  <div class="shell">
-    <div class="usp-intro reveal">
-      <h2>FBT Outlet, markowe produkty w cenach, które naprawdę się opłacają</h2>
-      <p>Szukasz oryginalnych produktów znanych i cenionych marek w atrakcyjnych cenach? Nie czekaj, sprawdź, co mamy dziś w ofercie i wybierz swoją okazję!</p>
-      <p>Zrób zakupy w FBT Outlet i ciesz się markową jakością w outletowej cenie.</p>
-    </div>
-  </div>
-</section>
-
 <!-- CATEGORIES -->
-<section class="section">
+<section class="section home-cats">
   <div class="shell">
     <div class="section-head reveal">
       <span class="eyebrow">Kolekcje</span>
@@ -205,8 +177,25 @@
   </div>
 </section>
 
+<!-- FEATURED PRODUCTS -->
+<section class="section home-featured" id="featured">
+  <div class="shell">
+    <div class="section-head reveal flex" style="justify-content:space-between;align-items:flex-end;max-width:none">
+      <div>
+        <span class="eyebrow">Bestsellery</span>
+        <h2 class="h-section">Na topie<br>w tym tygodniu</h2>
+      </div>
+      <a href="sklep.html" class="btn btn-ghost" style="flex-shrink:0">Zobacz wszystkie
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+    </div>
+    <div class="product-grid" id="featured-products"></div>
+  </div>
+</section>
+
 <!-- BRAND STRIP (scrolling marquee of stocked brands) -->
 <section class="brand-strip" aria-label="Marki dostępne w sklepie">
+  <div class="bs-head"><span class="eyebrow">Marki w naszym sklepie</span></div>
   <div class="brand-marquee">
     <div class="brand-track" aria-hidden="true">
       <span class="brand-item"><img src="assets/brands/nike.webp" alt="Nike" loading="eager" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><span class="bi-txt">Nike</span></span>
@@ -216,6 +205,41 @@
       <span class="brand-item"><img src="assets/brands/new-balance.webp" alt="New Balance" loading="eager" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><span class="bi-txt">New Balance</span></span>
       <span class="brand-item"><img src="assets/brands/under-armour.webp" alt="Under Armour" loading="eager" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><span class="bi-txt">Under Armour</span></span>
       <span class="brand-item"><img src="assets/brands/converse.webp" alt="Converse" loading="eager" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><span class="bi-txt">Converse</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- BRAND INTRO -->
+<section class="usp-intro-wrap">
+  <div class="shell">
+    <div class="usp-intro reveal">
+      <h2>FBT Outlet, markowe produkty w cenach, które naprawdę się opłacają</h2>
+      <p>Szukasz oryginalnych produktów znanych i cenionych marek w atrakcyjnych cenach? Nie czekaj, sprawdź, co mamy dziś w ofercie i wybierz swoją okazję!</p>
+      <p>Zrób zakupy w FBT Outlet i ciesz się markową jakością w outletowej cenie.</p>
+    </div>
+  </div>
+</section>
+
+<!-- VALUE PROPS (dlaczego FBT) -->
+<section class="usp-band">
+  <div class="shell">
+    <div class="usp-grid">
+      <div class="usp reveal">
+        <h3>Oryginalne produkty</h3>
+        <p>Tylko sprawdzone, oryginalne produkty renomowanych marek.</p>
+      </div>
+      <div class="usp reveal">
+        <h3>Marki premium</h3>
+        <p>Wybieramy marki cenione za jakość, funkcjonalność i design.</p>
+      </div>
+      <div class="usp reveal">
+        <h3>Ceny outletowe</h3>
+        <p>Szukamy najlepszych okazji, aby oferować atrakcyjne ceny.</p>
+      </div>
+      <div class="usp reveal">
+        <h3>Sport i styl</h3>
+        <p>Odzież, obuwie, akcesoria i sprzęt dla aktywnych i nie tylko.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -251,24 +275,7 @@
       <li>Wysyłka w 24h</li>
       <li>Śledzenie przesyłki</li>
       <li>Zwrot 14 dni</li>
-      <li>100% oryginalne</li>
     </ul>
-  </div>
-</section>
-
-<!-- FEATURED PRODUCTS -->
-<section class="section" id="featured" style="padding-top:80px">
-  <div class="shell">
-    <div class="section-head reveal flex" style="justify-content:space-between;align-items:flex-end;max-width:none">
-      <div>
-        <span class="eyebrow">Bestsellery</span>
-        <h2 class="h-section">Na topie<br>w tym tygodniu</h2>
-      </div>
-      <a href="sklep.html" class="btn btn-ghost" style="flex-shrink:0">Zobacz wszystkie
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </a>
-    </div>
-    <div class="product-grid" id="featured-products"></div>
   </div>
 </section>
 
