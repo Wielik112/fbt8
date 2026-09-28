@@ -58,13 +58,13 @@
 /* Value props under hero */
 .usp-band{border-top:1px solid var(--line,#22222a);border-bottom:1px solid var(--line,#22222a);background:var(--black-2,#0d0d10)}
 .usp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
-.usp{padding:34px 26px;border-left:1px solid var(--line,#22222a)}
+.usp{padding:clamp(30px,4vw,46px) clamp(20px,2.4vw,32px);border-left:1px solid var(--line,#22222a)}
 .usp:first-child{border-left:none}
 .usp h3{font-family:var(--display,inherit);font-size:15px;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px;color:#fff}
 .usp p{margin:0;font-size:13.5px;color:var(--grey-2,#8b8b95);line-height:1.55}
-.usp-intro{max-width:760px;margin:0 auto;text-align:center;padding:46px 20px 8px}
-.usp-intro h2{font-family:var(--display,inherit);font-size:clamp(22px,3vw,30px);text-transform:uppercase;margin:0 0 14px}
-.usp-intro p{color:var(--grey-1,#cfcfd6);font-size:15px;line-height:1.7;margin:0 0 10px}
+.usp-intro{max-width:780px;margin:0 auto;text-align:center;padding:clamp(64px,8vw,104px) 20px clamp(44px,5.5vw,70px)}
+.usp-intro h2{font-family:var(--display,inherit);font-size:clamp(22px,3vw,30px);text-transform:uppercase;margin:0 0 22px;line-height:1.15}
+.usp-intro p{color:var(--grey-1,#cfcfd6);font-size:15px;line-height:1.75;margin:0 0 14px}
 @media(max-width:860px){.usp-grid{grid-template-columns:repeat(2,1fr)}.usp:nth-child(3){border-left:none}}
 @media(max-width:520px){.usp-grid{grid-template-columns:1fr}.usp{border-left:none;border-top:1px solid var(--line,#22222a)}.usp:first-child{border-top:none}}
 /* Odstępy sekcji strony głównej: produkty bliżej kolekcji */
@@ -98,8 +98,8 @@
 @media(max-width:620px){.ctile-grid{grid-template-columns:1fr;gap:12px}.ctile{min-height:0;padding:22px 20px 20px}.ctile-art{position:absolute;top:18px;right:14px;width:40%;height:92px}.ctile-num{font-size:56px;top:10px;left:16px}.ctile-body{padding-top:78px}.ctile-body h3{font-size:28px}}
 @media(max-width:560px){.home-featured .section-head{flex-wrap:wrap;gap:18px}}
 /* Brand strip */
-.brand-strip{padding:34px 0 40px;border-top:1px solid var(--line,#22222a);border-bottom:1px solid var(--line,#22222a);background:var(--black-2,#0d0d10);overflow:hidden}
-.brand-strip .bs-head{text-align:center;margin-bottom:22px}
+.brand-strip{padding:clamp(40px,4.5vw,56px) 0 clamp(44px,5vw,62px);border-top:1px solid var(--line,#22222a);border-bottom:1px solid var(--line,#22222a);background:var(--black-2,#0d0d10);overflow:hidden}
+.brand-strip .bs-head{text-align:center;margin-bottom:30px}
 .brand-marquee{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
 .brand-track{display:flex;width:max-content;align-items:center;animation:scroll-x 32s linear infinite}
 .brand-strip:hover .brand-track{animation-play-state:paused}

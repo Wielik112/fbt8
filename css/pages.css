@@ -564,7 +564,7 @@
 /* ---------- Dostawa i płatności (zaufanie: znani przewoźnicy / metody) ----------
    Znaczki to napisy w barwach marek (bez plików logo), więc zawsze się
    wczytują od razu i są ostre na każdym ekranie. */
-.trust-strip { padding: 56px 0 50px; background: var(--black); border-bottom: 1px solid var(--line); }
+.trust-strip { padding: clamp(64px, 8vw, 104px) 0 clamp(56px, 7vw, 92px); background: var(--black); border-bottom: 1px solid var(--line); }
 .trust-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .trust-col { border: 1px solid var(--line); background: var(--black-2); border-radius: 14px; padding: 26px 26px 22px; }
 .trust-col .eyebrow { margin-bottom: 12px; }
@@ -572,7 +572,7 @@
 .trust-logos { display: flex; flex-wrap: wrap; gap: 10px; }
 .trust-note { margin: 16px 0 0; color: var(--grey-2); font-size: 13.5px; line-height: 1.55; }
 .trust-note strong { color: #fff; font-weight: 600; }
-.trust-facts { list-style: none; margin: 22px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 28px; }
+.trust-facts { list-style: none; margin: 40px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 28px; }
 .trust-facts li { display: flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 13px; color: var(--grey-1); }
 .trust-facts li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex: 0 0 auto; }
 
@@ -607,7 +607,6 @@
   .trust-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
-  .trust-strip { padding: 40px 0 36px; }
   .trust-col { padding: 20px 16px 18px; }
   .trust-col h3 { font-size: 19px; }
   .trust-col .trust-logos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
