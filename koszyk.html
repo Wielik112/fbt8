@@ -204,11 +204,24 @@ function removeItem(i) {
   showToast(name + ' usunięto z koszyka');
 }
 
-document.getElementById('promo-btn').addEventListener('click', () => {
+// Kod sprawdza serwer (lista kodów nie trafia do przeglądarki). Poprawny kod
+// zapamiętujemy, żeby formularz zamówienia zastosował go automatycznie.
+document.getElementById('promo-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('promo-btn');
   const code = document.getElementById('promo-input').value.trim().toUpperCase();
-  if (code === 'FBT15') { discount = 0.15; showToast('Kod FBT15 aktywny: -15%'); }
-  else if (code === 'START10') { discount = 0.10; showToast('Kod START10 aktywny: -10%'); }
-  else { discount = 0; showToast('Nieprawidłowy kod rabatowy'); }
+  let percent = 0;
+  if (code) {
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/checkout?coupon=' + encodeURIComponent(code), { headers: { Accept: 'application/json' } });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.percent) percent = data.percent;
+    } catch { /* błąd sieci — traktujemy jak nieprawidłowy kod */ }
+    btn.disabled = false;
+  }
+  discount = percent / 100;
+  try { percent ? sessionStorage.setItem('fbt_coupon', code) : sessionStorage.removeItem('fbt_coupon'); } catch { /* brak storage */ }
+  showToast(percent ? `Kod ${code} aktywny: -${percent}%` : 'Nieprawidłowy kod rabatowy');
   renderCart();
 });
 document.getElementById('checkout-btn').addEventListener('click', (e) => {

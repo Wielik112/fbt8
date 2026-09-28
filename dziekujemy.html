@@ -83,6 +83,7 @@
 
   // Payment succeeded from the buyer's side — clear the cart immediately.
   try { const s = JSON.parse(window.name || '{}'); delete s.cart; window.name = JSON.stringify(s); } catch {}
+  try { sessionStorage.removeItem('fbt_coupon'); } catch {}
   if (typeof updateCartCount === 'function') updateCartCount();
 
   if (!sessionId) {

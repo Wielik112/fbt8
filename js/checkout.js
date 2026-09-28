@@ -40,8 +40,6 @@
     const tier = m.tiers.find((t) => q <= t.maxQty) || m.tiers[m.tiers.length - 1];
     return tier.price;
   }
-  const COUPONS = { FBT15: 15, START10: 10 };
-
   const fmt = (gr) => (gr / 100).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
   const gradients = ['linear-gradient(135deg,#2a0409,#1c1c22)', 'linear-gradient(135deg,#1c1c22,#320810)', 'linear-gradient(135deg,#151519,#2a0409)'];
 
@@ -153,13 +151,24 @@
     box.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  // ---- Coupon ----
-  $('co-promo-btn').addEventListener('click', () => {
-    const code = $('co-promo-input').value.trim().toUpperCase();
-    if (COUPONS[code]) { discountPercent = COUPONS[code]; discountCode = code; showToast(`Kod ${code}: −${COUPONS[code]}%`); }
-    else { discountPercent = 0; discountCode = ''; showToast('Nieprawidłowy kod rabatowy'); }
+  // ---- Coupon (validated by the server; codes never ship to the browser) ----
+  async function applyCoupon(code, { quiet = false } = {}) {
+    discountPercent = 0; discountCode = '';
+    if (code) {
+      const btn = $('co-promo-btn');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/checkout?coupon=' + encodeURIComponent(code), { headers: { Accept: 'application/json' } });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.percent) { discountPercent = data.percent; discountCode = data.code || code; }
+      } catch { /* network error — treated as invalid below */ }
+      btn.disabled = false;
+    }
+    try { discountCode ? sessionStorage.setItem('fbt_coupon', discountCode) : sessionStorage.removeItem('fbt_coupon'); } catch { /* no storage */ }
+    if (!quiet || discountPercent) showToast(discountPercent ? `Kod ${discountCode}: −${discountPercent}%` : 'Nieprawidłowy kod rabatowy');
     renderTotals();
-  });
+  }
+  $('co-promo-btn').addEventListener('click', () => applyCoupon($('co-promo-input').value.trim().toUpperCase()));
 
   // ---- Point selection (wpisanie ręczne) ----
   $('c-point').addEventListener('input', () => {
@@ -316,6 +325,10 @@
     renderItems();
     renderShipping();
     renderTotals();
+    // Re-apply a code entered in the cart (validated again by the server).
+    let saved = '';
+    try { saved = sessionStorage.getItem('fbt_coupon') || ''; } catch { /* no storage */ }
+    if (saved) { $('co-promo-input').value = saved; applyCoupon(saved, { quiet: true }); }
     // Pull live product photos, then re-render so the summary shows the real images.
     loadProductMap().then(renderItems);
   })();
