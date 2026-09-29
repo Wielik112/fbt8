@@ -6,7 +6,7 @@
    Kolejność w tablicy = kolejność w menu i filtrach.
    ============================================ */
 window.CATEGORY_TREE = [
-  { name: 'Obuwie',      subs: ['Buty', 'Buty sportowe', 'Trampki'] },
+  { name: 'Obuwie',      subs: ['Buty', 'Buty sportowe', 'Buty do biegania', 'Trampki'] },
   { name: 'Odzież',      subs: ['Koszulki', 'Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'] },
   { name: 'Piłka nożna', subs: ['Buty piłkarskie', 'Rękawice bramkarskie', 'Akcesoria piłkarskie'] },
 ];
@@ -53,7 +53,7 @@ window.SIZE_SETS = {
 
 // Zwraca nazwę zestawu rozmiarów pasującego do danej podkategorii.
 window.sizeSetFor = function (cat) {
-  if (['Buty', 'Buty sportowe', 'Trampki', 'Buty piłkarskie'].includes(cat)) return 'shoe';
+  if (['Buty', 'Buty sportowe', 'Buty do biegania', 'Trampki', 'Buty piłkarskie'].includes(cat)) return 'shoe';
   if (['Koszulki', 'Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'].includes(cat)) return 'apparel';
   if (cat === 'Rękawice bramkarskie') return 'glove';
   if (cat === 'Akcesoria piłkarskie') return 'accessory';

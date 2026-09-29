@@ -170,6 +170,11 @@ h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:.5px;text-transform:
 .od-block h3{font-family:var(--display);font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--grey-2);margin:0 0 8px}
 .od-block .kv{font-size:14px;line-height:1.7}
 .od-block .kv b{color:var(--grey-2);font-weight:500}
+.od-invoice{margin-bottom:20px;padding:14px 16px;border:1px solid #6b551a;border-radius:12px;background:rgba(255,205,0,.06)}
+.od-invoice-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.od-invoice-head h3{color:#FFCD00;margin:0}
+.inv-badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:#FFCD00;color:#1d1d1b;white-space:nowrap}
+.inv-none{color:var(--grey-3)}
 .od-items{margin:6px 0 0}
 .od-item{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid var(--line)}
 .od-item:last-child{border-bottom:none}
@@ -190,6 +195,14 @@ h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:.5px;text-transform:
 .modal-body{padding:22px 24px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .modal-foot{display:flex;justify-content:flex-end;gap:12px;padding:18px 24px;border-top:1px solid var(--line)}
+/* Okno produktu na cały ekran: nie da się go zamknąć przypadkowym kliknięciem
+   obok, a nagłówek i przyciski zapisu są zawsze widoczne. */
+.modal-full{padding:0;place-items:stretch;background:var(--surface)}
+.modal-full .modal{max-width:none;min-height:100%;border:none;border-radius:0;box-shadow:none;display:flex;flex-direction:column}
+.modal-full .modal-head{position:sticky;top:0;z-index:5;background:var(--surface)}
+.modal-full .modal-head h2{width:100%;max-width:1000px;margin:0 auto}
+.modal-full .modal-body{flex:1;width:100%;max-width:1000px;margin:0 auto;padding-top:28px;padding-bottom:28px}
+.modal-full .modal-foot{position:sticky;bottom:0;z-index:5;background:var(--surface);box-shadow:0 -12px 24px -16px #000}
 
 /* ---- Image upload ---- */
 input[type=file]{width:100%;padding:10px 12px;background:var(--black-2);border:1px dashed var(--line-bright);
@@ -429,6 +442,11 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
         <option value="pending">Oczekujące na płatność</option>
         <option value="cancelled">Anulowane</option>
       </select>
+      <select id="order-invoice-filter" aria-label="Faktura">
+        <option value="">Faktura: wszystkie</option>
+        <option value="yes">Tylko z fakturą</option>
+        <option value="no">Bez faktury</option>
+      </select>
       <button id="orders-refresh" class="btn btn-ghost btn-sm">Odśwież</button>
       <button id="orders-labels" class="btn btn-primary btn-sm" disabled>Drukuj etykiety (0)</button>
       <button id="orders-delete" class="btn btn-ghost btn-sm btn-danger" disabled>Usuń zaznaczone (0)</button>
@@ -446,6 +464,7 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
             <th>Nr zamówienia</th>
             <th class="hide-sm">Data</th>
             <th class="hide-sm">Klient</th>
+            <th>Faktura</th>
             <th>Kwota</th>
             <th>Płatność</th>
             <th>Status</th>
@@ -492,7 +511,7 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
 </main>
 
 <!-- EDIT / ADD MODAL -->
-<div id="modal" class="modal-back hidden">
+<div id="modal" class="modal-back modal-full hidden">
   <form id="product-form" class="modal">
     <div class="modal-head">
       <h2 id="modal-title">Nowy produkt</h2>
@@ -589,6 +608,13 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
         <div class="hint">Zaznacz, aby ten produkt pojawił się wśród wyróżnionych na stronie głównej.</div>
       </div>
       <div class="field">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:14px;color:var(--white)">
+          <input type="checkbox" id="f-free-shipping" style="width:18px;height:18px;flex:0 0 auto">
+          Darmowa dostawa
+        </label>
+        <div class="hint">Zamówienie z tym produktem nie płaci za wysyłkę (każda metoda dostawy kosztuje 0 zł). W sklepie produkt dostaje oznaczenie „Darmowa dostawa".</div>
+      </div>
+      <div class="field">
         <label>Rozmiary, stany magazynowe i ceny</label>
         <div class="size-picker-label">Kliknij dostępne rozmiary:</div>
         <div id="f-size-picker" class="size-picker"></div>
@@ -653,6 +679,14 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
           <h3>Dostawa</h3>
           <div class="kv" id="om-shipping"></div>
         </div>
+      </div>
+
+      <div class="od-block od-invoice" id="om-invoice" hidden>
+        <div class="od-invoice-head">
+          <h3>Faktura — klient prosi o fakturę</h3>
+          <button type="button" class="btn btn-ghost btn-sm" id="om-invoice-copy">Kopiuj dane</button>
+        </div>
+        <div class="kv" id="om-invoice-body"></div>
       </div>
 
       <div class="od-block" style="margin-bottom:20px">

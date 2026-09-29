@@ -111,6 +111,8 @@ export async function ensureSchema() {
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS garment TEXT`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS note TEXT`;
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT false`;
+  // Darmowa dostawa dla zamówienia zawierającego ten produkt.
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS free_shipping BOOLEAN NOT NULL DEFAULT false`;
   // Stan magazynowy per rozmiar: { rozmiar: liczba_sztuk }.
   await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS stock JSONB NOT NULL DEFAULT '{}'::jsonb`;
   // Ceny per rozmiar (nadpisania ceny bazowej): { rozmiar: cena }.
@@ -171,6 +173,7 @@ export function mapRow(r) {
     description: r.description || '',
     note: r.note || '',
     featured: r.featured === true || r.featured === 't',
+    freeShipping: r.free_shipping === true || r.free_shipping === 't',
     tag: r.tag,
     tagType: r.tag_type,
     sizes: r.sizes || [],
@@ -209,7 +212,7 @@ function publicImage(r, raw, key) {
 export async function listProductsPublic() {
   const { rows } = await sql`
     SELECT id, name, cat, brand, condition, gender, level, surface, garment, price, old_price,
-           description, note, featured, tag, tag_type, code, sizes, stock, prices, specs, colors,
+           description, note, featured, free_shipping, tag, tag_type, code, sizes, stock, prices, specs, colors,
            gradient, updated_at,
            CASE WHEN left(image, 5) = 'data:' THEN 'data:' ELSE image END AS image,
            COALESCE((SELECT jsonb_agg(CASE WHEN left(e, 5) = 'data:' THEN 'data:' ELSE e END ORDER BY n)
@@ -268,9 +271,9 @@ export async function insertProduct(p, sortOrder = null) {
   const order = sortOrder == null ? await nextSortOrder() : sortOrder;
   const { rows } = await sql`
     INSERT INTO products
-      (id, name, cat, brand, condition, gender, level, surface, garment, price, old_price, description, note, featured, tag, tag_type, code, sizes, stock, prices, specs, colors, image, images, gradient, sort_order)
+      (id, name, cat, brand, condition, gender, level, surface, garment, price, old_price, description, note, featured, free_shipping, tag, tag_type, code, sizes, stock, prices, specs, colors, image, images, gradient, sort_order)
     VALUES
-      (${p.id}, ${p.name}, ${p.cat}, ${p.brand}, ${p.condition}, ${p.gender || 'Unisex'}, ${p.level || null}, ${p.surface || null}, ${p.garment || null}, ${p.price}, ${p.old}, ${p.description || null}, ${p.note || null}, ${p.featured === true},
+      (${p.id}, ${p.name}, ${p.cat}, ${p.brand}, ${p.condition}, ${p.gender || 'Unisex'}, ${p.level || null}, ${p.surface || null}, ${p.garment || null}, ${p.price}, ${p.old}, ${p.description || null}, ${p.note || null}, ${p.featured === true}, ${p.freeShipping === true},
        ${p.tag}, ${p.tagType}, ${p.code || null},
        ${JSON.stringify(p.sizes || [])}::jsonb, ${JSON.stringify(p.stock || {})}::jsonb, ${JSON.stringify(p.prices || {})}::jsonb, ${JSON.stringify(p.specs || [])}::jsonb, ${JSON.stringify(p.colors || [])}::jsonb,
        ${p.image || null}, ${JSON.stringify(p.images || [])}::jsonb,
@@ -285,6 +288,7 @@ export async function updateProduct(id, p) {
       name = ${p.name}, cat = ${p.cat}, brand = ${p.brand}, condition = ${p.condition},
       gender = ${p.gender || 'Unisex'}, level = ${p.level || null}, surface = ${p.surface || null}, garment = ${p.garment || null},
       price = ${p.price}, old_price = ${p.old}, description = ${p.description || null}, note = ${p.note || null}, featured = ${p.featured === true},
+      free_shipping = ${p.freeShipping === true},
       tag = ${p.tag}, tag_type = ${p.tagType}, code = ${p.code || null},
       sizes = ${JSON.stringify(p.sizes || [])}::jsonb,
       stock = ${JSON.stringify(p.stock || {})}::jsonb,

@@ -1,11 +1,11 @@
 import crypto from 'node:crypto';
 
 // Kategorie = „liście" drzewa (patrz js/categories.js). `cat` produktu to podkategoria.
-// Drzewo (grupowanie w UI): Obuwie {Buty, Buty sportowe, Trampki},
+// Drzewo (grupowanie w UI): Obuwie {Buty, Buty sportowe, Buty do biegania, Trampki},
 // Odzież {Kurtki, Bluzy, Spodnie, Dresy sportowe, Czapki},
 // Piłka nożna {Buty piłkarskie, Rękawice bramkarskie, Akcesoria piłkarskie}.
 export const CATEGORIES  = [
-  'Buty', 'Buty sportowe', 'Trampki',
+  'Buty', 'Buty sportowe', 'Buty do biegania', 'Trampki',
   'Koszulki', 'Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki',
   'Buty piłkarskie', 'Rękawice bramkarskie', 'Akcesoria piłkarskie',
 ];
@@ -144,6 +144,8 @@ export function normalizeProduct(body) {
   const note = String(body.note ?? '').trim().slice(0, 1000) || null;
   // Wyróżnienie na stronie głównej (sekcja Bestsellery).
   const featured = body.featured === true || body.featured === 'true' || body.featured === 'on' || body.featured === 1;
+  // Darmowa dostawa: zamówienie z tym produktem nie płaci za wysyłkę.
+  const freeShipping = body.freeShipping === true || body.freeShipping === 'true' || body.freeShipping === 'on' || body.freeShipping === 1;
   const image  = cleanImage(body.image);
   const images = toImageArray(body.images);
 
@@ -151,7 +153,7 @@ export function normalizeProduct(body) {
   const value = {
     id: String(body.id ?? '').trim() || null,
     name, brand, cat, condition, gender, price, old, description, note, tag, tagType, code,
-    level, surface, garment, featured,
+    level, surface, garment, featured, freeShipping,
     sizes,
     stock:  toStockMap(body.stock, sizes),
     prices: toPriceMap(body.prices, sizes),

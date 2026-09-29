@@ -296,6 +296,8 @@
     if (p.surface) { $('#pd-surface').textContent = p.surface; $('#pd-surface-row').hidden = false; }
     if (p.garment) { $('#pd-garment').textContent = p.garment; $('#pd-garment-row').hidden = false; }
     if (p.note && p.note.trim()) { $('#pd-note-text').textContent = p.note.trim(); $('#pd-note').hidden = false; }
+    const shipPriceEl = $('#pd-ship-price');
+    if (p.freeShipping && shipPriceEl) { shipPriceEl.textContent = 'Darmowa dostawa'; shipPriceEl.classList.add('is-free'); }
 
     // Add-to-cart: main.js already bound the click handler to this button;
     // it reads these data-* attributes at click time.

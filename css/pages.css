@@ -598,6 +598,7 @@
 .pd-ship { margin: -10px 0 26px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--black-2); }
 .pd-ship-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px; font-size: 13px; color: var(--grey-2); }
 .pd-ship-head strong { color: #fff; font-weight: 600; white-space: nowrap; }
+.pd-ship-head strong.is-free { color: #FFCD00; }
 .pd-ship .trust-logos { gap: 8px; }
 .pd-ship .lg { height: 30px; min-width: 0; padding: 0 10px; font-size: 13px; border-radius: 6px; }
 .pd-ship .lg-dpd { font-size: 15px; }

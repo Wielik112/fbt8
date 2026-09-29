@@ -34,8 +34,11 @@
   ];
   // Liczba sztuk w koszyku decyduje o progu ceny dostawy.
   function cartQty() { return cart().reduce((s, i) => s + i.qty, 0) || 1; }
+  // Choć jeden produkt z darmową dostawą → cała paczka gratis (serwer liczy tak samo).
+  function freeShipping() { return cart().some((i) => productMap[i.id] && productMap[i.id].freeShipping); }
   function shipPrice(key) {
     const m = SHIPPING[key]; if (!m) return 0;
+    if (freeShipping()) return 0;
     const q = cartQty();
     const tier = m.tiers.find((t) => q <= t.maxQty) || m.tiers[m.tiers.length - 1];
     return tier.price;
@@ -56,7 +59,7 @@
       if (!r.ok) return;
       const data = await r.json();
       if (Array.isArray(data)) data.forEach((p) => {
-        if (p && p.id) productMap[p.id] = { image: p.image || '', gradient: p.gradient || '' };
+        if (p && p.id) productMap[p.id] = { image: p.image || '', gradient: p.gradient || '', freeShipping: p.freeShipping === true };
       });
     } catch { /* offline — fall back to stored image */ }
   }
@@ -330,6 +333,6 @@
     try { saved = sessionStorage.getItem('fbt_coupon') || ''; } catch { /* no storage */ }
     if (saved) { $('co-promo-input').value = saved; applyCoupon(saved, { quiet: true }); }
     // Pull live product photos, then re-render so the summary shows the real images.
-    loadProductMap().then(renderItems);
+    loadProductMap().then(() => { renderItems(); renderShipping(); renderTotals(); });
   })();
 })();
