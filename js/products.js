@@ -63,6 +63,7 @@ function productCard(p) {
       <div class="product-badges">
         ${soldOut ? '<span class="tag sold">Wyprzedane</span>' : (p.tag ? `<span class="tag ${p.tagType === 'sale' ? '' : 'grey'}">${p.tag}</span>` : '')}
         <span class="tag ${condClass}">${p.condition} · Kat. A</span>
+        ${p.freeShipping ? '<span class="tag free-ship">Darmowa dostawa</span>' : ''}
       </div>
     </div>
     <div class="product-info">

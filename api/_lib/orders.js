@@ -251,16 +251,21 @@ export async function updateOrderAdmin(id, fields) {
   return rows[0] ? mapOrder(rows[0]) : null;
 }
 
-// Paginated admin listing with optional status filter.
-export async function listOrders({ status = null, limit = 25, offset = 0 } = {}) {
+// Paginated admin listing with optional status and invoice filters
+// (invoice: true = only orders asking for an invoice, false = only without).
+export async function listOrders({ status = null, invoice = null, limit = 25, offset = 0 } = {}) {
   const lim = Math.min(100, Math.max(1, Number(limit) || 25));
   const off = Math.max(0, Number(offset) || 0);
-  const rowsRes = status
-    ? await sql`SELECT * FROM orders WHERE status = ${status} ORDER BY created_at DESC LIMIT ${lim} OFFSET ${off}`
-    : await sql`SELECT * FROM orders ORDER BY created_at DESC LIMIT ${lim} OFFSET ${off}`;
-  const countRes = status
-    ? await sql`SELECT COUNT(*)::int AS n FROM orders WHERE status = ${status}`
-    : await sql`SELECT COUNT(*)::int AS n FROM orders`;
+  const inv = invoice === true || invoice === false ? invoice : null;
+  const rowsRes = await sql`
+    SELECT * FROM orders
+    WHERE (${status}::text IS NULL OR status = ${status})
+      AND (${inv}::boolean IS NULL OR (invoice IS NOT NULL) = ${inv})
+    ORDER BY created_at DESC LIMIT ${lim} OFFSET ${off}`;
+  const countRes = await sql`
+    SELECT COUNT(*)::int AS n FROM orders
+    WHERE (${status}::text IS NULL OR status = ${status})
+      AND (${inv}::boolean IS NULL OR (invoice IS NOT NULL) = ${inv})`;
   return { orders: rowsRes.rows.map(mapOrder), total: countRes.rows[0].n, limit: lim, offset: off };
 }
 

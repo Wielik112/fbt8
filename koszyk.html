@@ -107,7 +107,7 @@ async function loadProductMap() {
     if (!r.ok) return;
     const data = await r.json();
     if (Array.isArray(data)) data.forEach((p) => {
-      if (p && p.id) productMap[p.id] = { image: p.image || '', gradient: p.gradient || '', stock: (p.stock && typeof p.stock === 'object') ? p.stock : {} };
+      if (p && p.id) productMap[p.id] = { image: p.image || '', gradient: p.gradient || '', freeShipping: p.freeShipping === true, stock: (p.stock && typeof p.stock === 'object') ? p.stock : {} };
     });
   } catch { /* offline — fall back to stored image */ }
 }
@@ -161,7 +161,8 @@ function renderCart() {
   const total = sub - discAmt; // shipping is chosen and added at checkout
 
   document.getElementById('sum-sub').textContent = sub + ' zł';
-  document.getElementById('sum-ship').textContent = 'od 13 zł';
+  const freeShip = cart.some((i) => productMap[i.id] && productMap[i.id].freeShipping);
+  document.getElementById('sum-ship').textContent = freeShip ? 'Gratis' : 'od 13 zł';
   document.getElementById('sum-total').textContent = total + ' zł';
   const dRow = document.getElementById('sum-disc-row');
   if (discAmt > 0) { dRow.style.display = 'flex'; document.getElementById('sum-disc').textContent = '−' + discAmt + ' zł'; }

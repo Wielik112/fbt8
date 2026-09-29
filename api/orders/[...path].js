@@ -17,7 +17,7 @@ import { syncPaymentFromStripe, syncRecentUnpaid } from '../_lib/payments.js';
 
 // Consolidated, admin-only orders API. All order routes live in this single
 // function to stay within the serverless-function limit. Routes:
-//   GET    /api/orders(/list)           -> list (?status=&limit=&offset=&stats=1)
+//   GET    /api/orders(/list)           -> list (?status=&invoice=yes|no&limit=&offset=&stats=1)
 //   GET    /api/orders/shipping-config  -> Furgonetka / InPost setup check
 //   POST   /api/orders/labels           -> one PDF with many labels {ids, format}
 //   GET    /api/orders/:id              -> detail
@@ -74,9 +74,10 @@ async function listHandler(req, res) {
   const status = req.query?.status && ORDER_STATUSES.includes(req.query.status) ? req.query.status : null;
   const limit = req.query?.limit ? Number(req.query.limit) : 25;
   const offset = req.query?.offset ? Number(req.query.offset) : 0;
+  const invoice = req.query?.invoice === 'yes' ? true : (req.query?.invoice === 'no' ? false : null);
   // Pick up payments whose Stripe webhook never arrived.
   if (offset === 0) await syncRecentUnpaid();
-  const result = await listOrders({ status, limit, offset });
+  const result = await listOrders({ status, invoice, limit, offset });
   if (req.query?.stats) result.stats = await orderStats();
   res.setHeader('Cache-Control', 'no-store');
   return res.status(200).json(result);

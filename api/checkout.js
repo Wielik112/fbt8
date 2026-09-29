@@ -49,6 +49,7 @@ export default async function handler(req, res) {
     const unavailable = [];
     const stockIssues = [];
     let subtotal = 0;
+    let freeShipping = false; // choć jeden produkt z darmową dostawą → cała paczka gratis
     for (const raw of rawItems) {
       const id = String(raw?.id ?? '').trim();
       let qty = Math.round(Number(raw?.qty));
@@ -71,6 +72,7 @@ export default async function handler(req, res) {
       const unit = toGrosze(Number.isFinite(sizePrice) && sizePrice >= 0 ? sizePrice : product.price);
       subtotal += unit * qty;
       items.push({ id: product.id, name: product.name, price: unit, qty, size, gradient: product.gradient });
+      if (product.freeShipping) freeShipping = true;
     }
     if (unavailable.length) {
       return res.status(409).json({ error: 'Niektóre produkty są niedostępne i zostały usunięte z oferty.', unavailable });
@@ -109,7 +111,7 @@ export default async function handler(req, res) {
       }
     }
     const totalQty = items.reduce((s, i) => s + i.qty, 0);
-    const shippingCost = shippingCostFor(methodKey, totalQty);
+    const shippingCost = freeShipping ? 0 : shippingCostFor(methodKey, totalQty);
 
     // --- Invoice (optional) ---
     let invoice = null;
@@ -183,7 +185,7 @@ export default async function handler(req, res) {
       shipping_options: [{
         shipping_rate_data: {
           type: 'fixed_amount',
-          display_name: method.label,
+          display_name: freeShipping ? `${method.label} — darmowa dostawa` : method.label,
           fixed_amount: { amount: shippingCost, currency: CURRENCY },
         },
       }],

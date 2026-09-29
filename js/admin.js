@@ -6,7 +6,7 @@
    ============================================ */
 
 const CATEGORY_TREE = window.CATEGORY_TREE || [
-  { name: 'Obuwie', subs: ['Buty', 'Buty sportowe', 'Trampki'] },
+  { name: 'Obuwie', subs: ['Buty', 'Buty sportowe', 'Buty do biegania', 'Trampki'] },
   { name: 'Odzież', subs: ['Koszulki', 'Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'] },
   { name: 'Piłka nożna', subs: ['Buty piłkarskie', 'Rękawice bramkarskie', 'Akcesoria piłkarskie'] },
 ];
@@ -194,7 +194,7 @@ function renderRows() {
       : `<div class="swatch" style="background:${esc(p.gradient || DEFAULT_GRADIENT)}"></div>`;
     const extra = [p.level, p.surface].filter(Boolean).map(esc).join(' · ');
     const noteFlag = (p.note && p.note.trim()) ? ' · 📝 uwagi' : '';
-    const featFlag = p.featured ? ' · ⭐ Bestseller' : '';
+    const featFlag = (p.featured ? ' · ⭐ Bestseller' : '') + (p.freeShipping ? ' · 🚚 darmowa dostawa' : '');
     const stockVals = (p.stock && typeof p.stock === 'object') ? Object.values(p.stock) : [];
     const stockTotal = stockVals.reduce((a, b) => a + (Number(b) || 0), 0);
     const stockFlag = stockVals.length ? ` · 📦 ${stockTotal} szt.` : '';
@@ -544,6 +544,7 @@ function openModal(product) {
   $('f-description').value = product?.description || '';
   $('f-note').value      = product?.note || '';
   $('f-featured').checked = product?.featured === true;
+  $('f-free-shipping').checked = product?.freeShipping === true;
   $('f-tag').value       = product?.tag || '';
   $('f-tagType').value   = product?.tagType || 'sale';
   $('f-code').value      = product?.code || '';
@@ -561,10 +562,22 @@ function openModal(product) {
   renderGalleryPreview();
 
   modal.classList.remove('hidden');
+  modal.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+  formDirty = false;
   $('f-name').focus();
 }
 
-function closeModal() { modal.classList.add('hidden'); }
+function closeModal() { modal.classList.add('hidden'); document.body.style.overflow = ''; }
+// Zmiany w otwartym formularzu — przed zamknięciem pytamy, żeby nic nie przepadło.
+let formDirty = false;
+function requestCloseModal() {
+  if (formDirty && !confirm('Zamknąć bez zapisywania? Wprowadzone zmiany zostaną utracone.')) return;
+  closeModal();
+}
+$('product-form').addEventListener('input', () => { formDirty = true; });
+$('product-form').addEventListener('change', () => { formDirty = true; });
+$('product-form').addEventListener('click', (e) => { if (e.target.closest('.modal-body button')) formDirty = true; });
 
 /* ---------- Photo previews ---------- */
 function renderMainPreview() {
@@ -614,10 +627,10 @@ $('f-gallery-input').addEventListener('change', async (e) => {
 });
 
 $('add-btn').addEventListener('click', () => openModal(null));
-$('modal-close').addEventListener('click', closeModal);
-$('cancel-btn').addEventListener('click', closeModal);
-modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
+$('modal-close').addEventListener('click', requestCloseModal);
+$('cancel-btn').addEventListener('click', requestCloseModal);
+// Bez zamykania kliknięciem obok okna: przypadkowy klik kasował cały formularz.
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) requestCloseModal(); });
 
 function splitList(v) {
   return v.split(',').map((s) => s.trim()).filter(Boolean);
@@ -642,6 +655,7 @@ $('product-form').addEventListener('submit', async (e) => {
     description: $('f-description').value.trim(),
     note: $('f-note').value.trim(),
     featured: $('f-featured').checked,
+    freeShipping: $('f-free-shipping').checked,
     tag: $('f-tag').value.trim(),
     tagType: $('f-tagType').value,
     sizes,
@@ -693,7 +707,7 @@ const PAYMENT_LABELS = {
 const fmtPLN = (gr) => (Number(gr || 0) / 100).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
 const fmtDateTime = (s) => { try { return new Date(s).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' }); } catch { return s; } };
 
-const ordersState = { status: '', offset: 0, limit: 25, total: 0, loaded: false };
+const ordersState = { status: '', invoice: '', offset: 0, limit: 25, total: 0, loaded: false };
 let ordersCache = [];
 let currentOrder = null;
 
@@ -711,6 +725,7 @@ document.querySelectorAll('.tab').forEach((tab) => {
 });
 
 $('order-filter').addEventListener('change', () => { ordersState.status = $('order-filter').value; ordersState.offset = 0; loadOrders(); });
+$('order-invoice-filter').addEventListener('change', () => { ordersState.invoice = $('order-invoice-filter').value; ordersState.offset = 0; loadOrders(); });
 $('orders-refresh').addEventListener('click', () => loadOrders());
 
 function ordersNotice(msg, kind) {
@@ -726,10 +741,11 @@ function ordersNotice(msg, kind) {
 
 async function loadOrders() {
   const tbody = $('order-rows');
-  tbody.innerHTML = '<tr><td colspan="8" class="loading">Ładowanie…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="9" class="loading">Ładowanie…</td></tr>';
   try {
     const q = new URLSearchParams();
     if (ordersState.status) q.set('status', ordersState.status);
+    if (ordersState.invoice) q.set('invoice', ordersState.invoice);
     q.set('limit', ordersState.limit);
     q.set('offset', ordersState.offset);
     q.set('stats', '1');
@@ -741,7 +757,7 @@ async function loadOrders() {
     renderOrders(data.orders);
     renderPager();
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="8" class="empty">${esc(err.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="empty">${esc(err.message)}</td></tr>`;
   }
 }
 
@@ -755,13 +771,14 @@ function renderOrderStats(s) {
 
 function renderOrders(list) {
   const tbody = $('order-rows');
-  if (!list.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">Brak zamówień.</td></tr>'; return; }
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty">Brak zamówień.</td></tr>'; return; }
   tbody.innerHTML = list.map((o) => `
     <tr class="clickable" data-id="${esc(o.id)}">
       <td class="col-check"><input type="checkbox" class="row-check" data-sel="${esc(o.id)}" ${selectedOrders.has(o.id) ? 'checked' : ''} aria-label="Zaznacz"></td>
       <td class="cell-title"><span class="order-id">${esc(o.id)}</span></td>
       <td class="hide-sm" data-label="Data">${esc(fmtDateTime(o.createdAt))}</td>
       <td class="hide-sm cell-sub">${esc(o.customer?.name || '—')}<div class="pmeta">${esc(o.customer?.email || '')}</div></td>
+      <td data-label="Faktura">${o.invoice ? '<span class="inv-badge">Faktura</span>' : '<span class="inv-none">—</span>'}</td>
       <td class="price" data-label="Kwota">${fmtPLN(o.total)}</td>
       <td data-label="Płatność"><span class="ostatus ${esc(o.paymentStatus)}">${esc(PAYMENT_LABELS[o.paymentStatus] || o.paymentStatus)}</span></td>
       <td data-label="Status"><span class="ostatus ${esc(o.status)}">${esc(ORDER_STATUS_LABELS[o.status] || o.status)}</span></td>
@@ -804,6 +821,35 @@ orderModal.addEventListener('click', (e) => { if (e.target === orderModal) close
 $('om-save').addEventListener('click', saveOrder);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !orderModal.classList.contains('hidden')) closeOrder(); });
 
+// Dane do faktury: osobna ramka tylko wtedy, gdy klient zaznaczył fakturę.
+function invoiceLines(inv) {
+  return [
+    inv.company,
+    inv.nip ? `NIP: ${inv.nip}` : '',
+    inv.street,
+    [inv.postcode, inv.city].filter(Boolean).join(' '),
+    inv.country && inv.country !== 'PL' ? inv.country : '',
+  ].filter(Boolean);
+}
+function renderInvoice(inv) {
+  const box = $('om-invoice');
+  box.hidden = !inv;
+  if (!inv) { $('om-invoice-body').innerHTML = ''; return; }
+  $('om-invoice-body').innerHTML = `
+    <div><b>Nazwa:</b> ${esc(inv.company || '—')}</div>
+    <div><b>NIP:</b> ${esc(inv.nip || '— (nie podano)')}</div>
+    <div><b>Adres:</b> ${esc(inv.street || '—')}, ${esc([inv.postcode, inv.city].filter(Boolean).join(' ') || '—')}${inv.country && inv.country !== 'PL' ? ', ' + esc(inv.country) : ''}</div>`;
+}
+$('om-invoice-copy').addEventListener('click', async (e) => {
+  const inv = currentOrder?.invoice;
+  if (!inv) return;
+  const text = invoiceLines(inv).join('\n');
+  const btn = e.currentTarget;
+  try { await navigator.clipboard.writeText(text); btn.textContent = 'Skopiowano'; }
+  catch { window.prompt('Skopiuj dane do faktury:', text.replace(/\n/g, ', ')); }
+  setTimeout(() => { btn.textContent = 'Kopiuj dane'; }, 1600);
+});
+
 async function openOrder(id) {
   notice($('om-error'), '', 'err');
   let o;
@@ -813,18 +859,11 @@ async function openOrder(id) {
   currentOrder = o;
 
   $('om-title').textContent = 'Zamówienie ' + o.id;
-  const inv = o.invoice;
-  const invHtml = inv ? `
-    <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
-      <div><b>Faktura:</b> ${esc(inv.company || '')}</div>
-      ${inv.nip ? `<div><b>NIP:</b> ${esc(inv.nip)}</div>` : ''}
-      <div>${esc(inv.street || '')}</div>
-      <div>${esc(inv.postcode || '')} ${esc(inv.city || '')}</div>
-    </div>` : '';
   $('om-customer').innerHTML = `
     <div><b>Imię:</b> ${esc(o.customer?.name || '—')}</div>
     <div><b>E-mail:</b> ${esc(o.customer?.email || '—')}</div>
-    <div><b>Telefon:</b> ${esc(o.customer?.phone || '—')}</div>${invHtml}`;
+    <div><b>Telefon:</b> ${esc(o.customer?.phone || '—')}</div>`;
+  renderInvoice(o.invoice);
 
   const addr = o.shippingAddress;
   const shipDetail = o.inpostPoint
