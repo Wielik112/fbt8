@@ -594,9 +594,9 @@
 .lg-mc .mc::after  { right: 0; background: #F79E1B; mix-blend-mode: multiply; }
 .lg-apple   { background: #000; border: 1px solid var(--line-bright); }
 .lg-apple svg { height: 32px; width: auto; fill: #fff; }
-/* BLIK: czarny znaczek, biały napis i kolorowa kropka w barwach marki */
-.lg-blik    { background: #000; color: #fff; border: 1px solid var(--line-bright); font-size: 21px; font-weight: 800; letter-spacing: -.03em; gap: 7px; }
-.blik-dot   { width: 13px; height: 13px; border-radius: 50%; background: linear-gradient(135deg, #FF3D3D, #E6007E); flex: 0 0 auto; }
+/* BLIK: oficjalne logo (czarne tło jak znaczek) */
+.lg-blik    { background: #000; border: 1px solid var(--line-bright); }
+.lg-blik img { height: 26px; width: auto; display: block; }
 
 /* Wersja kompaktowa: linia pod „Dodaj do koszyka" na stronie produktu */
 .pd-ship { margin: -10px 0 26px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--black-2); }
@@ -618,7 +618,7 @@
   .trust-col .trust-logos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .lg { height: 38px; min-width: 0; padding: 0 10px; font-size: 14px; }
   .lg-dpd { font-size: 15px; }
-  .lg-blik { font-size: 19px; }
+  .lg-blik img { height: 24px; }
   .trust-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
   .trust-facts li { font-size: 12px; }
   .pd-ship .trust-logos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
