@@ -579,20 +579,24 @@
 /* Znaczek marki */
 .lg { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; min-width: 92px; padding: 0 14px; border-radius: 8px; font-family: Arial, Helvetica, sans-serif; font-weight: 800; font-size: 16px; line-height: 1; white-space: nowrap; user-select: none; }
 .lg-inpost  { background: #FFCD00; color: #1d1d1b; letter-spacing: -.02em; }
-.lg-dpd     { background: #DC0032; color: #fff; text-transform: lowercase; font-size: 19px; letter-spacing: -.03em; }
+.lg-dpd     { background: #DC0032; color: #fff; font-size: 17px; letter-spacing: .01em; }
+.lg .lg-ico { width: 20px; height: 20px; fill: currentColor; flex: 0 0 auto; }
 .lg-pocztex { background: #fff; color: #1d1d1b; letter-spacing: .02em; }
 .lg-pocztex b { color: #E2001A; }
 .lg-orlen   { background: #fff; color: #E4002B; font-size: 14px; }
 .lg-orlen i { font-style: normal; color: #1d1d1b; font-weight: 700; }
-.lg-visa    { background: #fff; color: #1A1F71; font-style: italic; font-size: 19px; letter-spacing: -.01em; }
+.lg-visa    { background: #fff; }
+.lg-visa svg { height: 16px; width: auto; fill: #1A1F71; }
 .lg-mc      { background: #fff; color: #1d1d1b; font-size: 13px; font-weight: 700; }
 .lg-mc .mc  { position: relative; width: 30px; height: 18px; flex: 0 0 auto; }
 .lg-mc .mc::before, .lg-mc .mc::after { content: ""; position: absolute; top: 0; width: 18px; height: 18px; border-radius: 50%; }
 .lg-mc .mc::before { left: 0; background: #EB001B; }
 .lg-mc .mc::after  { right: 0; background: #F79E1B; mix-blend-mode: multiply; }
-.lg-apple   { background: #000; color: #fff; border: 1px solid var(--line-bright); font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; }
-.lg-gpay    { background: #fff; color: #3c4043; font-weight: 600; }
-.lg-gpay b  { font-weight: 700; background: linear-gradient(90deg,#4285F4 0 25%,#EA4335 25% 50%,#FBBC05 50% 75%,#34A853 75%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lg-apple   { background: #000; border: 1px solid var(--line-bright); }
+.lg-apple svg { height: 32px; width: auto; fill: #fff; }
+/* BLIK: czarny znaczek, biały napis i kolorowa kropka w barwach marki */
+.lg-blik    { background: #000; color: #fff; border: 1px solid var(--line-bright); font-size: 21px; font-weight: 800; letter-spacing: -.03em; gap: 7px; }
+.blik-dot   { width: 13px; height: 13px; border-radius: 50%; background: linear-gradient(135deg, #FF3D3D, #E6007E); flex: 0 0 auto; }
 
 /* Wersja kompaktowa: linia pod „Dodaj do koszyka" na stronie produktu */
 .pd-ship { margin: -10px 0 26px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--black-2); }
@@ -601,7 +605,8 @@
 .pd-ship-head strong.is-free { color: #FFCD00; }
 .pd-ship .trust-logos { gap: 8px; }
 .pd-ship .lg { height: 30px; min-width: 0; padding: 0 10px; font-size: 13px; border-radius: 6px; }
-.pd-ship .lg-dpd { font-size: 15px; }
+.pd-ship .lg-dpd { font-size: 13px; }
+.pd-ship .lg-ico { width: 15px; height: 15px; }
 .pd-ship .lg-orlen { font-size: 12px; }
 
 @media (max-width: 860px) {
@@ -612,11 +617,13 @@
   .trust-col h3 { font-size: 19px; }
   .trust-col .trust-logos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .lg { height: 38px; min-width: 0; padding: 0 10px; font-size: 14px; }
-  .lg-dpd, .lg-visa { font-size: 17px; }
+  .lg-dpd { font-size: 15px; }
+  .lg-blik { font-size: 19px; }
   .trust-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
   .trust-facts li { font-size: 12px; }
   .pd-ship .trust-logos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .pd-ship .lg { padding: 0 4px; font-size: 12px; }
-  .pd-ship .lg-dpd { font-size: 14px; }
+  .pd-ship .lg-dpd { font-size: 12px; gap: 3px; }
+  .pd-ship .lg-ico { width: 13px; height: 13px; }
   .pd-ship .lg-orlen { font-size: 9.5px; gap: 2px; letter-spacing: -.02em; }
 }
