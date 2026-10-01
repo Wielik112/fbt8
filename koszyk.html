@@ -6,8 +6,13 @@
 <title>Koszyk | FBT Outlet</title>
 <meta name="description" content="Twój koszyk w FBT Outlet. Sprawdź produkty, zastosuj kod rabatowy i przejdź do bezpiecznej płatności.">
 <meta name="robots" content="noindex, follow">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>/* Dane produktów pobierane od razu, równolegle z resztą strony; skrypty
+   strony korzystają z tego samego wyniku (jedno zapytanie). */
+window.FBT_PRELOAD=(function(){function g(u){return fetch(u,{headers:{Accept:'application/json'}}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}
+var o={products:g('/api/products')},id=/produkt/.test(location.pathname)&&new URLSearchParams(location.search).get('id');if(id)o.product=g('/api/products/'+encodeURIComponent(id));return o})();</script>
+<link rel="preload" href="assets/fonts/saira-condensed-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fonts.css?v=1">
 <link rel="stylesheet" href="css/style.css?v=3">
 <link rel="stylesheet" href="css/pages.css?v=3">
 <link rel="icon" type="image/png" href="assets/favicon.png">
@@ -17,7 +22,7 @@
 
 <nav class="nav">
   <div class="shell">
-    <a href="index.html" class="nav-logo"><img src="assets/logo.png" alt="FBT Outlet"></a>
+    <a href="index.html" class="nav-logo"><img src="assets/logo.webp" width="550" height="299" alt="FBT Outlet"></a>
     <div class="nav-links">
       <a href="index.html">Start</a><a href="sklep.html">Sklep</a><a href="o-nas.html">O nas</a><a href="kontakt.html">Kontakt</a><a href="opinie.html">Opinie</a>
     </div>
@@ -41,7 +46,7 @@
 </header>
 
 <div class="shell">
-  <div class="cart-wrap">
+  <div class="cart-wrap" style="visibility:hidden">
     <div>
       <div id="cart-items"></div>
       <div id="cart-empty" style="display:none;padding:60px 0;text-align:center">
@@ -78,7 +83,7 @@
   <div class="shell">
     <div class="footer-grid">
       <div class="footer-brand">
-        <img src="assets/logo.png" alt="FBT Outlet">
+        <img src="assets/logo.webp" width="550" height="299" alt="FBT Outlet">
         <p>Premium sprzęt sportowy w outletowych cenach. Rozpędź się z nami.</p>
       </div>
       <div><h4>Sklep</h4><div class="footer-links"><a href="sklep.html">Wszystkie produkty</a><a href="sklep.html">Obuwie</a><a href="sklep.html">Bluzy</a><a href="sklep.html">Wyprzedaż</a></div></div>
@@ -103,9 +108,13 @@ let discount = 0;
 let productMap = {};
 async function loadProductMap() {
   try {
-    const r = await fetch('/api/products', { headers: { Accept: 'application/json' } });
-    if (!r.ok) return;
-    const data = await r.json();
+    const pre = window.FBT_PRELOAD && window.FBT_PRELOAD.products;
+    let data = pre ? await pre : null;
+    if (!Array.isArray(data)) {
+      const r = await fetch('/api/products', { headers: { Accept: 'application/json' } });
+      if (!r.ok) return;
+      data = await r.json();
+    }
     if (Array.isArray(data)) data.forEach((p) => {
       if (p && p.id) productMap[p.id] = { image: p.image || '', gradient: p.gradient || '', freeShipping: p.freeShipping === true, stock: (p.stock && typeof p.stock === 'object') ? p.stock : {} };
     });
@@ -114,6 +123,8 @@ async function loadProductMap() {
 
 function renderCart() {
   const cart = getCart();
+  // Ukryte do pierwszego renderu: pusty koszyk nie „skacze” przy starcie.
+  document.querySelector('.cart-wrap').style.visibility = 'visible';
   const wrap = document.getElementById('cart-items');
   const empty = document.getElementById('cart-empty');
   const summary = document.getElementById('cart-summary');

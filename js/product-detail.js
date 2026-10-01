@@ -20,11 +20,15 @@
   const fallback = () => (typeof FALLBACK_PRODUCTS !== 'undefined' ? FALLBACK_PRODUCTS : []);
 
   async function loadOne(pid) {
+    const pre = window.FBT_PRELOAD && window.FBT_PRELOAD.product;
+    if (pre) { const d = await pre; if (d && d.id === pid) return d; }
     try { return await fetchJSON(`/api/products/${encodeURIComponent(pid)}`); }
     catch { return fallback().find((p) => p.id === pid) || null; }
   }
 
   async function loadAll() {
+    const pre = window.FBT_PRELOAD && window.FBT_PRELOAD.products;
+    if (pre) { const d = await pre; if (Array.isArray(d) && d.length) return d; }
     try { const d = await fetchJSON('/api/products'); if (Array.isArray(d) && d.length) return d; } catch { /* offline */ }
     return fallback();
   }

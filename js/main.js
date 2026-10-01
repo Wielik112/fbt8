@@ -343,10 +343,14 @@ document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
   let cache = null;
   async function getProducts() {
     if (cache) return cache;
-    try {
-      const r = await fetch('/api/products', { headers: { Accept: 'application/json' } });
-      cache = r.ok ? await r.json() : [];
-    } catch { cache = []; }
+    const pre = window.FBT_PRELOAD && window.FBT_PRELOAD.products;
+    if (pre) cache = await pre;
+    if (!Array.isArray(cache)) {
+      try {
+        const r = await fetch('/api/products', { headers: { Accept: 'application/json' } });
+        cache = r.ok ? await r.json() : [];
+      } catch { cache = []; }
+    }
     return Array.isArray(cache) ? cache : [];
   }
 

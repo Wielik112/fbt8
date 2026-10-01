@@ -67,13 +67,22 @@ export async function sql(strings, ...values) {
   return getPool().query(text, values);
 }
 
-let schemaReady = false;
+// Runs a parameterless multi-statement SQL script in one round trip (simple
+// query protocol). Only for fixed DDL/migrations — never with user input.
+export async function sqlScript(text) {
+  return getPool().query(text);
+}
 
-// Creates the products table on first use. CREATE TABLE IF NOT EXISTS is
-// cheap, and the in-process guard skips repeat calls within a warm function.
+let schemaReady = false;
+let schemaPromise = null;
+
+// Creates / migrates the products and reviews tables on first use. All
+// statements are idempotent and go to the database as ONE script (a single
+// round trip instead of ~20), which keeps serverless cold starts fast. The
+// in-process guard skips repeat calls within a warm function.
 export async function ensureSchema() {
   if (schemaReady) return;
-  await sql`
+  schemaPromise ||= sqlScript(`
     CREATE TABLE IF NOT EXISTS products (
       id          TEXT PRIMARY KEY,
       name        TEXT NOT NULL,
@@ -100,54 +109,58 @@ export async function ensureSchema() {
       sort_order  INTEGER NOT NULL DEFAULT 0,
       created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-    )`;
-  // Migrations for databases created before these columns existed.
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS description TEXT`;
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS image TEXT`;
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB NOT NULL DEFAULT '[]'::jsonb`;
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS gender TEXT NOT NULL DEFAULT 'Unisex'`;
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS level TEXT`;
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS surface TEXT`;
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS garment TEXT`;
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS note TEXT`;
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT false`;
-  // Darmowa dostawa dla zamówienia zawierającego ten produkt.
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS free_shipping BOOLEAN NOT NULL DEFAULT false`;
-  // Stan magazynowy per rozmiar: { rozmiar: liczba_sztuk }.
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS stock JSONB NOT NULL DEFAULT '{}'::jsonb`;
-  // Ceny per rozmiar (nadpisania ceny bazowej): { rozmiar: cena }.
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS prices JSONB NOT NULL DEFAULT '{}'::jsonb`;
-  // Kod produktu z metki/pudełka (EAN / kod producenta).
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS code TEXT`;
-  // Specyfikacja produktu: lista { k, v } (np. Podeszwa → Guma).
-  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS specs JSONB NOT NULL DEFAULT '[]'::jsonb`;
-  // Migracja kategorii do nowego drzewa (Obuwie / Odzież / Piłka nożna).
-  // Idempotentne — po pierwszym przebiegu żadne wiersze nie pasują.
-  await sql`UPDATE products SET cat = garment WHERE cat = 'Odzież' AND garment IS NOT NULL AND garment <> ''`;
-  await sql`UPDATE products SET cat = 'Akcesoria piłkarskie' WHERE cat IN ('Piłki', 'Akcesoria', 'Odzież')`;
-  // Zmiana nazwy poziomu zaawansowania: „Treningowe" → „Półamatorskie".
-  // Idempotentne — po pierwszym przebiegu żaden wiersz nie pasuje.
-  await sql`UPDATE products SET level = 'Półamatorskie' WHERE level = 'Treningowe'`;
-  // Customer reviews (simple, public).
-  await sql`
+    );
+    -- Migrations for databases created before these columns existed.
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS description TEXT;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS image TEXT;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS gender TEXT NOT NULL DEFAULT 'Unisex';
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS level TEXT;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS surface TEXT;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS garment TEXT;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS note TEXT;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT false;
+    -- Darmowa dostawa dla zamówienia zawierającego ten produkt.
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS free_shipping BOOLEAN NOT NULL DEFAULT false;
+    -- Stan magazynowy per rozmiar: { rozmiar: liczba_sztuk }.
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS stock JSONB NOT NULL DEFAULT '{}'::jsonb;
+    -- Ceny per rozmiar (nadpisania ceny bazowej): { rozmiar: cena }.
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS prices JSONB NOT NULL DEFAULT '{}'::jsonb;
+    -- Kod produktu z metki/pudełka (EAN / kod producenta).
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS code TEXT;
+    -- Specyfikacja produktu: lista { k, v } (np. Podeszwa → Guma).
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS specs JSONB NOT NULL DEFAULT '[]'::jsonb;
+    -- Migracja kategorii do nowego drzewa (Obuwie / Odzież / Piłka nożna).
+    -- Idempotentne — po pierwszym przebiegu żadne wiersze nie pasują.
+    UPDATE products SET cat = garment WHERE cat = 'Odzież' AND garment IS NOT NULL AND garment <> '';
+    UPDATE products SET cat = 'Akcesoria piłkarskie' WHERE cat IN ('Piłki', 'Akcesoria', 'Odzież');
+    -- Zmiana nazwy poziomu zaawansowania: „Treningowe" → „Półamatorskie".
+    -- Idempotentne — po pierwszym przebiegu żaden wiersz nie pasuje.
+    UPDATE products SET level = 'Półamatorskie' WHERE level = 'Treningowe';
+    -- Customer reviews (simple, public).
     CREATE TABLE IF NOT EXISTS reviews (
       id          TEXT PRIMARY KEY,
       order_no    TEXT NOT NULL,
       rating      INTEGER NOT NULL DEFAULT 5,
       body        TEXT NOT NULL,
       created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-    )`;
-  schemaReady = true;
+    );
+  `).then(() => { schemaReady = true; }, (err) => { schemaPromise = null; throw err; });
+  return schemaPromise;
 }
 
 // Seeds the initial catalog exactly once, when the table is still empty.
+// Once a warm instance has seen products, later calls skip the query.
+let catalogSeeded = false;
 export async function seedIfEmpty() {
-  const { rows } = await sql`SELECT COUNT(*)::int AS n FROM products`;
-  if (rows[0].n > 0) return;
+  if (catalogSeeded) return;
+  const { rows } = await sql`SELECT EXISTS (SELECT 1 FROM products) AS has`;
+  if (rows[0].has) { catalogSeeded = true; return; }
   let order = 0;
   for (const p of SEED_PRODUCTS) {
     await insertProduct({ ...p }, order++);
   }
+  catalogSeeded = true;
 }
 
 // Lightweight connectivity check for the /api/health endpoint.

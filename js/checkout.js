@@ -55,9 +55,13 @@
   let productMap = {};
   async function loadProductMap() {
     try {
-      const r = await fetch('/api/products', { headers: { Accept: 'application/json' } });
-      if (!r.ok) return;
-      const data = await r.json();
+      const pre = window.FBT_PRELOAD && window.FBT_PRELOAD.products;
+      let data = pre ? await pre : null;
+      if (!Array.isArray(data)) {
+        const r = await fetch('/api/products', { headers: { Accept: 'application/json' } });
+        if (!r.ok) return;
+        data = await r.json();
+      }
       if (Array.isArray(data)) data.forEach((p) => {
         if (p && p.id) productMap[p.id] = { image: p.image || '', gradient: p.gradient || '', freeShipping: p.freeShipping === true };
       });

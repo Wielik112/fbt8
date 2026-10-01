@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Panel administratora | FBT Outlet</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/fonts.css?v=1">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <style>
 :root{
@@ -16,7 +14,7 @@
   --red:#E01020; --red-hot:#FF1E2D; --red-deep:#8B0812; --red-glow:rgba(224,16,32,.35);
   --white:#fff; --grey-1:#C9C9D2; --grey-2:#8B8B96; --grey-3:#56565F;
   --green:#1FBF6B;
-  --display:'Saira Condensed',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
+  --display:'Saira Condensed','Saira Condensed Fallback',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
   --ease:cubic-bezier(.22,1,.36,1);
 }
 *{box-sizing:border-box}
@@ -353,7 +351,7 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
 
 <div class="topbar">
   <div class="brand">
-    <img src="assets/logo.png" alt="FBT Outlet" onerror="this.style.display='none'">
+    <img src="assets/logo.webp" width="550" height="299" alt="FBT Outlet" onerror="this.style.display='none'">
     <div>
       <div class="brand-txt">FBT<span>.</span></div>
       <div class="brand-sub">Panel administratora</div>
