@@ -178,8 +178,25 @@ h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:.5px;text-transform:
 .od-item:last-child{border-bottom:none}
 /* Kod produktu (FBT-…) w panelu: kopiowanie i szybkie wyszukanie */
 .code-chip{display:inline-block;vertical-align:middle;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;font-weight:700;letter-spacing:.04em;color:#fff;background:var(--black-2);border:1px solid var(--line-bright);border-radius:7px;padding:3px 8px}
-.od-code{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:6px}
-.od-code .btn{padding:4px 10px;font-size:12px}
+/* Pozycja zamówienia jako karta produktu (co spakować) */
+.od-items{display:flex;flex-direction:column;gap:8px}
+.od-prod{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--black-2);color:inherit;font:inherit;cursor:pointer;transition:border-color .2s,background .2s}
+.od-prod:hover:not(:disabled){border-color:var(--red);background:rgba(224,16,32,.06)}
+.od-prod:disabled{cursor:default;opacity:.8}
+.od-thumb{flex:0 0 auto;width:76px;height:76px;border-radius:10px;overflow:hidden;background:#fff;display:grid;place-items:center}
+.od-thumb img{width:100%;height:100%;object-fit:contain}
+.od-swatch{width:100%;height:100%}
+.od-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.od-name{font-weight:700;font-size:15px;color:#fff}
+.od-pack{font-size:14px;color:var(--grey-1)}
+.od-pack b{color:#fff;font-size:16px}
+.od-meta{font-size:12.5px;color:var(--grey-2);display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.od-side{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.od-price{font-weight:700;white-space:nowrap}
+.od-go{font-size:12px;font-weight:700;color:var(--red);white-space:nowrap}
+.modal-from-order{position:absolute;right:66px;top:50%;transform:translateY(-50%);z-index:6}
+@media(max-width:640px){.modal-from-order{right:56px;font-size:12px;padding:6px 10px}}
+@media(max-width:640px){.od-thumb{width:60px;height:60px}.od-go{display:none}}
 .od-tot{display:flex;justify-content:space-between;font-size:14px;padding:5px 0}
 .od-tot.grand{font-family:var(--display);font-size:20px;text-transform:uppercase;padding-top:10px;border-top:1px solid var(--line);margin-top:6px}
 
@@ -516,6 +533,7 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
 <div id="modal" class="modal-back modal-full hidden">
   <form id="product-form" class="modal">
     <div class="modal-head">
+      <button type="button" class="btn btn-ghost btn-sm modal-from-order" id="modal-from-order" hidden></button>
       <h2><span id="modal-title">Nowy produkt</span> <span class="code-chip" id="modal-code" title="Kliknij, aby skopiować kod" style="cursor:pointer" hidden></span></h2>
       <button type="button" class="modal-close" id="modal-close" aria-label="Zamknij">×</button>
     </div>

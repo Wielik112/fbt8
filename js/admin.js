@@ -571,7 +571,12 @@ function openModal(product) {
   $('f-name').focus();
 }
 
-function closeModal() { modal.classList.add('hidden'); document.body.style.overflow = ''; }
+function closeModal() {
+  modal.classList.add('hidden');
+  document.body.style.overflow = '';
+  $('modal-from-order').hidden = true;
+  if (returnToOrderId) { const id = returnToOrderId; returnToOrderId = null; openOrder(id); }
+}
 // Zmiany w otwartym formularzu — przed zamknięciem pytamy, żeby nic nie przepadło.
 let formDirty = false;
 function requestCloseModal() {
@@ -819,29 +824,18 @@ $('order-rows').addEventListener('click', (e) => {
 
 const orderModal = $('order-modal');
 
-// Kod produktu przy pozycji zamówienia: „Kopiuj” do schowka albo „Pokaż produkt”,
-// czyli przejście do zakładki Produkty z kodem wpisanym w wyszukiwarkę.
+// Kopiowanie kodu produktu (FBT-…) do schowka.
 async function copyText(text, btn) {
   const label = btn.textContent;
   try { await navigator.clipboard.writeText(text); btn.textContent = 'Skopiowano'; }
   catch { window.prompt('Skopiuj kod:', text); }
   setTimeout(() => { btn.textContent = label; }, 1500);
 }
-function showProductByCode(code) {
-  closeOrder();
-  document.querySelector('.tab[data-tab="products"]').click();
-  const search = $('prod-search');
-  search.value = code;
-  productSearch = code;
-  renderRows();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
 $('om-items').addEventListener('click', (e) => {
-  const copy = e.target.closest('[data-copy-code]');
-  if (copy) { copyText(copy.dataset.copyCode, copy); return; }
-  const show = e.target.closest('[data-show-code]');
-  if (show) showProductByCode(show.dataset.showCode);
+  const card = e.target.closest('[data-open-product]');
+  if (card) openProductFromOrder(card.dataset.openProduct);
 });
+$('modal-from-order').addEventListener('click', requestCloseModal);
 $('modal-code').addEventListener('click', (e) => copyText(e.currentTarget.textContent, e.currentTarget));
 $('om-close').addEventListener('click', closeOrder);
 $('om-cancel').addEventListener('click', closeOrder);
@@ -878,6 +872,40 @@ $('om-invoice-copy').addEventListener('click', async (e) => {
   setTimeout(() => { btn.textContent = 'Kopiuj dane'; }, 1600);
 });
 
+// Pozycja zamówienia jako karta produktu: zdjęcie, rozmiar, ilość, marka i kody,
+// żeby od razu było widać, co spakować. Klik otwiera kartę produktu.
+function orderItemCard(it) {
+  const prod = products.find((p) => p.id === it.id);
+  const code = productCode(it.id);
+  const img = prod?.image
+    ? `<img src="${esc(prod.image)}" alt="" loading="lazy">`
+    : `<span class="od-swatch" style="background:${esc(prod?.gradient || it.gradient || DEFAULT_GRADIENT)}"></span>`;
+  const meta = [prod?.brand, prod?.cat].filter(Boolean).map(esc).join(' · ');
+  return `
+    <button type="button" class="od-prod" ${prod ? `data-open-product="${esc(it.id)}"` : 'disabled'}>
+      <span class="od-thumb">${img}</span>
+      <span class="od-info">
+        <span class="od-name">${esc(it.name)}</span>
+        <span class="od-pack">${it.size ? `Rozmiar <b>${esc(it.size)}</b> · ` : ''}Ilość <b>${esc(it.qty)}</b></span>
+        <span class="od-meta">${meta ? meta + ' · ' : ''}${code ? `<span class="code-chip">${esc(code)}</span>` : ''}${prod?.code ? ` · Kod z metki: <b>${esc(prod.code)}</b>` : ''}</span>
+        ${prod ? '' : '<span class="od-meta">Produkt usunięty ze sklepu</span>'}
+      </span>
+      <span class="od-side"><span class="od-price">${fmtPLN((it.price || 0) * it.qty)}</span>${prod ? '<span class="od-go">Otwórz produkt →</span>' : ''}</span>
+    </button>`;
+}
+
+// Otwiera kartę produktu z zamówienia; zamknięcie (lub zapis) wraca do zamówienia.
+let returnToOrderId = null;
+function openProductFromOrder(id) {
+  const prod = products.find((p) => p.id === id);
+  if (!prod) return;
+  returnToOrderId = currentOrder?.id || null;
+  closeOrder();
+  openModal(prod);
+  $('modal-from-order').hidden = !returnToOrderId;
+  $('modal-from-order').textContent = '← Wróć do zamówienia';
+}
+
 async function openOrder(id) {
   notice($('om-error'), '', 'err');
   let o;
@@ -899,15 +927,9 @@ async function openOrder(id) {
     : (addr ? `<div>${esc(addr.street || '')}</div><div>${esc(addr.postcode || '')} ${esc(addr.city || '')}</div><div>${esc(addr.country || '')}</div>` : '<div>—</div>');
   $('om-shipping').innerHTML = `<div><b>Metoda:</b> ${esc(o.shippingLabel || o.shippingMethod || '—')}</div>${shipDetail}`;
 
-  $('om-items').innerHTML = (o.items || []).map((it) => {
-    const code = productCode(it.id);
-    return `
-    <div class="od-item"><span>${esc(it.name)} ${it.size ? '· ' + esc(it.size) : ''} × ${it.qty}
-      ${code ? `<div class="od-code"><span class="code-chip">${esc(code)}</span>
-        <button type="button" class="btn btn-ghost btn-sm" data-copy-code="${esc(code)}">Kopiuj</button>
-        <button type="button" class="btn btn-ghost btn-sm" data-show-code="${esc(code)}">Pokaż produkt</button></div>` : ''}
-    </span><span>${fmtPLN((it.price || 0) * it.qty)}</span></div>`;
-  }).join('');
+  if (!products.length) await loadProducts();
+  if (currentOrder !== o) return; // closed or replaced while products were loading
+  $('om-items').innerHTML = (o.items || []).map(orderItemCard).join('');
   $('om-subtotal').textContent = fmtPLN(o.subtotal);
   if (o.discount > 0) {
     $('om-disc-row').style.display = 'flex';
