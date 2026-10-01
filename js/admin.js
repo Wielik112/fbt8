@@ -11,6 +11,7 @@ const CATEGORY_TREE = window.CATEGORY_TREE || [
   { name: 'Piłka nożna', subs: ['Buty piłkarskie', 'Rękawice bramkarskie', 'Akcesoria piłkarskie'] },
 ];
 const CATEGORIES = window.CATEGORY_LEAVES || CATEGORY_TREE.flatMap((g) => g.subs);
+const productCode = window.productCode || ((id) => (id ? 'FBT-' + String(id).replace(/^p-/i, '').toUpperCase() : ''));
 const mainCategoryOf = window.mainCategoryOf || ((leaf) => (CATEGORY_TREE.find((g) => g.subs.includes(leaf)) || {}).name || '');
 const CONDITIONS = ['Nowy'];
 const GENDERS = ['Męskie', 'Damskie', 'Unisex'];
@@ -151,7 +152,7 @@ function filteredProducts() {
   return products.filter((p) => {
     if (productFilter !== 'Wszystkie' && mainCategoryOf(p.cat) !== productFilter && p.cat !== productFilter) return false;
     if (!q) return true;
-    return `${p.name || ''} ${p.brand || ''} ${p.id || ''}`.toLowerCase().includes(q);
+    return `${p.name || ''} ${p.brand || ''} ${p.id || ''} ${productCode(p.id)}`.toLowerCase().includes(q);
   });
 }
 
@@ -203,7 +204,7 @@ function renderRows() {
       <td class="cell-media">${media}</td>
       <td class="cell-title">
         <div class="pname">${esc(p.name)}</div>
-        <div class="pmeta">${esc(p.brand)} · ${esc(p.gender || 'Unisex')} · ${esc(p.id)}${extra ? ' · ' + extra : ''}${stockFlag}${noteFlag}${featFlag}</div>
+        <div class="pmeta">${esc(p.brand)} · ${esc(p.gender || 'Unisex')} · <b>${esc(productCode(p.id))}</b>${extra ? ' · ' + extra : ''}${stockFlag}${noteFlag}${featFlag}</div>
       </td>
       <td class="hide-sm" data-label="Kategoria">${esc(p.cat)}</td>
       <td class="hide-sm" data-label="Stan"><span class="pill ${condClass}">${esc(p.condition)} · Kat. A</span></td>
@@ -528,6 +529,8 @@ $('f-specs-rows').addEventListener('click', (e) => {
 function openModal(product) {
   const editing = !!product;
   $('modal-title').textContent = editing ? 'Edytuj produkt' : 'Nowy produkt';
+  $('modal-code').hidden = !editing;
+  $('modal-code').textContent = editing ? productCode(product.id) : '';
   notice($('form-error'), '', 'err');
 
   fillCatSelect($('f-cat'), product?.cat || CATEGORIES[0]);
@@ -815,6 +818,31 @@ $('order-rows').addEventListener('click', (e) => {
 });
 
 const orderModal = $('order-modal');
+
+// Kod produktu przy pozycji zamówienia: „Kopiuj” do schowka albo „Pokaż produkt”,
+// czyli przejście do zakładki Produkty z kodem wpisanym w wyszukiwarkę.
+async function copyText(text, btn) {
+  const label = btn.textContent;
+  try { await navigator.clipboard.writeText(text); btn.textContent = 'Skopiowano'; }
+  catch { window.prompt('Skopiuj kod:', text); }
+  setTimeout(() => { btn.textContent = label; }, 1500);
+}
+function showProductByCode(code) {
+  closeOrder();
+  document.querySelector('.tab[data-tab="products"]').click();
+  const search = $('prod-search');
+  search.value = code;
+  productSearch = code;
+  renderRows();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+$('om-items').addEventListener('click', (e) => {
+  const copy = e.target.closest('[data-copy-code]');
+  if (copy) { copyText(copy.dataset.copyCode, copy); return; }
+  const show = e.target.closest('[data-show-code]');
+  if (show) showProductByCode(show.dataset.showCode);
+});
+$('modal-code').addEventListener('click', (e) => copyText(e.currentTarget.textContent, e.currentTarget));
 $('om-close').addEventListener('click', closeOrder);
 $('om-cancel').addEventListener('click', closeOrder);
 orderModal.addEventListener('click', (e) => { if (e.target === orderModal) closeOrder(); });
@@ -871,8 +899,15 @@ async function openOrder(id) {
     : (addr ? `<div>${esc(addr.street || '')}</div><div>${esc(addr.postcode || '')} ${esc(addr.city || '')}</div><div>${esc(addr.country || '')}</div>` : '<div>—</div>');
   $('om-shipping').innerHTML = `<div><b>Metoda:</b> ${esc(o.shippingLabel || o.shippingMethod || '—')}</div>${shipDetail}`;
 
-  $('om-items').innerHTML = (o.items || []).map((it) => `
-    <div class="od-item"><span>${esc(it.name)} ${it.size ? '· ' + esc(it.size) : ''} × ${it.qty}</span><span>${fmtPLN((it.price || 0) * it.qty)}</span></div>`).join('');
+  $('om-items').innerHTML = (o.items || []).map((it) => {
+    const code = productCode(it.id);
+    return `
+    <div class="od-item"><span>${esc(it.name)} ${it.size ? '· ' + esc(it.size) : ''} × ${it.qty}
+      ${code ? `<div class="od-code"><span class="code-chip">${esc(code)}</span>
+        <button type="button" class="btn btn-ghost btn-sm" data-copy-code="${esc(code)}">Kopiuj</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-show-code="${esc(code)}">Pokaż produkt</button></div>` : ''}
+    </span><span>${fmtPLN((it.price || 0) * it.qty)}</span></div>`;
+  }).join('');
   $('om-subtotal').textContent = fmtPLN(o.subtotal);
   if (o.discount > 0) {
     $('om-disc-row').style.display = 'flex';
