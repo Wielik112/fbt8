@@ -15,6 +15,13 @@ window.CATEGORY_TREE = [
 window.CATEGORY_LEAVES = window.CATEGORY_TREE.flatMap((g) => g.subs);
 
 // Zwraca nazwę kategorii głównej dla danej podkategorii (liścia) lub ''.
+// Kod produktu w sklepie (np. FBT-1A2B3C4D): nadawany automatycznie z ID
+// produktu, widoczny na stronie produktu, w panelu i przy pozycjach zamówień.
+window.productCode = function (id) {
+  const s = String(id || '').trim();
+  return s ? 'FBT-' + s.replace(/^p-/i, '').toUpperCase() : '';
+};
+
 window.mainCategoryOf = function (leaf) {
   const g = window.CATEGORY_TREE.find((g) => g.subs.includes(leaf));
   return g ? g.name : '';

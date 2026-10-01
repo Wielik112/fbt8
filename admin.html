@@ -178,6 +178,10 @@ h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:.5px;text-transform:
 .od-items{margin:6px 0 0}
 .od-item{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:8px 0;border-bottom:1px solid var(--line)}
 .od-item:last-child{border-bottom:none}
+/* Kod produktu (FBT-…) w panelu: kopiowanie i szybkie wyszukanie */
+.code-chip{display:inline-block;vertical-align:middle;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;font-weight:700;letter-spacing:.04em;color:#fff;background:var(--black-2);border:1px solid var(--line-bright);border-radius:7px;padding:3px 8px}
+.od-code{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:6px}
+.od-code .btn{padding:4px 10px;font-size:12px}
 .od-tot{display:flex;justify-content:space-between;font-size:14px;padding:5px 0}
 .od-tot.grand{font-family:var(--display);font-size:20px;text-transform:uppercase;padding-top:10px;border-top:1px solid var(--line);margin-top:6px}
 
@@ -400,7 +404,7 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
 
     <div class="prod-toolbar">
       <div class="pchips" id="prod-filters"></div>
-      <input type="search" id="prod-search" class="prod-search" placeholder="Szukaj produktu (nazwa, marka, ID)…" autocomplete="off">
+      <input type="search" id="prod-search" class="prod-search" placeholder="Szukaj: nazwa, marka lub kod FBT-…" autocomplete="off">
     </div>
 
     <div class="table-wrap">
@@ -514,7 +518,7 @@ input[type=file]::file-selector-button:hover{border-color:var(--grey-2)}
 <div id="modal" class="modal-back modal-full hidden">
   <form id="product-form" class="modal">
     <div class="modal-head">
-      <h2 id="modal-title">Nowy produkt</h2>
+      <h2><span id="modal-title">Nowy produkt</span> <span class="code-chip" id="modal-code" title="Kliknij, aby skopiować kod" style="cursor:pointer" hidden></span></h2>
       <button type="button" class="modal-close" id="modal-close" aria-label="Zamknij">×</button>
     </div>
     <div class="modal-body">

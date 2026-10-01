@@ -271,7 +271,7 @@
     }
 
     // Meta
-    $('#pd-code').textContent = 'FBT-' + String(p.id).toUpperCase();
+    $('#pd-code').textContent = window.productCode ? window.productCode(p.id) : 'FBT-' + String(p.id).toUpperCase();
     if (p.code && p.code.trim()) {
       const code = p.code.trim();
       $('#pd-mcode').textContent = code;
