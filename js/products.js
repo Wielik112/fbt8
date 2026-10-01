@@ -25,6 +25,9 @@ const FALLBACK_PRODUCTS = [
 let PRODUCTS = FALLBACK_PRODUCTS;
 
 async function loadProducts() {
+  // Started early in <head> (window.FBT_PRELOAD) — reuse it instead of a second request.
+  const pre = window.FBT_PRELOAD && window.FBT_PRELOAD.products;
+  if (pre) { const d = await pre; if (Array.isArray(d) && d.length) return d; }
   try {
     const res = await fetch('/api/products', { headers: { Accept: 'application/json' } });
     if (res.ok) {

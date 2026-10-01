@@ -48,8 +48,13 @@
   ]
 }
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>/* Dane produktów pobierane od razu, równolegle z resztą strony; skrypty
+   strony korzystają z tego samego wyniku (jedno zapytanie). */
+window.FBT_PRELOAD=(function(){function g(u){return fetch(u,{headers:{Accept:'application/json'}}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}
+var o={products:g('/api/products')},id=/produkt/.test(location.pathname)&&new URLSearchParams(location.search).get('id');if(id)o.product=g('/api/products/'+encodeURIComponent(id));return o})();</script>
+<link rel="preload" href="assets/fonts/saira-condensed-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fonts.css?v=1">
 <link rel="stylesheet" href="css/style.css?v=3">
 <link rel="stylesheet" href="css/pages.css?v=3">
 <link rel="icon" type="image/png" href="assets/favicon.png">
@@ -120,7 +125,7 @@
 <!-- NAV -->
 <nav class="nav">
   <div class="shell">
-    <a href="index.html" class="nav-logo"><img src="assets/logo.png" alt="FBT Outlet"></a>
+    <a href="index.html" class="nav-logo"><img src="assets/logo.webp" width="550" height="299" alt="FBT Outlet"></a>
     <div class="nav-links">
       <a href="index.html">Start</a>
       <a href="sklep.html">Sklep</a>
@@ -340,7 +345,7 @@
   <div class="shell">
     <div class="footer-grid">
       <div class="footer-brand">
-        <img src="assets/logo.png" alt="FBT Outlet">
+        <img src="assets/logo.webp" width="550" height="299" alt="FBT Outlet">
         <p>Premium sprzęt sportowy w outletowych cenach. Rozpędź się z nami.</p>
       </div>
       <div>

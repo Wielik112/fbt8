@@ -1,11 +1,14 @@
 import crypto from 'node:crypto';
-import { sql } from './db.js';
+import { sql, sqlScript } from './db.js';
 
 let ordersSchemaReady = false;
+let ordersSchemaPromise = null;
 
+// Creates / migrates the orders table on first use, as ONE idempotent script
+// (single round trip) so cold starts stay fast.
 export async function ensureOrdersSchema() {
   if (ordersSchemaReady) return;
-  await sql`
+  ordersSchemaPromise ||= sqlScript(`
     CREATE TABLE IF NOT EXISTS orders (
       id                   TEXT PRIMARY KEY,
       status               TEXT NOT NULL DEFAULT 'pending',
@@ -31,26 +34,27 @@ export async function ensureOrdersSchema() {
       created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
       paid_at              TIMESTAMPTZ
-    )`;
-  await sql`CREATE INDEX IF NOT EXISTS orders_created_idx ON orders (created_at DESC)`;
-  await sql`CREATE INDEX IF NOT EXISTS orders_status_idx ON orders (status)`;
-  await sql`CREATE INDEX IF NOT EXISTS orders_session_idx ON orders (stripe_session_id)`;
-  // InPost ShipX shipment linkage (added after the table first shipped).
-  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS inpost_shipment_id TEXT`;
-  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS inpost_status TEXT`;
-  // Optional invoice details (nazwa firmy, NIP, adres) — added after launch.
-  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice JSONB`;
-  // Regulamin (terms) acceptance recorded at checkout.
-  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ`;
-  // Carrier-agnostic shipment (Furgonetka): provider, package id, state and a
-  // small JSON bag (pending order-command uuid, carrier, price, e-mail flags).
-  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_provider TEXT`;
-  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_id TEXT`;
-  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_status TEXT`;
-  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_meta JSONB`;
-  // Human-readable name/address of the pickup point chosen on the map.
-  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS point_name TEXT`;
-  ordersSchemaReady = true;
+    );
+    CREATE INDEX IF NOT EXISTS orders_created_idx ON orders (created_at DESC);
+    CREATE INDEX IF NOT EXISTS orders_status_idx ON orders (status);
+    CREATE INDEX IF NOT EXISTS orders_session_idx ON orders (stripe_session_id);
+    -- InPost ShipX shipment linkage (added after the table first shipped).
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS inpost_shipment_id TEXT;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS inpost_status TEXT;
+    -- Optional invoice details (nazwa firmy, NIP, adres) — added after launch.
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice JSONB;
+    -- Regulamin (terms) acceptance recorded at checkout.
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ;
+    -- Carrier-agnostic shipment (Furgonetka): provider, package id, state and a
+    -- small JSON bag (pending order-command uuid, carrier, price, e-mail flags).
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_provider TEXT;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_id TEXT;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_status TEXT;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment_meta JSONB;
+    -- Human-readable name/address of the pickup point chosen on the map.
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS point_name TEXT;
+  `).then(() => { ordersSchemaReady = true; }, (err) => { ordersSchemaPromise = null; throw err; });
+  return ordersSchemaPromise;
 }
 
 // Human-friendly, hard-to-guess order id, e.g. FBT-20260908-9F3AC2.

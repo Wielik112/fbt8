@@ -632,3 +632,7 @@
   .pd-ship .lg-ico { width: 13px; height: 13px; }
   .pd-ship .lg-orlen img { height: auto; max-height: 22px; max-width: 100%; }
 }
+
+/* Miejsce zarezerwowane na produkty doczytywane z serwera — bez tego stopka
+   i sekcje niżej skakały w dół, gdy lista się pojawiała. */
+.shop-product-grid:empty, #featured-products:empty { min-height: 70vh; }

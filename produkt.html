@@ -5,8 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Produkt | FBT Outlet</title>
 <meta name="description" content="Szczegóły produktu w FBT Outlet.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>/* Dane produktów pobierane od razu, równolegle z resztą strony; skrypty
+   strony korzystają z tego samego wyniku (jedno zapytanie). */
+window.FBT_PRELOAD=(function(){function g(u){return fetch(u,{headers:{Accept:'application/json'}}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}
+var o={products:g('/api/products')},id=/produkt/.test(location.pathname)&&new URLSearchParams(location.search).get('id');if(id)o.product=g('/api/products/'+encodeURIComponent(id));return o})();</script>
+<link rel="preload" href="assets/fonts/saira-condensed-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fonts.css?v=1">
 <link rel="stylesheet" href="css/style.css?v=3">
 <link rel="stylesheet" href="css/pages.css?v=3">
 <link rel="icon" type="image/png" href="assets/favicon.png">
@@ -37,7 +42,7 @@
 
 <nav class="nav">
   <div class="shell">
-    <a href="index.html" class="nav-logo"><img src="assets/logo.png" alt="FBT Outlet"></a>
+    <a href="index.html" class="nav-logo"><img src="assets/logo.webp" width="550" height="299" alt="FBT Outlet"></a>
     <div class="nav-links">
       <a href="index.html">Start</a><a href="sklep.html">Sklep</a><a href="o-nas.html">O nas</a><a href="kontakt.html">Kontakt</a><a href="opinie.html">Opinie</a>
     </div>
@@ -55,14 +60,14 @@
 
 <div class="shell">
   <!-- STATE: loading / not found -->
-  <div id="pd-status" class="pd-status" style="padding:80px 0;text-align:center;color:var(--grey-2)">Ładowanie produktu…</div>
+  <div id="pd-status" class="pd-status" style="padding:80px 0;min-height:100vh;text-align:center;color:var(--grey-2)">Ładowanie produktu…</div>
 
   <!-- PRODUCT (filled by JS, hidden until loaded) -->
   <div id="pd-root" class="pd-wrap" hidden>
     <!-- GALLERY -->
     <div class="pd-gallery">
       <div class="pd-main-img" id="pd-main">
-        <img src="assets/logo.png" alt="" id="pd-main-logo" style="width:60%;height:auto;object-fit:contain;opacity:0.9">
+        <img src="assets/logo.webp" width="550" height="299" alt="" id="pd-main-logo" style="width:60%;height:auto;object-fit:contain;opacity:0.9">
         <button type="button" class="pd-nav pd-prev" id="pd-prev" aria-label="Poprzednie zdjęcie" hidden>‹</button>
         <button type="button" class="pd-nav pd-next" id="pd-next" aria-label="Następne zdjęcie" hidden>›</button>
       </div>
@@ -185,7 +190,7 @@
   <div class="shell">
     <div class="footer-grid">
       <div class="footer-brand">
-        <img src="assets/logo.png" alt="FBT Outlet">
+        <img src="assets/logo.webp" width="550" height="299" alt="FBT Outlet">
         <p>Premium sprzęt sportowy w outletowych cenach. Rozpędź się z nami.</p>
       </div>
       <div><h4>Sklep</h4><div class="footer-links"><a href="sklep.html">Wszystkie produkty</a><a href="sklep.html">Obuwie</a><a href="sklep.html">Bluzy</a><a href="sklep.html">Wyprzedaż</a></div></div>
