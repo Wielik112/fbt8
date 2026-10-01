@@ -584,8 +584,8 @@
 .lg .lg-ico { width: 20px; height: 20px; fill: currentColor; flex: 0 0 auto; }
 .lg-pocztex { background: #CF2818; }
 .lg-pocztex img { height: 17px; width: auto; display: block; }
-.lg-orlen   { background: #fff; color: #E4002B; font-size: 14px; }
-.lg-orlen i { font-style: normal; color: #1d1d1b; font-weight: 700; }
+.lg-orlen   { background: #D81D03; }
+.lg-orlen img { height: 30px; width: auto; display: block; }
 .lg-visa    { background: #fff; }
 .lg-visa svg { height: 16px; width: auto; fill: #1A1F71; }
 .lg-mc      { background: #fff; color: #1d1d1b; font-size: 13px; font-weight: 700; }
@@ -610,7 +610,7 @@
 .pd-ship .lg-inpost img { height: 20px; }
 .pd-ship .lg-pocztex img { height: 12px; }
 .pd-ship .lg-ico { width: 15px; height: 15px; }
-.pd-ship .lg-orlen { font-size: 12px; }
+.pd-ship .lg-orlen img { height: 22px; }
 
 @media (max-width: 860px) {
   .trust-grid { grid-template-columns: 1fr; }
@@ -630,5 +630,5 @@
   .pd-ship .lg-inpost img { height: auto; max-height: 18px; max-width: 100%; }
   .pd-ship .lg-pocztex img { height: auto; max-width: 100%; }
   .pd-ship .lg-ico { width: 13px; height: 13px; }
-  .pd-ship .lg-orlen { font-size: 9.5px; gap: 2px; letter-spacing: -.02em; }
+  .pd-ship .lg-orlen img { height: auto; max-height: 22px; max-width: 100%; }
 }
