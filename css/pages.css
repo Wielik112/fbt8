@@ -582,8 +582,8 @@
 .lg-inpost img { height: 30px; width: auto; display: block; }
 .lg-dpd     { background: #DC0032; color: #fff; font-size: 17px; letter-spacing: .01em; }
 .lg .lg-ico { width: 20px; height: 20px; fill: currentColor; flex: 0 0 auto; }
-.lg-pocztex { background: #fff; color: #1d1d1b; letter-spacing: .02em; }
-.lg-pocztex b { color: #E2001A; }
+.lg-pocztex { background: #CF2818; }
+.lg-pocztex img { height: 17px; width: auto; display: block; }
 .lg-orlen   { background: #fff; color: #E4002B; font-size: 14px; }
 .lg-orlen i { font-style: normal; color: #1d1d1b; font-weight: 700; }
 .lg-visa    { background: #fff; }
@@ -608,6 +608,7 @@
 .pd-ship .lg { height: 30px; min-width: 0; padding: 0 10px; font-size: 13px; border-radius: 6px; }
 .pd-ship .lg-dpd { font-size: 13px; }
 .pd-ship .lg-inpost img { height: 20px; }
+.pd-ship .lg-pocztex img { height: 12px; }
 .pd-ship .lg-ico { width: 15px; height: 15px; }
 .pd-ship .lg-orlen { font-size: 12px; }
 
@@ -627,6 +628,7 @@
   .pd-ship .lg { padding: 0 4px; font-size: 12px; }
   .pd-ship .lg-dpd { font-size: 12px; gap: 3px; }
   .pd-ship .lg-inpost img { height: auto; max-height: 18px; max-width: 100%; }
+  .pd-ship .lg-pocztex img { height: auto; max-width: 100%; }
   .pd-ship .lg-ico { width: 13px; height: 13px; }
   .pd-ship .lg-orlen { font-size: 9.5px; gap: 2px; letter-spacing: -.02em; }
 }
