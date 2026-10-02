@@ -107,7 +107,7 @@
       const cleanUrl = `${origin}/produkt?id=${encodeURIComponent(p.id)}`;
       const desc = (p.description || defaultDesc(p)).slice(0, 200);
       // Crawlerzy nie obsługują data-URI jako obrazka — wtedy używamy logo.
-      let ogImg = origin + '/assets/logo.png';
+      let ogImg = origin + '/preview.jpg';
       if (p.image) {
         if (p.image.startsWith('http')) ogImg = p.image;
         else if (!p.image.startsWith('data:')) ogImg = origin + '/' + p.image.replace(/^\//, '');
@@ -137,7 +137,7 @@
     // Structured data (Product) for richer Google results.
     try {
       const origin = location.origin;
-      const img = p.image ? (p.image.startsWith('http') || p.image.startsWith('data:') ? p.image : origin + '/' + p.image.replace(/^\//, '')) : origin + '/assets/logo.png';
+      const img = p.image ? (p.image.startsWith('http') || p.image.startsWith('data:') ? p.image : origin + '/' + p.image.replace(/^\//, '')) : origin + '/preview.jpg';
       const ld = {
         '@context': 'https://schema.org',
         '@type': 'Product',
