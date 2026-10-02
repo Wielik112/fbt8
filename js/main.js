@@ -250,6 +250,7 @@ document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
   const origin = location.origin;
   const SITE = 'FBT Outlet';
   const logo = origin + '/assets/logo.png';
+  const preview = origin + '/preview.jpg'; // obrazek podglądu linku (Google, Facebook, Messenger)
 
   // Canonical: clean URL (no .html / index), keep ?id on product pages.
   let clean = location.pathname.replace(/index\.html$/, '').replace(/\.html$/, '');
@@ -284,13 +285,13 @@ document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
   meta('property', 'og:title', title);
   meta('property', 'og:description', description);
   meta('property', 'og:url', canonical, true);
-  meta('property', 'og:image', logo, true);
+  meta('property', 'og:image', preview, true);
 
   // Twitter
   meta('name', 'twitter:card', 'summary_large_image');
   meta('name', 'twitter:title', title);
   meta('name', 'twitter:description', description);
-  meta('name', 'twitter:image', logo, true);
+  meta('name', 'twitter:image', preview, true);
 
   // JSON-LD: Organization + WebSite with on-site search action.
   if (!document.getElementById('ld-org')) {
