@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { sql } from './db.js';
-import { FURGONETKA_SERVICES, PARCEL_TEMPLATES, SHIPPING_METHODS } from './commerce.js';
+import { FURGONETKA_SERVICES, PARCEL_TEMPLATES, SHIPPING_METHODS, parcelTemplateFor } from './commerce.js';
 
 // Furgonetka.pl REST API client — one integration for every carrier the shop
 // offers (InPost, DPD, Pocztex, Orlen Paczka). Flow for an order:
@@ -300,8 +300,8 @@ function buildReceiver(order) {
 }
 
 // Parcel in Furgonetka units: centimetres + kilograms, declared value in PLN.
-function buildParcel(order, { template = 'small', weightKg = 1 } = {}) {
-  const tpl = PARCEL_TEMPLATES[template] || PARCEL_TEMPLATES.small;
+function buildParcel(order, { template, weightKg = 1 } = {}) {
+  const tpl = PARCEL_TEMPLATES[template] || PARCEL_TEMPLATES[parcelTemplateFor(order)];
   const d = tpl.dimensions;
   const qty = (order.items || []).reduce((s, i) => s + (i.qty || 1), 0) || 1;
   const names = (order.items || []).map((i) => i.name).filter(Boolean).join(', ');

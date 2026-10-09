@@ -1,4 +1,4 @@
-import { FURGONETKA_SERVICES, inpostServiceFor } from './commerce.js';
+import { FURGONETKA_SERVICES, PARCEL_TEMPLATES, inpostServiceFor, parcelTemplateFor } from './commerce.js';
 import { setShipment, setInpostShipment, updateInpostStatus, clearShipment } from './orders.js';
 import * as fgApi from './furgonetka.js';
 import * as inpostApi from './inpost.js';
@@ -95,7 +95,9 @@ async function settlePendingOrder(order) {
 // Creates (and by default orders) the shipment for a paid order.
 // opts: { template, weightKg, order = true, notify = true, budgetMs }
 export async function createShipmentForOrder(order, opts = {}) {
-  const { template = 'small', weightKg = 1, order: doOrder = true, notify = true, budgetMs = 8000 } = opts;
+  const { weightKg = 1, order: doOrder = true, notify = true, budgetMs = 8000 } = opts;
+  // Gabaryt: wybrany w panelu, a gdy brak — z liczby sztuk (do 2 → B, od 3 → C).
+  const template = PARCEL_TEMPLATES[opts.template] ? opts.template : parcelTemplateFor(order);
   if (order.paymentStatus !== 'paid') throw shipError('Zamówienie nie jest opłacone.');
   const provider = order.shipment?.provider || canShip(order);
   if (!provider) {

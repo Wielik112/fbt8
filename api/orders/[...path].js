@@ -140,7 +140,7 @@ async function shipmentHandler(req, res, id) {
   if (req.method === 'DELETE') return res.status(200).json(await cancelShipmentForOrder(order));
   if (req.method === 'POST') {
     const body = await readJsonBody(req);
-    const template = ['small', 'medium', 'large'].includes(body?.template) ? body.template : 'small';
+    const template = ['small', 'medium', 'large'].includes(body?.template) ? body.template : undefined; // undefined → B/C z liczby sztuk
     const weightKg = Number(body?.weightKg) > 0 ? Math.min(Number(body.weightKg), 50) : 1;
     const updated = await createShipmentForOrder(order, { template, weightKg, order: body?.order !== false });
     return res.status(201).json(updated);
