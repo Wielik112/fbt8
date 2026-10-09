@@ -304,6 +304,7 @@ document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
           name: SITE,
           url: origin + '/',
           logo: logo,
+          sameAs: ['https://www.facebook.com/profile.php?id=61594681273532'],
           description: 'Oryginalne obuwie piłkarskie i sportowe renomowanych oraz premium marek w cenach outletowych.'
         },
         {
