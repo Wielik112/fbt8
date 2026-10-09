@@ -81,12 +81,20 @@ export function trackingUrlFor(methodKey, number) {
   return fn ? fn(number) : null;
 }
 
-// InPost Paczkomat parcel templates (gabaryty). Dimensions in millimetres.
+// Parcel templates (gabaryty A/B/C). Dimensions in millimetres. Length is
+// 59 cm: Furgonetka rejects anything longer for parcel lockers/automats
+// ("Maksymalna długość przesyłki dla automatów paczkowych to 59 cm").
 export const PARCEL_TEMPLATES = {
-  small:  { label: 'Gabaryt A', dimensions: { length: 640, width: 380, height: 80,  unit: 'mm' } },
-  medium: { label: 'Gabaryt B', dimensions: { length: 640, width: 380, height: 190, unit: 'mm' } },
-  large:  { label: 'Gabaryt C', dimensions: { length: 640, width: 380, height: 410, unit: 'mm' } },
+  small:  { label: 'Gabaryt A', dimensions: { length: 590, width: 380, height: 80,  unit: 'mm' } },
+  medium: { label: 'Gabaryt B', dimensions: { length: 590, width: 380, height: 190, unit: 'mm' } },
+  large:  { label: 'Gabaryt C', dimensions: { length: 590, width: 380, height: 410, unit: 'mm' } },
 };
+
+// Default parcel size from the number of items: up to 2 → B, 3 or more → C.
+export function parcelTemplateFor(order) {
+  const qty = (order?.items || []).reduce((s, i) => s + (Number(i.qty) || 1), 0);
+  return qty >= 3 ? 'large' : 'medium';
+}
 
 // Discount codes -> percent off. Validated server-side only — the list never
 // reaches the browser. Set COUPONS="KOD1:15,KOD2:10" in the environment to

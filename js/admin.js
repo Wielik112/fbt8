@@ -1150,6 +1150,9 @@ function renderShipSection(o) {
   $('om-ship-title').textContent = sh?.provider === 'inpost' ? 'Przesyłka InPost (ShipX)' : 'Przesyłka (Furgonetka)';
 
   if (!sh) {
+    // Domyślny gabaryt z liczby sztuk: do 2 → B, od 3 → C (można zmienić ręcznie).
+    const qty = (o.items || []).reduce((n, it) => n + (Number(it.qty) || 1), 0);
+    $('om-parcel').value = qty >= 3 ? 'large' : 'medium';
     $('om-ship-hint').textContent = 'Zamówienie tworzy paczkę u przewoźnika z metody dostawy klienta i od razu generuje etykietę (koszt pobiera Furgonetka). Szkic możesz poprawić w panelu Furgonetki.';
     return;
   }

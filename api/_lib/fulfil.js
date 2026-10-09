@@ -29,7 +29,7 @@ export async function onOrderPaid(order) {
   if (provider && !order.shipment?.id) {
     try {
       const doOrder = provider === 'inpost' || furgonetkaAutoOrder();
-      current = await createShipmentForOrder(order, { template: 'small', weightKg: 1, order: doOrder, notify: false, budgetMs: 4000 });
+      current = await createShipmentForOrder(order, { weightKg: 1, order: doOrder, notify: false, budgetMs: 4000 });
     } catch (err) {
       console.error('[fulfil] auto-shipment failed for', order.id, err?.message || err);
     }

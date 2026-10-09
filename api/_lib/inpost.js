@@ -1,4 +1,4 @@
-import { inpostServiceFor, PARCEL_TEMPLATES } from './commerce.js';
+import { inpostServiceFor, PARCEL_TEMPLATES, parcelTemplateFor } from './commerce.js';
 
 // InPost ShipX API client.
 // Docs: https://dokumentacja-inpost.atlassian.net/wiki/spaces/PL/
@@ -112,14 +112,14 @@ function buildReceiver(order, withAddress) {
 }
 
 // Builds the ShipX shipment payload for an order + chosen parcel options.
-export function buildShipmentPayload(order, { template = 'small', weightKg = 1 } = {}) {
+export function buildShipmentPayload(order, { template, weightKg = 1 } = {}) {
   const svc = inpostServiceFor(order.shippingMethod);
   if (!svc) {
     const err = new Error('Ta metoda dostawy nie jest obsługiwana przez InPost.');
     err.code = 'NOT_INPOST';
     throw err;
   }
-  const tpl = PARCEL_TEMPLATES[template] ? template : 'small';
+  const tpl = PARCEL_TEMPLATES[template] ? template : parcelTemplateFor(order);
 
   const parcel = svc.locker
     ? { template: tpl }
