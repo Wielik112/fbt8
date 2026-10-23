@@ -273,7 +273,7 @@ export function senderAddress() {
     postcode: process.env.FURGONETKA_SENDER_POSTCODE || '',
     city: process.env.FURGONETKA_SENDER_CITY || '',
     country_code: 'PL',
-    email: process.env.FURGONETKA_SENDER_EMAIL || 'kontakt@fbtoutlet.pl',
+    email: process.env.FURGONETKA_SENDER_EMAIL || 'fbtoutlet@gmail.com',
     phone: normalizePhone(process.env.FURGONETKA_SENDER_PHONE),
   };
 }

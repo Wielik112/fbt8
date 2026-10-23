@@ -87,7 +87,7 @@ export async function sendOrderPreparingEmail(order) {
     </table>
     <p style="text-align:right;margin:10px 0;color:#111"><strong>Razem: ${zl(order.total)}</strong></p>
     ${trackingBlock}
-    <p style="color:#555;font-size:13px;margin:20px 0 0">Damy Ci znać, gdy paczka będzie w drodze. W razie pytań napisz do nas na kontakt@fbtoutlet.pl.</p>
+    <p style="color:#555;font-size:13px;margin:20px 0 0">Damy Ci znać, gdy paczka będzie w drodze. W razie pytań napisz do nas na fbtoutlet@gmail.com.</p>
     <p style="color:#999;font-size:12px;margin:16px 0 0">FBT Outlet · Lubieszów 87, 67-100</p>
   </div>`;
 
@@ -95,7 +95,7 @@ export async function sendOrderPreparingEmail(order) {
     + `Twoja paczka jest przygotowywana do wysyłki.\n`
     + `Numer zamówienia: ${order.id}\n`
     + (tracking ? `Numer przesyłki: ${tracking}\nŚledzenie: ${trackUrl}\n` : '')
-    + `Razem: ${zl(order.total)}\n\nFBT Outlet · kontakt@fbtoutlet.pl`;
+    + `Razem: ${zl(order.total)}\n\nFBT Outlet · fbtoutlet@gmail.com`;
 
   return sendMail({ to: order.customer.email, subject, html, text });
 }
@@ -133,11 +133,11 @@ export async function sendOrderShippedEmail(order) {
     <p style="margin:0 0 4px;color:#111">Dostawa: ${shippingLine(order)}</p>
     <p style="margin:12px 0 6px;color:#111">Numer przesyłki: <strong>${esc(tracking)}</strong></p>
     <p style="margin:0 0 16px"><a href="${trackUrl}" style="color:#e01020;font-weight:600">Śledź przesyłkę →</a></p>
-    <p style="color:#555;font-size:13px;margin:20px 0 0">Status sprawdzisz też na <a href="${site}/sledzenie.html" style="color:#e01020">${esc(site.replace(/^https?:\/\//, ''))}/sledzenie</a> (numer zamówienia + e-mail). Pytania? kontakt@fbtoutlet.pl</p>
+    <p style="color:#555;font-size:13px;margin:20px 0 0">Status sprawdzisz też na <a href="${site}/sledzenie.html" style="color:#e01020">${esc(site.replace(/^https?:\/\//, ''))}/sledzenie</a> (numer zamówienia + e-mail). Pytania? fbtoutlet@gmail.com</p>
     <p style="color:#999;font-size:12px;margin:16px 0 0">FBT Outlet · Lubieszów 87, 67-100</p>
   </div>`;
   const text = `Twoja paczka jest gotowa do drogi!\n`
-    + `Numer zamówienia: ${order.id}\nNumer przesyłki: ${tracking}\nŚledzenie: ${trackUrl}\n\nFBT Outlet · kontakt@fbtoutlet.pl`;
+    + `Numer zamówienia: ${order.id}\nNumer przesyłki: ${tracking}\nŚledzenie: ${trackUrl}\n\nFBT Outlet · fbtoutlet@gmail.com`;
 
   return sendMail({ to: order.customer.email, subject, html, text });
 }
