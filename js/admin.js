@@ -1147,6 +1147,7 @@ function renderShipSection(o) {
   const box = $('om-ship');
   const sh = o.shipment;
   // Shipment actions only for paid orders or ones that already have a parcel.
+  notice($('om-ship-error'), '', 'err');
   if (!sh && o.paymentStatus !== 'paid') { box.hidden = true; return; }
   box.hidden = false;
   $('om-ship-create').hidden = !!sh;
@@ -1195,7 +1196,13 @@ function applyOrderUpdate(updated, msg) {
 
 function shipErr(err) {
   if (err.status === 401) { notice($('om-error'), 'Sesja wygasła. Zaloguj się ponownie.', 'err'); setTimeout(() => { closeOrder(); show('login'); }, 1200); }
-  else notice($('om-error'), err.message, 'err');
+  else {
+    // Shown next to the shipment buttons — the modal's top notice is
+    // usually scrolled out of view when these are clicked.
+    const box = $('om-ship-error');
+    notice(box, err.message, 'err');
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 }
 
 async function shipAction(btn, fn) {
@@ -1204,6 +1211,7 @@ async function shipAction(btn, fn) {
   const label = btn.textContent;
   btn.textContent = 'Chwila…';
   notice($('om-error'), '', 'err');
+  notice($('om-ship-error'), '', 'err');
   try { await fn(); } catch (err) { shipErr(err); } finally { btn.disabled = false; btn.textContent = label; }
 }
 
