@@ -23,9 +23,9 @@
     dpd_courier:    { label: 'Kurier DPD',              sub: 'Dostawa kurierem pod adres',        requiresPoint: false, carrier: 'dpd',
                       tiers: [{ maxQty: 2, price: 2400 }, { maxQty: Infinity, price: 2800 }] },
     pocztex_courier:{ label: 'Kurier Pocztex',          sub: 'Dostawa kurierem pod adres',        requiresPoint: false, carrier: 'pocztex',
-                      tiers: [{ maxQty: 2, price: 1500 }, { maxQty: Infinity, price: 1500 }] },
+                      tiers: [{ maxQty: 2, price: 2100 }, { maxQty: Infinity, price: 2100 }] },
     inpost_courier: { label: 'Kurier InPost',           sub: 'Dostawa kurierem pod adres',        requiresPoint: false, carrier: 'inpost',
-                      tiers: [{ maxQty: 2, price: 1900 }, { maxQty: Infinity, price: 2300 }] },
+                      tiers: [{ maxQty: 2, price: 2100 }, { maxQty: Infinity, price: 2300 }] },
   };
   // Kolejność i nagłówki grup w wyborze dostawy.
   const SHIP_GROUPS = [
