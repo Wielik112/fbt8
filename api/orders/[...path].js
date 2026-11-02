@@ -35,6 +35,10 @@ export default async function handler(req, res) {
   // "/api/orders" is rewritten to "/api/orders/list" (vercel.json).
   let seg = routeSegments(req);
   if (seg.length === 1 && seg[0] === 'list') seg = [];
+  // "/api/orders/:id/shipment|label" is rewritten to "/api/orders/:id?action=…"
+  // (vercel.json) — the catch-all alone doesn't reach two-segment paths there.
+  const action = String(req.query?.action || new URL(req.url || '', 'http://x').searchParams.get('action') || '');
+  if (seg.length === 1 && ['shipment', 'label'].includes(action)) seg.push(action);
 
   try {
     await ensureOrdersSchema();

@@ -50,6 +50,10 @@
       "destination": "/api/orders/list"
     },
     {
+      "source": "/api/orders/:id/:action(shipment|label)",
+      "destination": "/api/orders/:id?action=:action"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
     }
