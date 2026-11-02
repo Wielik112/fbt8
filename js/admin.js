@@ -991,7 +991,11 @@ $('orders-check-all').addEventListener('change', (e) => {
 
 function shipCell(o) {
   const sh = o.shipment;
-  if (!sh) return o.paymentStatus === 'paid' ? '<span style="color:var(--red)">brak etykiety</span>' : '—';
+  if (!sh) {
+    if (o.paymentStatus !== 'paid') return '—';
+    const why = o.shipmentError?.message;
+    return `<span style="color:var(--red)">brak etykiety</span>${why ? `<div style="color:var(--red);font-size:12px;max-width:260px" title="${esc(why)}">${esc(why.length > 90 ? why.slice(0, 90) + '…' : why)}</div>` : ''}`;
+  }
   const label = shipStatusLabel(sh.status);
   return `<b>${esc(carrierName(o))}</b> · ${esc(label)}${o.trackingNumber ? `<div>${esc(o.trackingNumber)}</div>` : ''}`;
 }
@@ -1153,7 +1157,8 @@ function renderShipSection(o) {
     // Domyślny gabaryt z liczby sztuk: do 2 → B, od 3 → C (można zmienić ręcznie).
     const qty = (o.items || []).reduce((n, it) => n + (Number(it.qty) || 1), 0);
     $('om-parcel').value = qty >= 3 ? 'large' : 'medium';
-    $('om-ship-hint').textContent = 'Zamówienie tworzy paczkę u przewoźnika z metody dostawy klienta i od razu generuje etykietę (koszt pobiera Furgonetka). Szkic możesz poprawić w panelu Furgonetki.';
+    const why = o.shipmentError;
+    $('om-ship-hint').textContent = (why ? `Nie udało się utworzyć przesyłki (${fmtDateTime(why.at)}): ${why.message} — po poprawieniu kliknij ponownie. ` : '') + 'Zamówienie tworzy paczkę u przewoźnika z metody dostawy klienta i od razu generuje etykietę (koszt pobiera Furgonetka). Szkic możesz poprawić w panelu Furgonetki.';
     return;
   }
   const ordered = sh.provider === 'inpost' || !!sh.ordered;

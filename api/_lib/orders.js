@@ -88,6 +88,8 @@ export function mapOrder(r) {
     shipment: r.shipment_id
       ? { ...(r.shipment_meta || {}), provider: r.shipment_provider, id: r.shipment_id, status: r.shipment_status }
       : (r.inpost_shipment_id ? { ...(r.shipment_meta || {}), provider: 'inpost', id: r.inpost_shipment_id, status: r.inpost_status } : null),
+    // Why the last attempt to create a shipment failed (shown in the panel).
+    shipmentError: !r.shipment_id && !r.inpost_shipment_id ? (r.shipment_meta?.createError || null) : null,
     inpostShipmentId: r.inpost_shipment_id,
     inpostStatus: r.inpost_status,
     trackingNumber: r.tracking_number,
@@ -210,6 +212,16 @@ export async function setShipment(id, { provider = 'furgonetka', shipmentId, sta
     WHERE id = ${id}
     RETURNING *`;
   return rows[0] ? mapOrder(rows[0]) : null;
+}
+
+// Remembers why creating the shipment failed, while the order has none yet.
+export async function setShipmentError(id, message) {
+  const meta = { createError: message ? { message: String(message).slice(0, 500), at: new Date().toISOString() } : null };
+  await sql`
+    UPDATE orders SET
+      shipment_meta = COALESCE(shipment_meta, '{}'::jsonb) || ${JSON.stringify(meta)}::jsonb,
+      updated_at = now()
+    WHERE id = ${id} AND shipment_id IS NULL AND inpost_shipment_id IS NULL`;
 }
 
 // Forgets the shipment (after cancelling / deleting it at the carrier).
