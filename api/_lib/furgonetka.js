@@ -359,13 +359,35 @@ export function summarizePackage(p) {
   };
 }
 
+// Some carriers (e.g. Pocztex, GLS) refuse a separate label sender with
+// "/sender: Usługa niedostępna u tego przewoźnika". The pickup address is the
+// same data, so on that refusal validate once more without `sender`.
+function senderRefused(err) {
+  const d = err?.details;
+  const list = Array.isArray(d) ? d : (Array.isArray(d?.errors) ? d.errors : []);
+  if (list.some((e) => String(e?.path || e?.field || '').startsWith('/sender'))) return true;
+  return /(^|\s)\/sender\b/.test(String(err?.message || ''));
+}
+
+async function validatedPayload(order, opts) {
+  const payload = await buildPackagePayload(order, opts);
+  try {
+    await fg('/packages/validate', { method: 'POST', body: payload });
+    return payload;
+  } catch (err) {
+    if (err?.code !== 'FURGONETKA_ERROR' || !senderRefused(err)) throw err;
+    const { sender, ...withoutSender } = payload;
+    await fg('/packages/validate', { method: 'POST', body: withoutSender });
+    return withoutSender;
+  }
+}
+
 export async function validatePackage(order, opts) {
-  return fg('/packages/validate', { method: 'POST', body: await buildPackagePayload(order, opts) });
+  return validatedPayload(order, opts);
 }
 
 export async function createPackage(order, opts) {
-  const payload = await buildPackagePayload(order, opts);
-  await fg('/packages/validate', { method: 'POST', body: payload });
+  const payload = await validatedPayload(order, opts);
   return fg('/packages', { method: 'POST', body: payload });
 }
 
