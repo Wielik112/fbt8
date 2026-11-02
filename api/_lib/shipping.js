@@ -1,5 +1,5 @@
 import { FURGONETKA_SERVICES, PARCEL_TEMPLATES, inpostServiceFor, parcelTemplateFor } from './commerce.js';
-import { setShipment, setInpostShipment, updateInpostStatus, clearShipment } from './orders.js';
+import { setShipment, setInpostShipment, updateInpostStatus, clearShipment, setShipmentError } from './orders.js';
 import * as fgApi from './furgonetka.js';
 import * as inpostApi from './inpost.js';
 import { sendOrderShippedEmail } from './mailer.js';
@@ -94,7 +94,24 @@ async function settlePendingOrder(order) {
 
 // Creates (and by default orders) the shipment for a paid order.
 // opts: { template, weightKg, order = true, notify = true, budgetMs }
+// A failure before any parcel exists is saved on the order, so the panel can
+// say why there is no label instead of a bare "brak etykiety".
 export async function createShipmentForOrder(order, opts = {}) {
+  const hadShipment = !!order.shipment?.id;
+  try {
+    const updated = await createShipment(order, opts);
+    if (!hadShipment && order.shipmentError) await setShipmentError(order.id, null).catch(() => {});
+    return updated;
+  } catch (err) {
+    if (!hadShipment) {
+      const msg = shippingErrorResponse(err)?.error || err?.message || 'Nieznany błąd';
+      await setShipmentError(order.id, msg).catch(() => {});
+    }
+    throw err;
+  }
+}
+
+async function createShipment(order, opts = {}) {
   const { weightKg = 1, order: doOrder = true, notify = true, budgetMs = 8000 } = opts;
   // Gabaryt: wybrany w panelu, a gdy brak — z liczby sztuk (do 2 → B, od 3 → C).
   const template = PARCEL_TEMPLATES[opts.template] ? opts.template : parcelTemplateFor(order);
@@ -134,7 +151,7 @@ export async function createShipmentForOrder(order, opts = {}) {
       shipmentId: created.packageId,
       status: created.state || 'waiting',
       trackingNumber: created.trackingNumber,
-      meta: { carrier: created.carrier, price: created.price, editUrl: created.editUrl, template, weightKg: Number(weightKg) || 1 },
+      meta: { carrier: created.carrier, price: created.price, editUrl: created.editUrl, template, weightKg: Number(weightKg) || 1, createError: null },
     });
   }
   if (!doOrder) return current;
