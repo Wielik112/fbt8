@@ -144,8 +144,9 @@ h1, h2, h3, h4 { font-family: var(--display); font-weight: 800; line-height: 0.9
 .nav-logo { display: flex; align-items: center; gap: 10px; }
 .nav-logo img { height: 40px; width: auto; }
 
-.nav-links { display: flex; align-items: center; gap: 34px; }
+.nav-links { display: flex; align-items: center; gap: clamp(18px, 1.9vw, 34px); margin: 0 clamp(16px, 2vw, 32px); }
 .nav-links a {
+  white-space: nowrap;
   font-family: var(--display); font-weight: 600; font-size: 15px;
   letter-spacing: 0.06em; text-transform: uppercase; color: var(--grey-1);
   position: relative; padding: 6px 0;
@@ -267,6 +268,13 @@ h1, h2, h3, h4 { font-family: var(--display); font-weight: 800; line-height: 0.9
 @media (max-width: 1024px) {
   .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
 }
+/* Za wąsko na pełne menu w jednej linii: najpierw znika „Kup teraz”
+   (Sklep jest w menu), a poniżej 1100 px menu przechodzi pod burgera. */
+@media (max-width: 1360px) { .nav .nav-actions .btn { display: none; } }
+@media (max-width: 1100px) {
+  .nav-links { display: none; }
+  .burger { display: flex; }
+}
 @media (max-width: 860px) {
   .nav-links, .nav .btn { display: none; }
   .burger { display: flex; }
@@ -324,13 +332,15 @@ h1, h2, h3, h4 { font-family: var(--display); font-weight: 800; line-height: 0.9
 /* Desktop dropdown */
 .cat-nav { position: relative; display: inline-flex; }
 .cat-nav-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: none; border: none; cursor: pointer;
-  color: var(--grey-1); font-family: var(--body); font-size: 15px; font-weight: 500;
-  padding: 0; transition: color .15s;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: none; border: none; cursor: pointer; white-space: nowrap;
+  /* Jak pozostałe linki menu (START, SKLEP…). */
+  color: var(--grey-1); font-family: var(--display); font-size: 15px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 6px 0; transition: color .15s;
 }
 .cat-nav-btn:hover, .cat-nav.open .cat-nav-btn { color: #fff; }
-.cn-caret { width: 15px; height: 15px; transition: transform .2s var(--ease); }
+.cn-caret { width: 14px; height: 14px; flex-shrink: 0; transition: transform .2s var(--ease); }
 .cat-nav.open .cn-caret { transform: rotate(180deg); }
 .cat-nav-menu {
   position: absolute; top: calc(100% + 14px); left: 50%; transform: translateX(-50%) translateY(-6px);
