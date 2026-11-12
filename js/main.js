@@ -470,7 +470,7 @@ document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
       menu.className = 'cat-nav-menu';
       menu.innerHTML =
         `<a class="cn-all" href="sklep.html?main=${enc(group.name)}">Wszystko z: ${group.name}</a>` +
-        group.subs.map((s) => `<a href="sklep.html?cat=${enc(s)}">${s}</a>`).join('');
+        (window.groupSubs ? window.groupSubs(group) : group.subs).map((s) => `<a href="sklep.html?cat=${enc(s)}">${s}</a>`).join('');
       wrap.appendChild(btn);
       wrap.appendChild(menu);
       navLinks.insertBefore(wrap, ref);
@@ -512,7 +512,7 @@ document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a => {
       list.className = 'm-cat-list';
       list.innerHTML =
         `<a href="sklep.html?main=${enc(group.name)}">Wszystko z: ${group.name}</a>` +
-        group.subs.map((s) => `<a href="sklep.html?cat=${enc(s)}">${s}</a>`).join('');
+        (window.groupSubs ? window.groupSubs(group) : group.subs).map((s) => `<a href="sklep.html?cat=${enc(s)}">${s}</a>`).join('');
       box.appendChild(btn);
       box.appendChild(list);
       mob.insertBefore(box, ref);
