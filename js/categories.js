@@ -4,9 +4,12 @@
    Dodanie podkategorii = jedna linijka w tablicy poniżej.
    Wartość podkategorii to jednocześnie `cat` produktu.
    Kolejność w tablicy = kolejność w menu i filtrach.
+   `also` = podkategorie z innej grupy, pokazywane też w tej (zakładka
+   w menu i filtrach, wliczane do „Wszystko z: …"); ich główną kategorią
+   zostaje grupa, w której są w `subs`.
    ============================================ */
 window.CATEGORY_TREE = [
-  { name: 'Obuwie',      subs: ['Buty', 'Buty sportowe', 'Buty do biegania', 'Trampki'] },
+  { name: 'Obuwie',      subs: ['Buty', 'Buty sportowe', 'Buty do biegania', 'Trampki'], also: ['Buty piłkarskie'] },
   { name: 'Odzież',      subs: ['Koszulki', 'Kurtki', 'Bluzy', 'Spodnie', 'Dresy sportowe', 'Czapki'] },
   { name: 'Piłka nożna', subs: ['Buty piłkarskie', 'Rękawice bramkarskie', 'Akcesoria piłkarskie'] },
 ];
@@ -25,6 +28,17 @@ window.productCode = function (id) {
 window.mainCategoryOf = function (leaf) {
   const g = window.CATEGORY_TREE.find((g) => g.subs.includes(leaf));
   return g ? g.name : '';
+};
+
+// Podkategorie widoczne w danej grupie: własne + `also`.
+window.groupSubs = function (g) {
+  return g ? [...g.subs, ...(g.also || [])] : [];
+};
+
+// Czy produkt z podkategorii `leaf` należy do kategorii głównej `main`.
+window.inMainCategory = function (leaf, main) {
+  const g = window.CATEGORY_TREE.find((x) => x.name === main);
+  return !!g && window.groupSubs(g).includes(leaf);
 };
 
 // Kategorie główne, które są obuwiem (dla siatki rozmiarów butów).

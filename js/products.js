@@ -108,9 +108,10 @@ function plProdukty(n) {
 // Homepage category tiles: data-cat may be a leaf OR a main category name.
 function fillCategoryCounts() {
   const mainOf = window.mainCategoryOf || (() => '');
+  const inMain = window.inMainCategory || ((leaf, main) => mainOf(leaf) === main);
   document.querySelectorAll('.cat-count[data-cat]').forEach((el) => {
     const key = el.dataset.cat;
-    const n = PRODUCTS.filter((p) => p.cat === key || mainOf(p.cat) === key).length;
+    const n = PRODUCTS.filter((p) => p.cat === key || inMain(p.cat, key)).length;
     el.textContent = n ? `${n} ${plProdukty(n)}` : 'Nowości wkrótce';
   });
 }
@@ -158,6 +159,8 @@ function initShop() {
   const TREE = window.CATEGORY_TREE || [];
   const LEAVES = window.CATEGORY_LEAVES || [];
   const mainOf = window.mainCategoryOf || (() => '');
+  const inMain = window.inMainCategory || ((leaf, main) => mainOf(leaf) === main);
+  const subsOf = window.groupSubs || ((g) => g.subs);
   const FOOTWEAR = window.FOOTWEAR_MAIN || ['Obuwie', 'Piłka nożna'];
 
   const state = {
@@ -212,7 +215,7 @@ function initShop() {
   }
   function matchCategory(p) {
     if (state.cat) return p.cat === state.cat;
-    if (state.main) return mainOf(p.cat) === state.main;
+    if (state.main) return inMain(p.cat, state.main);
     return true;
   }
   function currentList() {
@@ -248,7 +251,7 @@ function initShop() {
         <button type="button" class="cacc-head"><span>${g.name}</span><span class="cacc-caret"></span></button>
         <div class="cacc-list">
           <button type="button" class="cacc-sub cacc-mainall" data-main-all="${g.name}">Wszystko z: ${g.name}</button>
-          ${g.subs.map((s) => `<button type="button" class="cacc-sub" data-cat="${s}">${s}</button>`).join('')}
+          ${subsOf(g).map((s) => `<button type="button" class="cacc-sub" data-cat="${s}">${s}</button>`).join('')}
         </div>
       </div>`;
     });

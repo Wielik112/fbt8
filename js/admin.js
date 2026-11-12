@@ -150,7 +150,7 @@ let productSearch = '';
 function filteredProducts() {
   const q = productSearch.trim().toLowerCase();
   return products.filter((p) => {
-    if (productFilter !== 'Wszystkie' && mainCategoryOf(p.cat) !== productFilter && p.cat !== productFilter) return false;
+    if (productFilter !== 'Wszystkie' && mainCategoryOf(p.cat) !== productFilter && p.cat !== productFilter && !(window.inMainCategory && window.inMainCategory(p.cat, productFilter))) return false;
     if (!q) return true;
     return `${p.name || ''} ${p.brand || ''} ${p.id || ''} ${productCode(p.id)}`.toLowerCase().includes(q);
   });
